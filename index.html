@@ -254,8 +254,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 const S = {
   // OPERACIÓN
   panel:      {g:'Operación', n:'Panel', ico:'📊', st:'activo', fase:'Fase 3'},
-  mesas:      {g:'Operación', n:'Mesas y Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El mapa de mesas en tiempo real: ves cuáles están libres, ocupadas o por cobrar, con el tiempo y el monto de cada una. Desde aquí abres una comanda, unes mesas o trasladas platos.', feat:['Mapa de mesas por color y estado','Unir mesas y trasladar platos','Tiempo y monto vivo por mesa','Organización por pisos y ambientes','Filtros: salón, llevar, delivery, online','Cambiar de mesero']},
-  pedido:     {g:'Operación', n:'Tomar Pedido', ico:'🧾', st:'activo', fase:'Fase 3', badge:'3', desc:'La pantalla para armar la comanda: eliges productos por categoría, agregas cantidades, adicionales y combos, y lo envías a cocina o a caja.', feat:['Selección rápida por categorías','Adicionales, toppings y combos','Nº de comensales por mesa','Enviar a producción (cocina/barra)','Grabar precuenta','Nota por producto']},
+  mesas:      {g:'Operación', n:'Mesas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El mapa de mesas en tiempo real: ves cuáles están libres, ocupadas o por cobrar, con el tiempo y el monto de cada una. Desde aquí abres una comanda, unes mesas o trasladas platos.', feat:['Mapa de mesas por color y estado','Unir mesas y trasladar platos','Tiempo y monto vivo por mesa','Organización por pisos y ambientes','Filtros: salón, llevar, delivery, online','Cambiar de mesero']},
+  pedido:     {g:'Operación', n:'Nueva Comanda', ico:'🧾', st:'activo', fase:'Fase 3', badge:'3', desc:'La pantalla para armar la comanda: eliges productos por categoría, agregas cantidades, adicionales y combos, y lo envías a cocina o a caja.', feat:['Selección rápida por categorías','Adicionales, toppings y combos','Nº de comensales por mesa','Enviar a producción (cocina/barra)','Grabar precuenta','Nota por producto']},
   cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'construccion', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'construccion', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
@@ -509,7 +509,7 @@ let comanda=[], lineSeq=1, curCat='Recomendados', pendingProd=null, pendingSel={
 
 function pedidoView(){
   return `
-  <div class="page-head"><h1>🧾 Tomar Pedido <span class="status-pill activo">Activo</span><span class="fase-tag">Capa 1 · demo</span></h1>
+  <div class="page-head"><h1>🧾 Nueva Comanda <span class="status-pill activo">Activo</span><span class="fase-tag">Capa 1 · demo</span></h1>
     <div class="sub">Arma la comanda y envíala a cocina. Los productos son de ejemplo; conectar con datos reales es la Capa 2.</div></div>
   <div class="tp">
     <div class="tp-ctx">
