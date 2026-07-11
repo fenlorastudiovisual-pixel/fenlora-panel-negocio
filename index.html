@@ -132,6 +132,39 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .opt .op{color:var(--primary);font-weight:600;font-size:12.5px}
 .modal-f{padding:16px 20px;border-top:1px solid var(--border)}
 
+/* COMANDAS: type filters + mesa map */
+.comtypes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.comtype{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;background:var(--card);border:1px solid var(--border);color:var(--txt2);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.comtype:hover{border-color:var(--border2);color:var(--txt)}
+.comtype.active{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}
+.comtype .ct-badge{background:var(--card2);color:var(--txt2);font-size:11px;font-weight:700;padding:1px 8px;border-radius:10px}
+.comtype.active .ct-badge{background:var(--primary);color:#052e21}
+.mesas-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mesas-head b{font-family:'Outfit',sans-serif;font-size:15px}
+.mesa-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.mesa{border-radius:15px;padding:18px;color:#fff;cursor:pointer;position:relative;min-height:118px;transition:.15s;border:1px solid transparent}
+.mesa:hover{transform:translateY(-3px);box-shadow:0 14px 30px -12px rgba(0,0,0,.6)}
+.mesa:active{transform:scale(.98)}
+.mesa.libre{background:linear-gradient(140deg,#12a56f,#0b7d53)}
+.mesa.ocup{background:linear-gradient(140deg,#d98a1f,#b06b11)}
+.mesa.cobr{background:linear-gradient(140deg,#d0384f,#9e2739)}
+.mesa .mesa-ic{position:absolute;top:14px;right:15px;font-size:18px;opacity:.5}
+.mesa .mesa-n{font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;margin-top:6px}
+.mesa .mesa-s{font-size:11.5px;opacity:.92;margin-top:4px}
+.mesa .mesa-m{position:absolute;bottom:16px;left:18px;font-family:'Outfit',sans-serif;font-weight:700;font-size:16px}
+.empty-type{text-align:center;padding:50px 20px;background:var(--card);border:1px dashed var(--border2);border-radius:16px}
+.empty-type .et-ic{font-size:48px;margin-bottom:14px}
+.empty-type .et-t{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+.empty-type .et-d{font-size:13px;color:var(--txt2);margin-top:6px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.5}
+.cl.sent{opacity:.6}
+.cl.sent .cl-name{color:var(--primary)}
+.cl.held{border-style:dashed;border-color:var(--amber)}
+.cl-hold{font-size:10.5px;color:var(--amber);cursor:pointer;font-weight:700;margin-right:10px}
+.cl-hold:hover{text-decoration:underline}
+.held-tag{font-size:9px;background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+.unir-bar{background:var(--card2);border:1px solid var(--primary);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;font-weight:600}
+.mesa.sel{outline:3px solid var(--primary);outline-offset:2px}
+
 /* BRAND */
 .brand{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
 .brand .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--primary),#00b381);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
@@ -215,6 +248,129 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .mm .ms{font-size:10.5px;opacity:.9;margin-top:2px}
 .mm .mp{position:absolute;bottom:12px;right:13px;font-weight:700;font-size:13px}
 @media(max-width:1180px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.qa-grid{grid-template-columns:repeat(4,1fr)}.ph-feat{grid-template-columns:1fr}}
+
+/* ═══ COMANDA v2 (estilo ApiWorking, tema oscuro) ═══ */
+.tp{grid-template-columns:1fr 438px !important}
+.tp-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.tp-toolbar .tp-search2{margin-bottom:0;flex:1}
+.view-toggle{display:flex;background:var(--card);border:1px solid var(--border);border-radius:9px;overflow:hidden;flex-shrink:0}
+.view-toggle button{background:none;border:none;color:var(--txt3);padding:9px 12px;cursor:pointer;font-size:15px;font-family:inherit}
+.view-toggle button.on{background:var(--primary-dim);color:var(--primary)}
+
+/* vista lista */
+.prod-list{display:flex;flex-direction:column;gap:7px}
+.prow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 14px;cursor:pointer;transition:.13s}
+.prow:hover{border-color:var(--primary);background:var(--card2)}
+.prow .pe2{font-size:22px;flex-shrink:0}
+.prow .pn2{flex:1;font-size:13.5px;font-weight:600}
+.prow .popt2{font-size:9px;font-weight:700;background:var(--amber-dim);color:var(--amber);padding:2px 8px;border-radius:10px}
+.prow .pp2{font-family:'Outfit',sans-serif;font-weight:700;color:var(--primary);font-size:14px}
+.prow .padd2{width:26px;height:26px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:300;flex-shrink:0}
+
+/* meta bar de la comanda */
+.comanda-meta{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:9px;align-items:center;font-size:11.5px;color:var(--txt2)}
+.cm-field{display:flex;align-items:center;gap:6px}
+.cm-field select{background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-family:inherit;font-size:11.5px;padding:5px 8px;outline:none;cursor:pointer;max-width:130px}
+.cm-com{display:flex;align-items:center;gap:7px}
+.cm-com .qb{width:22px;height:22px;font-size:14px}
+.ver-mesas{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:11px;font-weight:700;padding:6px 11px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif}
+.ver-mesas:hover{border-color:var(--primary);color:var(--primary)}
+
+/* línea rica */
+.cl-head{display:flex;gap:9px;align-items:flex-start}
+.cl-acc{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.accb{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12.5px;display:flex;align-items:center;justify-content:center;padding:0;line-height:0}
+.accb.b1{color:var(--blue)}.accb.b1:hover{background:var(--blue-dim);border-color:var(--blue)}
+.accb.b2{color:var(--red)}.accb.b2:hover{background:var(--red-dim);border-color:var(--red)}
+.accb.b3{color:var(--primary)}.accb.b3:hover{background:var(--primary-dim);border-color:var(--primary)}
+.accb.b3.on{background:var(--primary);color:#052e21;border-color:var(--primary)}
+.cl-info{flex:1;min-width:0}
+.cl-notes{font-size:10.5px;color:var(--amber);font-style:italic;margin-top:4px;line-height:1.35}
+.cl-area{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.4px;background:var(--card);color:var(--txt3);border:1px solid var(--border);padding:1px 6px;border-radius:8px;margin-top:5px}
+.cort-tag{font-size:9px;background:var(--primary-dim);color:var(--primary);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+.sent-tag{font-size:9px;background:var(--primary-dim);color:var(--primary);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+.cl.cort{border-color:rgba(0,229,160,.3)}
+.cl-ctrl{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cl-pricebox{display:flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:3px 7px;font-size:12px;color:var(--txt3)}
+.cl-price-in{width:62px;background:none;border:none;outline:none;color:var(--primary);font-family:'Outfit',sans-serif;font-weight:700;font-size:12.5px;text-align:right}
+.cl-imp{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--txt);margin-left:auto}
+.cl-pos{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3)}
+.cl-pos-sel{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--txt);font-family:inherit;font-size:11px;padding:3px 4px;outline:none;cursor:pointer}
+.cl-static-q{font-size:11px;color:var(--txt3)}
+
+/* footer: comensal + obs */
+.cf-fields{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.cf-in{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
+.cf-in .lb{font-size:11px;color:var(--txt3);flex-shrink:0;min-width:74px}
+.cf-in input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-family:inherit;font-size:12.5px}
+.trow.cortr{color:var(--primary)}
+
+/* 4 botones de guardado */
+.save-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sbtn{padding:11px 10px;border-radius:10px;border:1px solid var(--border);font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:.14s;line-height:1.15;text-align:center;background:var(--card2);color:var(--txt)}
+.sbtn:hover{border-color:var(--border2);transform:translateY(-1px)}
+.sbtn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.sbtn .si{font-size:15px}
+.sbtn.prod{background:var(--amber-dim);border-color:rgba(245,166,35,.35);color:var(--amber)}
+.sbtn.fact{background:var(--primary);border-color:var(--primary);color:#052e21}
+.sbtn.fact:hover{box-shadow:0 8px 18px -6px rgba(0,229,160,.5)}
+.sec-row{display:flex;gap:7px;margin-top:8px}
+.sec-row .btn{flex:1;padding:9px;font-size:11.5px}
+
+/* mesa acciones */
+.mesa-act{position:absolute;top:12px;left:14px;width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.28);border:none;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:0;padding:0}
+.mesa-act:hover{background:rgba(0,0,0,.5)}
+.amb-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin:20px 0 12px;display:flex;align-items:center;gap:9px;color:var(--txt)}
+.amb-title:first-of-type{margin-top:0}
+.amb-cnt{font-size:11px;color:var(--txt2);background:var(--card2);padding:2px 9px;border-radius:11px;font-weight:600}
+.act-list{display:flex;flex-direction:column;gap:8px}
+.act-item{display:flex;align-items:center;gap:12px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--txt);transition:.14s}
+.act-item:hover{border-color:var(--primary);background:var(--primary-dim)}
+.act-item .ai{font-size:17px;width:22px;text-align:center}
+.act-item.danger:hover{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+
+/* notas modal */
+.note-unit{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px}
+.note-unit .nut{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--txt2);text-transform:uppercase;margin-bottom:9px}
+.note-in{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;margin-bottom:10px}
+.note-in:focus{border-color:var(--primary)}
+.qn-lbl{font-size:10.5px;color:var(--txt3);margin-bottom:7px}
+.qn-row{display:flex;flex-wrap:wrap;gap:6px}
+.qn-btn{font-size:11px;font-weight:700;letter-spacing:.3px;background:var(--surface);border:1px solid var(--border);color:var(--txt2);padding:6px 11px;border-radius:8px;cursor:pointer;transition:.13s;font-family:inherit}
+.qn-btn:hover{border-color:var(--border2);color:var(--txt)}
+.qn-btn.on{background:var(--amber);border-color:var(--amber);color:#3a2a06}
+.note-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.note-tag{font-size:10.5px;background:var(--amber-dim);color:var(--amber);padding:3px 9px;border-radius:9px;font-weight:600;display:flex;align-items:center;gap:6px}
+.note-tag .rmx{cursor:pointer;opacity:.7}.note-tag .rmx:hover{opacity:1}
+
+/* pago modal */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:18px}
+.pay-m{background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:14px 8px;text-align:center;cursor:pointer;transition:.14s}
+.pay-m:hover{border-color:var(--border2)}
+.pay-m.on{border-color:var(--primary);background:var(--primary-dim)}
+.pay-m .pmi{font-size:22px}
+.pay-m .pml{font-size:11.5px;font-weight:600;margin-top:5px;color:var(--txt)}
+.pay-sec{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--txt3);margin:6px 0 9px}
+.tip-row{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.tip-b{flex:1;min-width:52px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--txt);transition:.13s}
+.tip-b:hover{border-color:var(--border2)}
+.tip-b.on{border-color:var(--primary);background:var(--primary-dim);color:var(--primary)}
+.disc-in{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;margin-bottom:16px}
+.disc-in:focus{border-color:var(--primary)}
+.pay-sum{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:6px}
+
+/* tickets impresos */
+.ticket-wrap{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-height:52vh;overflow-y:auto;padding:4px}
+.ticket{background:#fff;color:#111;border-radius:6px;padding:16px 18px;width:270px;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.5;box-shadow:0 8px 24px -8px rgba(0,0,0,.6)}
+.ticket .tk-c{text-align:center}
+.ticket .tk-b{font-weight:700}
+.ticket .tk-big{font-size:15px;font-weight:700}
+.ticket .tk-hr{border-top:1px dashed #999;margin:8px 0}
+.ticket .tk-row{display:flex;justify-content:space-between;gap:8px}
+.ticket .tk-note{font-style:italic;font-size:10px;color:#444;padding-left:10px}
+.ticket .tk-foot{text-align:center;font-size:9.5px;color:#666;margin-top:8px}
+.print-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
 </style>
 </head>
 <body>
@@ -248,14 +404,20 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 <div class="ctxmenu" id="ctxmenu"></div>
 <div class="toast-t" id="toastT"></div>
 <div class="modal-bg" id="optModal"></div>
+<div class="modal-bg" id="comModal"></div>
+<div class="modal-bg" id="splitModal"></div>
+<div class="modal-bg" id="notesModal"></div>
+<div class="modal-bg" id="payModal"></div>
+<div class="modal-bg" id="printModal"></div>
+<div class="modal-bg" id="mesaActModal"></div>
+<div class="modal-bg" id="moveModal"></div>
 
 <script>
 /* ─── ESTRUCTURA DEL PANEL (data-driven) ─── */
 const S = {
   // OPERACIÓN
   panel:      {g:'Operación', n:'Panel', ico:'📊', st:'activo', fase:'Fase 3'},
-  mesas:      {g:'Operación', n:'Mesas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El mapa de mesas en tiempo real: ves cuáles están libres, ocupadas o por cobrar, con el tiempo y el monto de cada una. Desde aquí abres una comanda, unes mesas o trasladas platos.', feat:['Mapa de mesas por color y estado','Unir mesas y trasladar platos','Tiempo y monto vivo por mesa','Organización por pisos y ambientes','Filtros: salón, llevar, delivery, online','Cambiar de mesero']},
-  pedido:     {g:'Operación', n:'Nueva Comanda', ico:'🧾', st:'activo', fase:'Fase 3', badge:'3', desc:'La pantalla para armar la comanda: eliges productos por categoría, agregas cantidades, adicionales y combos, y lo envías a cocina o a caja.', feat:['Selección rápida por categorías','Adicionales, toppings y combos','Nº de comensales por mesa','Enviar a producción (cocina/barra)','Grabar precuenta','Nota por producto']},
+  mesas:      {g:'Operación', n:'Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', badge:'5', desc:'El centro de todos los pedidos: mesas del salón, para llevar, domicilio, Rappi/PedidosYa y online. En "Mesas" tocas una mesa para abrir su comanda.', feat:['Filtros: mesas, llevar, delivery, online','Mapa de mesas con semáforo','Unir mesas para grupos','Tocar mesa → abre su comanda','Cada comanda en su pestaña','Cambiar de mesero']},
   cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'construccion', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'construccion', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
@@ -313,8 +475,8 @@ const ctxmenu=document.getElementById('ctxmenu');
 const MAX_TABS=8;
 let openTabs=['panel'], active=null;
 const scrollPos={};
-const tName=k=>k==='panel'?'Panel':S[k].n;
-const tIco =k=>k==='panel'?'📊':S[k].ico;
+const tName=k=>k==='panel'?'Panel':(DYN[k]?DYN[k].title:S[k].n);
+const tIco =k=>k==='panel'?'📊':(DYN[k]?DYN[k].ico:S[k].ico);
 
 function toastT(msg){
   const t=document.getElementById('toastT');t.textContent=msg;t.classList.add('on');
@@ -335,9 +497,10 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='pedido' ? pedidoView() : moduleView(k);
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
-  if(k==='pedido') initPedido();
+  if(k==='mesas') initComandas();
+  else if(DYN[k]) DYN[k].init();
 }
 function switchTab(k){
   if(active && active!==k) scrollPos[active]=content.scrollTop;
@@ -345,6 +508,7 @@ function switchTab(k){
   document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('on',p.dataset.k===k));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.k===k));
   renderTabs();
+  if(k==='mesas' && document.getElementById('comContent')) renderComContent();
   content.scrollTop=scrollPos[k]||0;
 }
 function openTab(k){
@@ -429,8 +593,7 @@ function dashboard(){
     ['Clientes Club VIP','312','+9 esta semana','up','⭐',''],
   ];
   const qa=[
-    ['pedido','🧾','Tomar pedido','var(--primary-dim)','var(--primary)'],
-    ['mesas','🍽️','Mesas','var(--amber-dim)','var(--amber)'],
+    ['mesas','🍽️','Comandas','var(--primary-dim)','var(--primary)'],
     ['cocina','👨‍🍳','Cocina KDS','var(--red-dim)','var(--red)'],
     ['caja','💵','Caja','var(--primary-dim)','var(--primary)'],
     ['dian','🧾','Facturar','var(--blue-dim)','var(--blue)'],
@@ -481,159 +644,669 @@ function moduleView(k){
   </div></div>`;
 }
 
-/* ─── TOMAR PEDIDO (Capa 1: interfaz funcional, datos de ejemplo) ─── */
-const COP=n=>'$'+n.toLocaleString('es-CO');
+/* ─── COMANDAS · Capa 1 (funciones estilo ApiWorking, tema oscuro) ─── */
+const COP=n=>'$'+Math.round(n).toLocaleString('es-CO');
+const pad=n=>String(n).padStart(2,'0');
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const CATS=['Recomendados','Entradas','Fuertes','Acompañam.','Postres','Bebidas'];
+const QN_DEFAULT=['SIN SAL','SIN PICANTE','SIN CEBOLLA','BIEN COCIDO','PARA LLEVAR','MUCHO LIMÓN'];
 const PRODUCTS=[
-  {id:'p1',n:'Pulpo a la Brasa',pr:58000,cat:'Fuertes',rec:1,e:'🐙'},
-  {id:'p2',n:'Lomo al Carbón',pr:74000,cat:'Fuertes',rec:1,e:'🥩',opts:[
+  {id:'p1',n:'Pulpo a la Brasa',pr:58000,cat:'Fuertes',rec:1,e:'🐙',area:'COCINA'},
+  {id:'p2',n:'Lomo al Carbón',pr:74000,cat:'Fuertes',rec:1,e:'🥩',area:'COCINA',qn:['TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','SIN SAL','EXTRA JUGOSO'],opts:[
     {t:'Término',type:'single',req:1,items:[{n:'Término medio',p:0},{n:'Tres cuartos',p:0},{n:'Bien cocido',p:0}]},
     {t:'Adicionales',type:'multi',items:[{n:'Extra papas',p:8000},{n:'Huevo frito',p:4000},{n:'Salsa de la casa',p:3000}]}
   ]},
-  {id:'p3',n:'Costillas BBQ',pr:62000,cat:'Fuertes',rec:1,e:'🍖'},
-  {id:'p4',n:'Ensalada César',pr:22000,cat:'Entradas',e:'🥗',opts:[
+  {id:'p3',n:'Costillas BBQ',pr:62000,cat:'Fuertes',rec:1,e:'🍖',area:'COCINA',qn:['SIN BBQ','EXTRA SALSA','BIEN DORADAS','SIN SAL']},
+  {id:'p4',n:'Ensalada César',pr:22000,cat:'Entradas',e:'🥗',area:'COCINA',opts:[
     {t:'Proteína',type:'single',req:1,items:[{n:'Sin proteína',p:0},{n:'Pollo',p:6000},{n:'Camarón',p:12000}]}
   ]},
-  {id:'p5',n:'Empanadas (x3)',pr:15000,cat:'Entradas',e:'🥟'},
-  {id:'p6',n:'Papas Rústicas',pr:14000,cat:'Acompañam.',e:'🍟'},
-  {id:'p7',n:'Arroz de la Casa',pr:10000,cat:'Acompañam.',e:'🍚'},
-  {id:'p8',n:'Torta de Chocolate',pr:28000,cat:'Postres',rec:1,e:'🍫'},
-  {id:'p9',n:'Cheesecake',pr:24000,cat:'Postres',e:'🍰'},
-  {id:'p10',n:'Limonada Natural',pr:9000,cat:'Bebidas',e:'🍋',opts:[
+  {id:'p5',n:'Empanadas (x3)',pr:15000,cat:'Entradas',e:'🥟',area:'COCINA'},
+  {id:'p6',n:'Papas Rústicas',pr:14000,cat:'Acompañam.',e:'🍟',area:'COCINA'},
+  {id:'p7',n:'Arroz de la Casa',pr:10000,cat:'Acompañam.',e:'🍚',area:'COCINA'},
+  {id:'p8',n:'Torta de Chocolate',pr:28000,cat:'Postres',rec:1,e:'🍫',area:'COCINA'},
+  {id:'p9',n:'Cheesecake',pr:24000,cat:'Postres',e:'🍰',area:'COCINA'},
+  {id:'p10',n:'Limonada Natural',pr:9000,cat:'Bebidas',e:'🍋',area:'BARRA',qn:['SIN AZÚCAR','POCO HIELO','SIN HIELO','MUCHO LIMÓN'],opts:[
     {t:'Tamaño',type:'single',req:1,items:[{n:'Vaso',p:0},{n:'Jarra (1L)',p:6000}]}
   ]},
-  {id:'p11',n:'Café Americano',pr:6000,cat:'Bebidas',e:'☕'},
-  {id:'p12',n:'Gaseosa',pr:6000,cat:'Bebidas',e:'🥤'},
+  {id:'p11',n:'Café Americano',pr:6000,cat:'Bebidas',e:'☕',area:'BARRA',qn:['SIN AZÚCAR','DOBLE CARGA','CON LECHE']},
+  {id:'p12',n:'Gaseosa',pr:6000,cat:'Bebidas',e:'🥤',area:'BARRA',qn:['SIN HIELO','BIEN FRÍA']},
 ];
-let comanda=[], lineSeq=1, curCat='Recomendados', pendingProd=null, pendingSel={};
+const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
+const MESEROS=['Sebastián','Laura','Andrés','Kelly'];
+const ALMACENES=['Almacén principal','Barra'];
+const PAGOS=[['efectivo','💵','Efectivo'],['tarjeta','💳','Tarjeta'],['nequi','📱','Nequi'],['daviplata','📲','Daviplata'],['qr','🔳','Pago QR']];
+const TIPS=[0,5,10,15];
 
-function pedidoView(){
+const DYN={}, ORD={}, ORDCAT={}, ORDMETA={};
+let ordSeq=1, ordNumSeq=707, LID=1000, viewMode='grid';
+let pendingTarget=null, pendingProd=null, pendingSel={}, pendingMesa=null, comensales=1, comType='mesas', unirMode=false, unirSel=[];
+let notesTarget=null, notesLid=null, payTarget=null, pay={m:null,tip:0,disc:0}, mesaActN=null, moveTarget=null;
+
+const MESAS=[
+  {n:1,est:'ocup',t:'hace 45 min',m:16500,piso:'Piso 1',mesero:'Laura'},
+  {n:2,est:'cobr',t:'hace 3 h',m:68000,piso:'Piso 1',mesero:'Andrés'},
+  {n:3,est:'ocup',t:'hace 20 min',m:42000,piso:'Piso 1',mesero:'Sebastián'},
+  {n:4,est:'libre',piso:'Piso 1'},{n:5,est:'libre',piso:'Piso 1'},
+  {n:6,est:'ocup',t:'hace 1 h',m:120000,piso:'Piso 1',mesero:'Kelly'},
+  {n:7,est:'libre',piso:'Terraza'},{n:8,est:'libre',piso:'Terraza'},
+  {n:9,est:'libre',piso:'Terraza'},{n:10,est:'libre',piso:'Terraza'},
+];
+const getMesa=n=>MESAS.find(m=>m.n===n);
+const COMTYPES=[['mesas','🍽️','Mesas',6],['llevar','🥡','Llevar',2],['delivery','🛵','Delivery',1],['dext','🛴','Delivery Externo',0],['online','🌐','Online',3]];
+
+function comandasView(){
   return `
-  <div class="page-head"><h1>🧾 Nueva Comanda <span class="status-pill activo">Activo</span><span class="fase-tag">Capa 1 · demo</span></h1>
-    <div class="sub">Arma la comanda y envíala a cocina. Los productos son de ejemplo; conectar con datos reales es la Capa 2.</div></div>
+  <div class="page-head"><h1>🍽️ Comandas <span class="status-pill activo">Activo</span><span class="fase-tag">Capa 1 · demo</span></h1>
+    <div class="sub">Elige el tipo de pedido. En "Mesas" toca una mesa para abrir su comanda; cada una se abre en su propia pestaña.</div></div>
+  <div class="comtypes" id="comTypes"></div>
+  <div id="comContent"></div>`;
+}
+function initComandas(){
+  document.getElementById('comTypes').innerHTML=COMTYPES.map(c=>`<div class="comtype${c[0]===comType?' active':''}" onclick="setComType('${c[0]}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${c[3]}</span></div>`).join('');
+  renderComContent();
+}
+function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelectorAll('#comTypes .comtype').forEach((el,i)=>el.classList.toggle('active',COMTYPES[i][0]===t));renderComContent();}
+
+function mesaCard(m){
+  const s=m.est==='libre'?'Disponible':(m.est==='cobr'?'Por cobrar · '+(m.t||''):(m.t||'ahora'));
+  return `<div class="mesa ${m.est}${unirSel.includes(m.n)?' sel':''}" onclick="clickMesa(${m.n},'${m.est}')">
+    ${m.est!=='libre'?`<button class="mesa-act" title="Acciones" onclick="event.stopPropagation();openMesaAct(${m.n})">⋮</button>`:''}
+    <div class="mesa-ic">🪑</div><div class="mesa-n">MESA ${pad(m.n)}</div>
+    <div class="mesa-s">${s}${m.mesero&&m.est!=='libre'?' · '+m.mesero:''}</div>
+    ${m.m?`<div class="mesa-m">${COP(m.m)}</div>`:''}</div>`;
+}
+function renderComContent(){
+  const c=document.getElementById('comContent'); if(!c)return;
+  if(comType==='mesas'){
+    let html=`<div class="mesas-head"><b>🗺️ Mapa de mesas</b>
+      <button class="btn ghost" style="width:auto;padding:9px 14px" onclick="toggleUnir()">${unirMode?'✕ Cancelar':'🔗 Unir mesas'}</button></div>`;
+    AMBIENTES.forEach(amb=>{
+      const ms=MESAS.filter(m=>m.piso===amb.n);
+      if(!ms.length)return;
+      html+=`<div class="amb-title">🍴 ${amb.n} <span class="amb-cnt">${ms.length} mesas</span></div>
+        <div class="mesa-map">${ms.map(mesaCard).join('')}</div>`;
+    });
+    if(unirMode) html+=`<div class="unir-bar"><span>${unirSel.length} mesa(s) seleccionada(s)</span>
+      <button class="btn primary" style="width:auto;padding:9px 16px" onclick="confirmarUnir()">Unir y abrir comanda</button></div>`;
+    c.innerHTML=html;
+  } else {
+    const label={llevar:'para llevar',delivery:'a domicilio',dext:'de Rappi / PedidosYa',online:'online'}[comType];
+    const ico={llevar:'🥡',delivery:'🛵',dext:'🛴',online:'🌐'}[comType];
+    c.innerHTML=`<div class="empty-type"><div class="et-ic">${ico}</div>
+      <div class="et-t">Pedidos ${label}</div>
+      <div class="et-d">Estos pedidos no ocupan mesa. ${comType==='delivery'?'Al crearlo se pide la dirección del cliente.':'Se va directo a tomar el pedido.'}</div>
+      <button class="btn primary" style="width:auto;padding:12px 22px;margin-top:16px;display:inline-flex" onclick="newOrder('${comType}')">➕ Nueva orden ${label}</button></div>`;
+  }
+}
+function toggleUnir(){unirMode=!unirMode;unirSel=[];renderComContent();}
+function confirmarUnir(){
+  if(unirSel.length<2){toastT('Selecciona al menos 2 mesas');return;}
+  const nums=unirSel.slice().sort((a,b)=>a-b);
+  nums.forEach(n=>{const m=getMesa(n);m.est='ocup';m.t='unida';m.merged=true;});
+  const key='mesa_'+nums.join('_');
+  const title='Mesa '+nums.map(pad).join('+');
+  unirMode=false;unirSel=[];
+  openOrder(key,title,'🔗',{com:nums.length*2});
+}
+function clickMesa(n,est){
+  if(unirMode){ if(est==='libre'){const i=unirSel.indexOf(n);i>-1?unirSel.splice(i,1):unirSel.push(n);renderComContent();} else {toastT('Solo puedes unir mesas disponibles');} return; }
+  if(est==='libre'){askComensales(n);} else {openOrder('mesa_'+n,'Mesa '+pad(n),'🍽️');}
+}
+function newOrder(type){
+  if(type==='delivery'){askAddress();return;}
+  const map={llevar:['🥡','Para llevar'],dext:['🛴','Rappi/PYA'],online:['🌐','Online']};
+  const id=type+'_'+(ordSeq++);
+  openOrder(id, map[type][1]+' #'+id.split('_')[1], map[type][0]);
+}
+
+/* comensales modal */
+function askComensales(n){
+  pendingMesa=n;comensales=1;
+  const m=document.getElementById('comModal');
+  m.innerHTML=`<div class="modal" style="width:340px">
+    <div class="modal-h"><b>Iniciar comanda · Mesa ${pad(n)}</b><div class="mx" onclick="closeCom()">✕</div></div>
+    <div class="modal-b"><div style="font-size:13px;color:var(--txt2);margin-bottom:14px;text-align:center">Nº de comensales en la mesa</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:22px">
+        <div class="qb" style="width:40px;height:40px;font-size:20px" onclick="setCom(-1)">−</div>
+        <span id="comN" style="font-family:'Outfit',sans-serif;font-size:34px;font-weight:700;min-width:44px;text-align:center">1</span>
+        <div class="qb" style="width:40px;height:40px;font-size:20px" onclick="setCom(1)">+</div>
+      </div></div>
+    <div class="modal-f"><button class="btn primary" onclick="startMesa()">🍽️ Iniciar comanda</button></div></div>`;
+  m.classList.add('on');
+}
+function setCom(d){comensales=Math.max(1,comensales+d);document.getElementById('comN').textContent=comensales;}
+function closeCom(){document.getElementById('comModal').classList.remove('on');}
+function startMesa(){const n=pendingMesa;closeCom();openOrder('mesa_'+n,'Mesa '+pad(n),'🍽️',{com:comensales});}
+document.getElementById('comModal').addEventListener('click',e=>{if(e.target.id==='comModal')closeCom();});
+
+/* delivery address modal */
+function askAddress(){
+  const m=document.getElementById('comModal');
+  m.innerHTML=`<div class="modal" style="width:400px">
+    <div class="modal-h"><b>🛵 Nuevo domicilio</b><div class="mx" onclick="closeCom()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Nombre del cliente</div>
+      <input id="addrName" placeholder="Nombre" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Dirección de entrega</div>
+      <input id="addrInput" placeholder="Cra 5 # 10-20, Barrio Centro" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Teléfono / WhatsApp</div>
+      <input id="addrPhone" inputmode="numeric" placeholder="300 123 4567" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none">
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="startDelivery()">Crear domicilio</button></div></div>`;
+  m.classList.add('on');
+}
+function startDelivery(){
+  const addr=(document.getElementById('addrInput').value||'').trim()||'Sin dirección';
+  const phone=(document.getElementById('addrPhone').value||'').trim();
+  const name=(document.getElementById('addrName').value||'').trim();
+  closeCom();
+  const id='delivery_'+(ordSeq++);
+  openOrder(id,'Domicilio #'+id.split('_')[1],'🛵',{address:addr,phone,cliente:name});
+}
+
+/* order taking per target */
+function openOrder(target,title,ico,meta){
+  if(!ORD[target]){
+    ORD[target]=[];ORDCAT[target]='Recomendados';
+    ORDMETA[target]=Object.assign({com:4,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'},meta||{});
+  }
+  DYN[target]={title,ico,render:()=>orderView(target),init:()=>initOrder(target)};
+  openTab(target);
+}
+function orderView(target){
+  const meta=ORDMETA[target]||{}; const isMesa=target.startsWith('mesa_');
+  const mesaObj=isMesa?getMesa(+target.replace('mesa_','').split('_')[0]):null;
+  let ctx='Pedido sin mesa';
+  if(isMesa) ctx=(mesaObj?mesaObj.piso+' · ':'')+'Comensales: '+(meta.com||4);
+  else if(meta.address) ctx='📍 '+meta.address+(meta.phone?(' · '+meta.phone):'');
+  return `
+  <div class="page-head"><h1>${DYN[target].ico} ${DYN[target].title} <span class="status-pill activo">Comanda abierta</span></h1>
+    <div class="sub">${ctx} · Orden ${meta.num||''}</div></div>
   <div class="tp">
-    <div class="tp-ctx">
-      <div class="mesa-sel"><span class="mm-ic">🍽️</span> Mesa 04 · Piso 1 <span style="color:var(--txt3);font-size:12px">▾</span></div>
-      <div class="divx"></div>
-      <div class="ctx-i">Comensales: <b>4</b></div>
-      <div class="divx"></div>
-      <div class="ctx-i">Mesero: <b>Sebastián</b></div>
-      <div class="divx"></div>
-      <div class="ctx-i">Estado: <b style="color:var(--amber)">Comanda abierta</b></div>
-    </div>
-
     <div class="tp-left">
-      <div class="tp-search2">🔎<input id="tpSearch" placeholder="Buscar producto por nombre…" oninput="renderProds()"></div>
-      <div class="chips" id="tpChips"></div>
-      <div class="prod-grid" id="tpProds"></div>
+      <div class="tp-toolbar">
+        <div class="tp-search2">🔎<input id="search_${target}" placeholder="Ingrese el nombre del producto y presione Enter…" oninput="renderProds('${target}')" onkeydown="searchEnter('${target}',event)"></div>
+        <div class="view-toggle">
+          <button id="vg_${target}" class="${viewMode==='grid'?'on':''}" onclick="setView('${target}','grid')" title="Vista foto">▦</button>
+          <button id="vl_${target}" class="${viewMode==='list'?'on':''}" onclick="setView('${target}','list')" title="Vista lista">☰</button>
+        </div>
+      </div>
+      <div class="chips" id="chips_${target}"></div>
+      <div id="prods_${target}"></div>
     </div>
-
     <div class="comanda">
-      <div class="comanda-h"><b>🧾 Comanda</b><span class="cnt" id="cCount">0 ítems</span></div>
-      <div class="comanda-body" id="cBody"></div>
-      <div class="comanda-f" id="cFoot"></div>
+      <div class="comanda-h"><b>🧾 Comanda</b>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="ver-mesas" onclick="openTab('mesas')">🍴 Ver mesas</button>
+          <span class="cnt" id="ccount_${target}">0 ítems</span>
+        </div></div>
+      <div class="comanda-meta" id="cmeta_${target}"></div>
+      <div class="comanda-body" id="cbody_${target}"></div>
+      <div class="comanda-f" id="cfoot_${target}"></div>
     </div>
   </div>`;
 }
-
-function initPedido(){
-  const chips=document.getElementById('tpChips');
-  chips.innerHTML=CATS.map(c=>`<div class="chip${c===curCat?' active':''}" onclick="setCat('${c}')">${c}</div>`).join('');
-  renderProds();renderComanda();
-}
-function setCat(c){curCat=c;document.querySelectorAll('#tpChips .chip').forEach(x=>x.classList.toggle('active',x.textContent===c));renderProds();}
-function renderProds(){
-  const q=(document.getElementById('tpSearch')?.value||'').toLowerCase().trim();
-  let list=PRODUCTS.filter(p=>{
-    const inCat = curCat==='Recomendados' ? p.rec : p.cat===curCat;
-    const inQ = !q || p.n.toLowerCase().includes(q);
-    return q ? inQ : inCat;
-  });
-  document.getElementById('tpProds').innerHTML = list.length ? list.map(p=>`
-    <div class="prod" onclick="pick('${p.id}')">
-      ${p.opts?'<span class="popt">opciones</span>':''}
-      <div class="pe">${p.e}</div><div class="pn">${p.n}</div><div class="pp">${COP(p.pr)}</div>
-      <div class="padd">+</div>
-    </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="ee">🔍</div>Sin resultados</div>`;
-}
-function pick(id){
-  const p=PRODUCTS.find(x=>x.id===id);
-  if(p.opts){openOpts(p);} else {addLine(p,[]);}
-}
-function addLine(p,selOpts){
-  const extra=selOpts.reduce((s,o)=>s+o.p,0);
-  comanda.push({lid:lineSeq++,id:p.id,n:p.n,base:p.pr,qty:1,opts:selOpts,unit:p.pr+extra});
-  renderComanda();toastT(p.n+' agregado a la comanda');
-}
-function changeQty(lid,d){const l=comanda.find(x=>x.lid===lid);if(!l)return;l.qty=Math.max(1,l.qty+d);renderComanda();}
-function removeLine(lid){comanda=comanda.filter(x=>x.lid!==lid);renderComanda();}
-function renderComanda(){
-  const body=document.getElementById('cBody'),foot=document.getElementById('cFoot'),cnt=document.getElementById('cCount');
-  const items=comanda.reduce((s,l)=>s+l.qty,0);
-  cnt.textContent=items+(items===1?' ítem':' ítems');
-  if(!comanda.length){
-    body.innerHTML=`<div class="empty"><div class="ee">🧾</div>Toca un producto para agregarlo a la comanda.</div>`;
-    foot.innerHTML=`<button class="btn primary" disabled>Enviar a cocina</button>`;return;
+function renderMeta(target){
+  const el=document.getElementById('cmeta_'+target); if(!el)return;
+  const meta=ORDMETA[target]||{}; const isMesa=target.startsWith('mesa_');
+  let html=`<div class="cm-field">🏬 <select onchange="setAlmacen('${target}',this.value)">${ALMACENES.map(a=>`<option ${a===meta.almacen?'selected':''}>${a}</option>`).join('')}</select></div>
+    <div class="cm-field">👤 <select onchange="setMesero('${target}',this.value)">${MESEROS.map(x=>`<option ${x===meta.mesero?'selected':''}>${x}</option>`).join('')}</select></div>`;
+  if(isMesa){
+    html+=`<div class="cm-com">👥 Comensales <div class="qb" onclick="chgComensales('${target}',-1)">−</div><b id="cmn_${target}">${meta.com||1}</b><div class="qb" onclick="chgComensales('${target}',1)">+</div></div>`;
+  } else if(meta.phone){
+    html+=`<div class="cm-field">📞 ${meta.phone}</div>`;
   }
-  body.innerHTML=comanda.map(l=>{
-    const optTxt=l.opts.map(o=>o.n+(o.p?` (+${COP(o.p)})`:'')).join(' · ');
-    return `<div class="cl">
-      <div class="cl-top"><div><div class="cl-name">${l.n}</div>${optTxt?`<div class="cl-opts">${optTxt}</div>`:''}</div><div class="cl-rm" onclick="removeLine(${l.lid})">✕</div></div>
-      <div class="cl-bot"><div class="qstep"><div class="qb" onclick="changeQty(${l.lid},-1)">−</div><span class="qv">${l.qty}</span><div class="qb" onclick="changeQty(${l.lid},1)">+</div></div>
-      <div class="cl-price">${COP(l.unit*l.qty)}</div></div></div>`;
+  el.innerHTML=html;
+}
+function initOrder(target){
+  document.getElementById('chips_'+target).innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[target]?' active':''}" onclick="setCat('${target}','${c}')">${c}</div>`).join('');
+  renderMeta(target);renderProds(target);renderComanda(target);
+}
+function setView(target,mode){viewMode=mode;
+  const g=document.getElementById('vg_'+target),l=document.getElementById('vl_'+target);
+  if(g)g.classList.toggle('on',mode==='grid'); if(l)l.classList.toggle('on',mode==='list');
+  renderProds(target);
+}
+function setCat(target,c){ORDCAT[target]=c;document.querySelectorAll('#chips_'+target+' .chip').forEach(x=>x.classList.toggle('active',x.textContent===c));renderProds(target);}
+function prodList(target){
+  const q=norm(document.getElementById('search_'+target)?.value||'');
+  const cat=ORDCAT[target];
+  return PRODUCTS.filter(p=>{const inCat=cat==='Recomendados'?p.rec:p.cat===cat;return q?norm(p.n).includes(q):inCat;});
+}
+function renderProds(target){
+  const cont=document.getElementById('prods_'+target); if(!cont)return;
+  const list=prodList(target);
+  if(!list.length){cont.className='prod-grid';cont.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="ee">🔍</div>Sin resultados</div>`;return;}
+  if(viewMode==='list'){
+    cont.className='prod-list';
+    cont.innerHTML=list.map(p=>`<div class="prow" onclick="pick('${target}','${p.id}')">
+      <span class="pe2">${p.e}</span><span class="pn2">${p.n}</span>${p.opts?'<span class="popt2">opciones</span>':''}<span class="pp2">${COP(p.pr)}</span><span class="padd2">+</span></div>`).join('');
+  } else {
+    cont.className='prod-grid';
+    cont.innerHTML=list.map(p=>`<div class="prod" onclick="pick('${target}','${p.id}')">${p.opts?'<span class="popt">opciones</span>':''}
+      <div class="pe">${p.e}</div><div class="pn">${p.n}</div><div class="pp">${COP(p.pr)}</div><div class="padd">+</div></div>`).join('');
+  }
+}
+function searchEnter(target,e){
+  if(e.key!=='Enter')return;
+  const list=prodList(target);
+  if(list.length){ pick(target,list[0].id); const inp=document.getElementById('search_'+target); if(inp)inp.value=''; renderProds(target); }
+  else toastT('No se encontró el producto');
+}
+function pick(target,id){const p=PRODUCTS.find(x=>x.id===id);if(p.opts){openOpts(target,p);}else{addLine(target,p,[]);}}
+function addLine(target,p,sel){
+  const extra=sel.reduce((s,o)=>s+o.p,0);
+  ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,area:p.area||'COCINA',notes:[[]]});
+  renderComanda(target);syncMesa(target);toastT('Se agregó '+p.n+' a la comanda');
+}
+function changeQty(target,lid,d){
+  const l=ORD[target].find(x=>x.lid===lid);
+  if(l&&!l.sent){
+    l.qty=Math.max(1,l.qty+d);
+    while(l.notes.length<l.qty)l.notes.push([]);
+    while(l.notes.length>l.qty)l.notes.pop();
+    renderComanda(target);syncMesa(target);
+  }
+}
+function delLine(target,lid){
+  const l=ORD[target].find(x=>x.lid===lid); if(!l)return;
+  if(l.sent){const mot=prompt('Este plato ya fue enviado a producción.\nMotivo de anulación:');if(!mot)return;toastT('Anulado: '+l.n+' — '+mot);}
+  ORD[target]=ORD[target].filter(x=>x.lid!==lid);
+  renderComanda(target);syncMesa(target);
+}
+function toggleHold(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l&&!l.sent){l.held=!l.held;renderComanda(target);}}
+function toggleCort(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l){l.cort=!l.cort;toastT(l.cort?'🎁 Cortesía: '+l.n:'Cortesía quitada');renderComanda(target);syncMesa(target);}}
+function changePrice(target,lid,v){const l=ORD[target].find(x=>x.lid===lid);if(!l)return;const n=parseInt((v+'').replace(/\D/g,''))||0;l.unit=n;renderComanda(target);syncMesa(target);}
+function setPos(target,lid,v){
+  const lines=ORD[target];const from=lines.findIndex(x=>x.lid===lid);const to=Math.max(0,Math.min(lines.length-1,(+v)-1));
+  if(from<0||from===to)return;lines.splice(to,0,lines.splice(from,1)[0]);renderComanda(target);
+}
+function noteStr(l){
+  return l.notes.map((arr,i)=>arr.length?((l.qty>1?('U'+(i+1)+': '):'')+arr.join(', ')):'').filter(Boolean).join('   ·   ');
+}
+function renderComanda(target){
+  const body=document.getElementById('cbody_'+target),foot=document.getElementById('cfoot_'+target),cnt=document.getElementById('ccount_'+target);
+  if(!body)return;
+  const lines=ORD[target];const items=lines.reduce((s,l)=>s+l.qty,0);
+  cnt.textContent=items+(items===1?' ítem':' ítems');
+  if(!lines.length){
+    body.innerHTML=`<div class="empty"><div class="ee">🧾</div>Toca un producto para agregarlo a la comanda.</div>`;
+    foot.innerHTML=`<div class="save-grid">
+      <button class="sbtn" disabled><span class="si">💾</span>Grabar</button>
+      <button class="sbtn prod" disabled><span class="si">🔥</span>Enviar a Producción</button>
+      <button class="sbtn" disabled><span class="si">🧾</span>Enviar Comanda</button>
+      <button class="sbtn fact" disabled><span class="si">💵</span>Facturar y Grabar</button></div>`;
+    return;
+  }
+  body.innerHTML=lines.map((l,idx)=>{
+    const o=l.opts.map(x=>x.n+(x.p?` (+${COP(x.p)})`:'')).join(' · ');
+    const ns=noteStr(l);
+    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
+    const acc=`<div class="cl-acc">
+      <button class="accb b1" title="Notas / observación por unidad" onclick="openNotes('${target}',${l.lid})">🗒️</button>
+      <button class="accb b2" title="Quitar / anular" onclick="delLine('${target}',${l.lid})">🗑️</button>
+      <button class="accb b3 ${l.cort?'on':''}" title="Cortesía (no se cobra)" onclick="toggleCort('${target}',${l.lid})">🎁</button></div>`;
+    const qty=l.sent?`<span class="cl-static-q">Cant: ${l.qty}</span>`:`<div class="qstep"><div class="qb" onclick="changeQty('${target}',${l.lid},-1)">−</div><span class="qv">${l.qty}</span><div class="qb" onclick="changeQty('${target}',${l.lid},1)">+</div></div>`;
+    const price=l.sent?`<div class="cl-pricebox" style="opacity:.6">$ <span class="cl-price-in">${l.unit.toLocaleString('es-CO')}</span></div>`:`<div class="cl-pricebox">$ <input class="cl-price-in" value="${l.unit.toLocaleString('es-CO')}" onchange="changePrice('${target}',${l.lid},this.value)"></div>`;
+    const posSel=`<div class="cl-pos">Pos <select class="cl-pos-sel" onchange="setPos('${target}',${l.lid},this.value)">${lines.map((_,i)=>`<option value="${i+1}" ${i===idx?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
+    const hold=l.sent?'':`<span class="cl-hold" onclick="toggleHold('${target}',${l.lid})">${l.held?'▶ enviar':'⏸ retener'}</span>`;
+    return `<div class="cl${l.sent?' sent':''}${l.held?' held':''}${l.cort?' cort':''}">
+      <div class="cl-head">${acc}
+        <div class="cl-info">
+          <div class="cl-name">${l.n}${tags}</div>
+          ${o?`<div class="cl-opts">${o}</div>`:''}
+          ${ns?`<div class="cl-notes">📝 ${ns}</div>`:''}
+          <span class="cl-area">🍳 ${l.area}</span>
+        </div></div>
+      <div class="cl-ctrl">${qty}${price}<div class="cl-imp">${COP(l.unit*l.qty)}</div>${posSel}${hold}</div></div>`;
   }).join('');
-  const total=comanda.reduce((s,l)=>s+l.unit*l.qty,0);
+  const meta=ORDMETA[target]||{};
+  const subtotal=lines.reduce((s,l)=>s+l.unit*l.qty,0);
+  const cortAmt=lines.filter(l=>l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=subtotal-cortAmt;
+  const pend=lines.filter(l=>!l.sent&&!l.held).length;
+  const held=lines.filter(l=>l.held).length;
   foot.innerHTML=`
-    <div class="trow"><span>Subtotal</span><span>${COP(total)}</span></div>
+    <div class="cf-fields">
+      <div class="cf-in"><span class="lb">👤 Comensal</span><input placeholder="Nombre del cliente (opcional)" value="${(meta.cliente||'').replace(/"/g,'&quot;')}" onchange="setCliente('${target}',this.value)"></div>
+      <div class="cf-in"><span class="lb">📝 Observación</span><input placeholder="Observación general de la comanda" value="${(meta.obs||'').replace(/"/g,'&quot;')}" onchange="setObs('${target}',this.value)"></div>
+    </div>
+    <div class="trow"><span>Subtotal</span><span>${COP(subtotal)}</span></div>
+    ${cortAmt?`<div class="trow cortr"><span>Cortesías</span><span>− ${COP(cortAmt)}</span></div>`:''}
     <div class="trow"><span>IVA incluido</span><span>—</span></div>
     <div class="trow tot"><span>TOTAL</span><span class="tv">${COP(total)}</span></div>
-    <div class="comanda-actions">
-      <button class="btn primary" onclick="enviarCocina()">🔥 Enviar a cocina</button>
-      <div class="btn-row">
-        <button class="btn ghost" onclick="toastT('Precuenta guardada')">💾 Precuenta</button>
-        <button class="btn ghost" onclick="toastT('Enviando a facturación…')">🧾 Facturar</button>
-      </div>
+    <div class="save-grid">
+      <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
+      <button class="sbtn prod" onclick="enviarProduccion('${target}')" ${pend?'':'disabled'}><span class="si">🔥</span>Enviar a Producción${pend?' ('+pend+')':''}</button>
+      <button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Enviar Comanda</button>
+      <button class="sbtn fact" onclick="openPay('${target}')"><span class="si">💵</span>Facturar y Grabar</button>
+    </div>
+    ${held?`<div style="font-size:10.5px;color:var(--amber);text-align:center;margin-top:8px">⏸ ${held} plato(s) retenido(s) — se envían cuando toques "enviar" en cada uno</div>`:''}
+    <div class="sec-row">
+      <button class="btn ghost" onclick="dividir('${target}')">✂️ Dividir</button>
+      <button class="btn ghost" onclick="printComanda('${target}','precuenta')">🧮 Precuenta</button>
+      <button class="btn ghost" onclick="moverPlatos('${target}')">↔ Mover platos</button>
     </div>`;
 }
-function enviarCocina(){
-  const items=comanda.reduce((s,l)=>s+l.qty,0);
-  toastT(`✅ ${items} ítem(s) enviados a cocina · Mesa 04`);
-  comanda=[];renderComanda();
+function setAlmacen(target,v){ORDMETA[target].almacen=v;}
+function setMesero(target,v){ORDMETA[target].mesero=v;if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m)m.mesero=v;});}}
+function chgComensales(target,d){const meta=ORDMETA[target];meta.com=Math.max(1,(meta.com||1)+d);const el=document.getElementById('cmn_'+target);if(el)el.textContent=meta.com;}
+function setCliente(target,v){ORDMETA[target].cliente=v;}
+function setObs(target,v){ORDMETA[target].obs=v;}
+function syncMesa(target){
+  if(!target.startsWith('mesa_'))return;
+  const lines=ORD[target];
+  const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est=lines.length?'ocup':'libre';m.t='ahora';m.m=total;}});
 }
 
-/* OPTIONS MODAL */
-function openOpts(p){
-  pendingProd=p;pendingSel={};
-  p.opts.forEach((g,gi)=>{if(g.type==='single'&&g.req)pendingSel[gi]=[0];else pendingSel[gi]=[];});
-  const m=document.getElementById('optModal');
-  m.innerHTML=`<div class="modal">
-    <div class="modal-h"><b>${p.e} ${p.n}</b><div class="mx" onclick="closeOpts()">✕</div></div>
-    <div class="modal-b" id="optBody"></div>
-    <div class="modal-f"><button class="btn primary" onclick="confirmOpts()" id="optConfirm">Agregar · ${COP(p.pr)}</button></div>
+/* ── 4 botones de guardado ── */
+function grabar(target){toastT('💾 Comanda grabada (sin enviar) · '+DYN[target].title);syncMesa(target);}
+function enviarProduccion(target){
+  const send=ORD[target].filter(l=>!l.sent&&!l.held);
+  if(!send.length){toastT('No hay platos nuevos por enviar');return;}
+  send.forEach(l=>l.sent=true);
+  renderComanda(target);syncMesa(target);
+  printCocina(target,send);
+}
+function enviarComanda(target){printComanda(target,'comanda');}
+
+/* ── impresión comanda interna / precuenta ── */
+function printComanda(target,mode){
+  const lines=ORD[target]; if(!lines.length){toastT('La comanda está vacía');return;}
+  const meta=ORDMETA[target]||{};
+  const isMesa=target.startsWith('mesa_'); const mesaObj=isMesa?getMesa(+target.replace('mesa_','').split('_')[0]):null;
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const titulo=mode==='precuenta'?'PRECUENTA':'COMANDA';
+  const rows=lines.map(l=>{const ns=noteStr(l);
+    return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+  const ticket=`<div class="ticket">
+    <div class="tk-c tk-big">${DYN[target].title.toUpperCase()}${mesaObj?' · '+mesaObj.piso.toUpperCase():''}</div>
+    <div class="tk-c">${titulo}</div>
+    <div class="tk-hr"></div>
+    <div>Cliente: ${meta.cliente||'—'}</div>
+    <div>Mesero: ${meta.mesero||'—'}</div>
+    <div>Hora: ${hora}${isMesa?' · Comensales: '+(meta.com||1):''}</div>
+    <div>Orden: ${meta.num||''}</div>
+    <div class="tk-hr"></div>
+    <div class="tk-row tk-b"><span>CANT · DESCRIPCIÓN</span><span>IMPORTE</span></div>
+    ${rows}
+    <div class="tk-hr"></div>
+    <div class="tk-row tk-big"><span>TOTAL</span><span>${COP(total)}</span></div>
+    ${meta.obs?`<div class="tk-hr"></div><div>Obs: ${meta.obs}</div>`:''}
+    <div class="tk-foot">${fecha}<br>FENLORA CLOUD</div>
   </div>`;
+  const m=document.getElementById('printModal');
+  m.innerHTML=`<div class="modal" style="width:520px">
+    <div class="modal-h"><b>🧾 Imprimir ${titulo.toLowerCase()}</b><div class="mx" onclick="closePrint()">✕</div></div>
+    <div class="modal-b"><div class="ticket-wrap">${ticket}</div></div>
+    <div class="modal-f"><div class="print-actions">
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Enviado a impresora')">🖨️ Imprimir</button>
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpreso')">🔁 Reimprimir</button>
+      <button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint();enviarProduccion('${target}')">🔥 Enviar a Producción</button>
+    </div></div></div>`;
+  m.classList.add('on');
+}
+function closePrint(){document.getElementById('printModal').classList.remove('on');}
+document.getElementById('printModal').addEventListener('click',e=>{if(e.target.id==='printModal')closePrint();});
+
+/* ── impresión por área de producción (cocina/barra), sin precios ── */
+function printCocina(target,items){
+  const meta=ORDMETA[target]||{};
+  const isMesa=target.startsWith('mesa_'); const mesaObj=isMesa?getMesa(+target.replace('mesa_','').split('_')[0]):null;
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const areas=[...new Set(items.map(l=>l.area))];
+  const tickets=areas.map(area=>{
+    const rows=items.filter(l=>l.area===area).map(l=>{const ns=noteStr(l);
+      return `<div class="tk-row tk-b"><span>${l.qty}  ${l.n}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+    return `<div class="ticket">
+      <div class="tk-c tk-b">Impresora ${area}</div>
+      <div class="tk-c">${meta.num||''}</div>
+      <div class="tk-c">${hora} · system</div>
+      <div class="tk-c tk-big">${DYN[target].title.toUpperCase()}${mesaObj?': '+mesaObj.piso.toUpperCase():''}</div>
+      <div class="tk-hr"></div>
+      <div class="tk-b">CANT · PRODUCTO</div>
+      ${rows}
+      <div class="tk-foot">Sin precios · Área de producción</div>
+    </div>`;}).join('');
+  const m=document.getElementById('printModal');
+  m.innerHTML=`<div class="modal" style="width:560px">
+    <div class="modal-h"><b>🔥 Enviado a Producción</b><div class="mx" onclick="closePrint()">✕</div></div>
+    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Se imprime un ticket por cada área de producción involucrada (${areas.join(', ')}).</div>
+      <div class="ticket-wrap">${tickets}</div></div>
+    <div class="modal-f"><div class="print-actions">
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpreso a cocina')">🔁 Reimprimir</button>
+      <button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint()">✓ Listo</button>
+    </div></div></div>`;
+  m.classList.add('on');
+}
+
+/* ── cobro / facturación ── */
+function openPay(target){
+  const lines=ORD[target]; if(!lines.length){toastT('La comanda está vacía');return;}
+  payTarget=target; pay={m:null,tip:0,disc:0};
+  renderPay();
+  document.getElementById('payModal').classList.add('on');
+}
+function payTotals(){
+  const lines=ORD[payTarget];
+  const subtotal=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const tipAmt=Math.round(subtotal*pay.tip/100);
+  const disc=pay.disc||0;
+  const total=Math.max(0,subtotal+tipAmt-disc);
+  return {subtotal,tipAmt,disc,total};
+}
+function renderPay(){
+  const t=payTotals();
+  const m=document.getElementById('payModal');
+  m.innerHTML=`<div class="modal" style="width:460px">
+    <div class="modal-h"><b>💵 Cobrar · ${DYN[payTarget].title}</b><div class="mx" onclick="closePay()">✕</div></div>
+    <div class="modal-b">
+      <div class="pay-sec">Medio de pago</div>
+      <div class="pay-grid">${PAGOS.map(p=>`<div class="pay-m ${pay.m===p[0]?'on':''}" onclick="payMethod('${p[0]}')"><div class="pmi">${p[1]}</div><div class="pml">${p[2]}</div></div>`).join('')}</div>
+      <div class="pay-sec">Propina</div>
+      <div class="tip-row">${TIPS.map(pc=>`<div class="tip-b ${pay.tip===pc?'on':''}" onclick="setTip(${pc})">${pc===0?'Sin propina':pc+'%'}</div>`).join('')}</div>
+      <div class="pay-sec">Descuento (COP)</div>
+      <input class="disc-in" inputmode="numeric" placeholder="0" value="${pay.disc||''}" oninput="setDisc(this.value)">
+      <div class="pay-sum">
+        <div class="trow"><span>Subtotal</span><span>${COP(t.subtotal)}</span></div>
+        ${t.tipAmt?`<div class="trow"><span>Propina (${pay.tip}%)</span><span>+ ${COP(t.tipAmt)}</span></div>`:''}
+        ${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}
+        <div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn primary" id="payConfirm" ${pay.m?'':'disabled'} onclick="confirmPay()">🧾 Generar Comprobante DIAN</button></div></div>`;
+}
+function payMethod(m){pay.m=m;renderPay();}
+function setTip(p){pay.tip=p;renderPay();}
+function setDisc(v){pay.disc=parseInt((v+'').replace(/\D/g,''))||0;const t=payTotals();
+  const el=document.querySelector('#payModal .pay-sum');if(el){el.innerHTML=`<div class="trow"><span>Subtotal</span><span>${COP(t.subtotal)}</span></div>${t.tipAmt?`<div class="trow"><span>Propina (${pay.tip}%)</span><span>+ ${COP(t.tipAmt)}</span></div>`:''}${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}<div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>`;}
+}
+function confirmPay(){
+  if(!pay.m){toastT('Elige un medio de pago');return;}
+  const t=payTotals();const target=payTarget;const label=(PAGOS.find(p=>p[0]===pay.m)||[])[2];
+  closePay();
+  toastT(`🧾 Comprobante DIAN generado · ${COP(t.total)} en ${label} · ${DYN[target].title}`);
+  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;}});}
+  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
+  closeTab(target);
+}
+function closePay(){document.getElementById('payModal').classList.remove('on');}
+document.getElementById('payModal').addEventListener('click',e=>{if(e.target.id==='payModal')closePay();});
+
+/* ── dividir cuenta ── */
+function dividir(target){
+  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  if(!total){toastT('La comanda está vacía');return;}
+  const m=document.getElementById('splitModal');
+  m.innerHTML=`<div class="modal" style="width:430px">
+    <div class="modal-h"><b>✂️ Dividir cuenta · ${COP(total)}</b><div class="mx" onclick="closeSplit()">✕</div></div>
+    <div class="modal-b" id="splitBody">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px">
+        <button class="btn ghost" onclick="splitEqual('${target}')">👥 Partes iguales</button>
+        <button class="btn ghost" onclick="splitItems('${target}')">🍽️ Por producto</button>
+        <button class="btn ghost" onclick="splitMonto('${target}')">💲 Por monto</button>
+        <button class="btn ghost" onclick="splitItems('${target}')">🙋 Por comensal</button>
+      </div>
+      <div style="font-size:12px;color:var(--txt2);text-align:center">Elige cómo dividir la cuenta.</div>
+    </div></div>`;
+  m.classList.add('on');
+}
+function splitEqual(target){
+  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  let n=2;
+  const draw=()=>{document.getElementById('splitBody').innerHTML=`
+    <div style="text-align:center;margin-bottom:16px"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">¿Entre cuántas personas?</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:20px">
+        <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(-1)">−</div>
+        <span id="splitN" style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700">${n}</span>
+        <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(1)">+</div></div></div>
+    <div class="trow tot" style="justify-content:space-between"><span>Cada persona paga</span><span class="tv">${COP(Math.ceil(total/n))}</span></div>`;};
+  window._sn=(d)=>{n=Math.max(2,n+d);draw();};
+  draw();
+}
+function splitItems(target){
+  const lines=ORD[target];
+  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Cada producto como pago aparte:</div>
+    ${lines.map(l=>`<div class="trow"><span>${l.qty}x ${l.n}${l.cort?' (cortesía)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>`).join('')}`;
+}
+function splitMonto(target){
+  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Ingresa cuánto paga la primera persona; el resto queda para las demás.</div>
+    <input class="disc-in" inputmode="numeric" placeholder="Monto de la persona 1" oninput="window._sm(this.value)">
+    <div class="trow tot" id="smRest"><span>Queda por pagar</span><span class="tv">${COP(total)}</span></div>`;
+  window._sm=(v)=>{const p=parseInt((v+'').replace(/\D/g,''))||0;const el=document.querySelector('#smRest .tv');if(el)el.textContent=COP(Math.max(0,total-p));};
+}
+function closeSplit(){document.getElementById('splitModal').classList.remove('on');}
+document.getElementById('splitModal').addEventListener('click',e=>{if(e.target.id==='splitModal')closeSplit();});
+
+/* ── notas por producto (modal por unidad) ── */
+function openNotes(target,lid){
+  notesTarget=target;notesLid=lid;
+  renderNotes();
+  document.getElementById('notesModal').classList.add('on');
+}
+function curLine(){return ORD[notesTarget].find(x=>x.lid===notesLid);}
+function renderNotes(){
+  const l=curLine(); if(!l)return;
+  const p=PRODUCTS.find(x=>x.id===l.id)||{};
+  const qn=p.qn||QN_DEFAULT;
+  const units=[];
+  for(let i=0;i<l.qty;i++){
+    const tags=l.notes[i]||[];
+    units.push(`<div class="note-unit">
+      <div class="nut">Notas${l.qty>1?' · unidad '+(i+1):''}</div>
+      <input class="note-in" placeholder="Escribe notas separadas por COMA y presiona ENTER" onkeydown="noteEnter(${i},event)">
+      <div class="qn-lbl">Clic para añadir:</div>
+      <div class="qn-row">${qn.map(q=>`<button class="qn-btn ${tags.includes(q)?'on':''}" onclick="qnToggle(${i},'${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>
+      ${tags.length?`<div class="note-tags">${tags.map((tg,ti)=>`<span class="note-tag">${tg}<span class="rmx" onclick="rmTag(${i},${ti})">✕</span></span>`).join('')}</div>`:''}
+    </div>`);
+  }
+  const m=document.getElementById('notesModal');
+  m.innerHTML=`<div class="modal" style="width:470px">
+    <div class="modal-h"><b>🗒️ Notas: ${l.n}</b><div class="mx" onclick="closeNotes()">✕</div></div>
+    <div class="modal-b">${units.join('')}</div>
+    <div class="modal-f"><button class="btn primary" onclick="closeNotes()">✓ Guardar notas</button></div></div>`;
+}
+function qnToggle(i,tag){const l=curLine();if(!l)return;if(!l.notes[i])l.notes[i]=[];const a=l.notes[i];const p=a.indexOf(tag);p>-1?a.splice(p,1):a.push(tag);renderNotes();}
+function noteEnter(i,e){if(e.key!=='Enter')return;e.preventDefault();const l=curLine();if(!l)return;if(!l.notes[i])l.notes[i]=[];
+  (e.target.value||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(t=>{if(!l.notes[i].includes(t))l.notes[i].push(t);});
+  e.target.value='';renderNotes();}
+function rmTag(i,ti){const l=curLine();if(!l)return;l.notes[i].splice(ti,1);renderNotes();}
+function closeNotes(){document.getElementById('notesModal').classList.remove('on');renderComanda(notesTarget);}
+document.getElementById('notesModal').addEventListener('click',e=>{if(e.target.id==='notesModal')closeNotes();});
+
+/* ── acciones por mesa ── */
+function openMesaAct(n){
+  mesaActN=n;const key='mesa_'+n;const has=ORD[key]&&ORD[key].length;
+  const m=document.getElementById('mesaActModal');
+  m.innerHTML=`<div class="modal" style="width:360px">
+    <div class="modal-h"><b>⚙️ Acciones · Mesa ${pad(n)}</b><div class="mx" onclick="closeMesaAct()">✕</div></div>
+    <div class="modal-b"><div class="act-list">
+      <div class="act-item" onclick="closeMesaAct();openOrder('mesa_${n}','Mesa ${pad(n)}','🍽️')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
+      <div class="act-item" onclick="closeMesaAct();${has?`printComanda('mesa_${n}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
+      <div class="act-item" onclick="closeMesaAct();${has?`openPay('mesa_${n}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>
+      <div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>
+    </div></div></div>`;
+  m.classList.add('on');
+}
+function closeMesaAct(){document.getElementById('mesaActModal').classList.remove('on');}
+document.getElementById('mesaActModal').addEventListener('click',e=>{if(e.target.id==='mesaActModal')closeMesaAct();});
+function moverComanda(n){
+  const libres=MESAS.filter(m=>m.est==='libre');
+  if(!libres.length){toastT('No hay mesas libres');return;}
+  const m=document.getElementById('mesaActModal');
+  m.innerHTML=`<div class="modal" style="width:360px">
+    <div class="modal-h"><b>↔ Mover comanda de Mesa ${pad(n)}</b><div class="mx" onclick="closeMesaAct()">✕</div></div>
+    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Elige la mesa destino:</div>
+      <div class="act-list">${libres.map(mm=>`<div class="act-item" onclick="doMoveComanda(${n},${mm.n})"><span class="ai">🪑</span>Mesa ${pad(mm.n)} · ${mm.piso}</div>`).join('')}</div></div></div>`;
+}
+function doMoveComanda(from,to){
+  const fk='mesa_'+from,tk='mesa_'+to;
+  ORD[tk]=ORD[fk]||[];ORDMETA[tk]=ORDMETA[fk]||{};ORDCAT[tk]=ORDCAT[fk]||'Recomendados';
+  delete ORD[fk];delete ORDMETA[fk];delete ORDCAT[fk];
+  const mf=getMesa(from),mt=getMesa(to);
+  const tot=ORD[tk].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  if(mf){mf.est='libre';mf.t='';mf.m=0;} if(mt){mt.est='ocup';mt.t='ahora';mt.m=tot;}
+  closeMesaAct();
+  if(openTabs.includes(fk)){closeTab(fk);}
+  openOrder(tk,'Mesa '+pad(to),'🍽️');
+  toastT('Comanda movida a Mesa '+pad(to));
+  if(document.getElementById('comContent'))renderComContent();
+}
+
+/* ── trasladar platos entre mesas ── */
+function moverPlatos(target){
+  const lines=ORD[target]; if(!lines.length){toastT('No hay platos');return;}
+  const libres=MESAS.filter(m=>m.est==='libre');
+  const otras=MESAS.filter(m=>('mesa_'+m.n)!==target);
+  const m=document.getElementById('moveModal');
+  window._movSel={};
+  m.innerHTML=`<div class="modal" style="width:440px">
+    <div class="modal-h"><b>↔ Trasladar platos</b><div class="mx" onclick="closeMove()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Marca los platos y elige la mesa destino:</div>
+      ${lines.map(l=>`<label class="cf-in" style="cursor:pointer;margin-bottom:7px"><input type="checkbox" onchange="window._movSel[${l.lid}]=this.checked" style="margin-right:4px"><span style="flex:1">${l.qty}x ${l.n}</span><span style="color:var(--txt3);font-size:12px">${COP(l.unit*l.qty)}</span></label>`).join('')}
+      <div style="font-size:12px;color:var(--txt2);margin:12px 0 6px">Mesa destino</div>
+      <select id="movDest" class="disc-in" style="margin-bottom:0">${otras.map(mm=>`<option value="${mm.n}">Mesa ${pad(mm.n)} · ${mm.piso}${mm.est==='libre'?' (libre)':' (ocupada)'}</option>`).join('')}</select>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="doMoverPlatos('${target}')">Trasladar seleccionados</button></div></div>`;
+  m.classList.add('on');
+}
+function doMoverPlatos(target){
+  const sel=window._movSel||{};const ids=Object.keys(sel).filter(k=>sel[k]).map(Number);
+  if(!ids.length){toastT('Marca al menos un plato');return;}
+  const to=+document.getElementById('movDest').value;const tk='mesa_'+to;
+  if(!ORD[tk]){ORD[tk]=[];ORDCAT[tk]='Recomendados';ORDMETA[tk]=Object.assign({com:2,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'});}
+  const move=ORD[target].filter(l=>ids.includes(l.lid));
+  ORD[target]=ORD[target].filter(l=>!ids.includes(l.lid));
+  move.forEach(l=>ORD[tk].push(l));
+  const mt=getMesa(to);if(mt){mt.est='ocup';mt.t='ahora';mt.m=ORD[tk].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);}
+  closeMove();renderComanda(target);syncMesa(target);
+  toastT(ids.length+' plato(s) trasladado(s) a Mesa '+pad(to));
+}
+function closeMove(){document.getElementById('moveModal').classList.remove('on');}
+document.getElementById('moveModal').addEventListener('click',e=>{if(e.target.id==='moveModal')closeMove();});
+
+/* ── options modal (variantes/adicionales) ── */
+function openOpts(target,p){
+  pendingTarget=target;pendingProd=p;pendingSel={};
+  p.opts.forEach((g,gi)=>{pendingSel[gi]=(g.type==='single'&&g.req)?[0]:[];});
+  const m=document.getElementById('optModal');
+  m.innerHTML=`<div class="modal"><div class="modal-h"><b>${p.e} ${p.n}</b><div class="mx" onclick="closeOpts()">✕</div></div>
+    <div class="modal-b" id="optBody"></div><div class="modal-f"><button class="btn primary" id="optConfirm" onclick="confirmOpts()">Agregar</button></div></div>`;
   m.classList.add('on');renderOpts();
 }
-function renderOpts(){
-  const p=pendingProd;
-  document.getElementById('optBody').innerHTML=p.opts.map((g,gi)=>`
-    <div class="optgroup"><div class="ogt"><span>${g.t}</span>${g.req?'<span class="req">Obligatorio</span>':g.type==='multi'?'<span style="color:var(--txt3);font-weight:400;text-transform:none">Opcional · varios</span>':''}</div>
-    ${g.items.map((it,ii)=>`<div class="opt${pendingSel[gi].includes(ii)?' sel':''}" onclick="toggleOpt(${gi},${ii})">
-      <div style="display:flex;align-items:center;gap:11px"><div class="oc"></div>${it.n}</div>${it.p?`<span class="op">+${COP(it.p)}</span>`:''}</div>`).join('')}
-    </div>`).join('');
-  const extra=extraTotal();
-  document.getElementById('optConfirm').textContent=`Agregar · ${COP(pendingProd.pr+extra)}`;
+function renderOpts(){const p=pendingProd;
+  document.getElementById('optBody').innerHTML=p.opts.map((g,gi)=>`<div class="optgroup"><div class="ogt"><span>${g.t}</span>${g.req?'<span class="req">Obligatorio</span>':g.type==='multi'?'<span style="color:var(--txt3);font-weight:400;text-transform:none">Opcional · varios</span>':''}</div>
+    ${g.items.map((it,ii)=>`<div class="opt${pendingSel[gi].includes(ii)?' sel':''}" onclick="toggleOpt(${gi},${ii})"><div style="display:flex;align-items:center;gap:11px"><div class="oc"></div>${it.n}</div>${it.p?`<span class="op">+${COP(it.p)}</span>`:''}</div>`).join('')}</div>`).join('');
+  document.getElementById('optConfirm').textContent='Agregar · '+COP(pendingProd.pr+extraTotal());
 }
-function toggleOpt(gi,ii){
-  const g=pendingProd.opts[gi];
-  if(g.type==='single'){pendingSel[gi]=[ii];}
-  else{const arr=pendingSel[gi];const p=arr.indexOf(ii);p>-1?arr.splice(p,1):arr.push(ii);}
-  renderOpts();
-}
+function toggleOpt(gi,ii){const g=pendingProd.opts[gi];if(g.type==='single'){pendingSel[gi]=[ii];}else{const a=pendingSel[gi],p=a.indexOf(ii);p>-1?a.splice(p,1):a.push(ii);}renderOpts();}
 function extraTotal(){return pendingProd.opts.reduce((s,g,gi)=>s+pendingSel[gi].reduce((a,ii)=>a+g.items[ii].p,0),0);}
-function confirmOpts(){
-  const sel=[];pendingProd.opts.forEach((g,gi)=>pendingSel[gi].forEach(ii=>sel.push({n:g.items[ii].n,p:g.items[ii].p})));
-  addLine(pendingProd,sel);closeOpts();
-}
+function confirmOpts(){const sel=[];pendingProd.opts.forEach((g,gi)=>pendingSel[gi].forEach(ii=>sel.push({n:g.items[ii].n,p:g.items[ii].p})));addLine(pendingTarget,pendingProd,sel);closeOpts();}
 function closeOpts(){document.getElementById('optModal').classList.remove('on');}
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
 
