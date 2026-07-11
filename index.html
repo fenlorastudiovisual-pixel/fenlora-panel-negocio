@@ -371,6 +371,54 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .ticket .tk-foot{text-align:center;font-size:9.5px;color:#666;margin-top:8px}
 .print-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 
+/* ── FIX: comanda hace scroll como una sola columna (no oculta la lista) ── */
+.comanda{overflow:hidden;max-height:calc(100vh - 118px)}
+.comanda-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
+.comanda-scroll::-webkit-scrollbar{width:6px}.comanda-scroll::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
+.comanda-body{flex:none !important;overflow:visible !important}
+.comanda-meta{position:sticky;top:0;background:var(--card);z-index:3}
+
+/* ── Módulo Mesas / QR / NFC ── */
+.qr-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;margin-bottom:6px}
+.qr-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+.qr-card h3{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
+.qr-card .qsub{font-size:12.5px;color:var(--txt2);margin-bottom:16px;line-height:1.5}
+.opt-toggle{display:flex;align-items:center;gap:13px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--card2);cursor:pointer;transition:.14s}
+.opt-toggle:hover{border-color:var(--border2)}
+.opt-toggle .oi{width:38px;height:38px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.opt-toggle .ot{flex:1;min-width:0}
+.opt-toggle .ot b{font-size:13.5px;font-weight:600;display:block}
+.opt-toggle .ot span{font-size:11px;color:var(--txt2)}
+.sw{width:44px;height:25px;border-radius:20px;background:var(--card);border:1px solid var(--border2);position:relative;flex-shrink:0;transition:.18s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:var(--txt3);transition:.18s}
+.opt-toggle.on .sw{background:var(--primary);border-color:var(--primary)}
+.opt-toggle.on .sw::after{left:22px;background:#052e21}
+.opt-toggle.on{border-color:rgba(0,229,160,.3)}
+.phone{width:272px;margin:0 auto;background:#0a0f1c;border:8px solid #1a2035;border-radius:34px;padding:14px 13px 20px;box-shadow:0 20px 50px -15px rgba(0,0,0,.7)}
+.phone-notch{width:88px;height:5px;background:#2a3350;border-radius:6px;margin:2px auto 14px}
+.phone-brand{text-align:center;margin-bottom:16px}
+.phone-brand .pb-logo{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#00b381);display:flex;align-items:center;justify-content:center;font-size:25px;margin:0 auto 8px}
+.phone-brand .pb-n{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px}
+.phone-brand .pb-m{font-size:11px;color:var(--txt2)}
+.phone-btn{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--border);border-radius:13px;padding:12px 14px;margin-bottom:9px;font-size:13px;font-weight:600;color:var(--txt)}
+.phone-btn .pbi{font-size:18px}
+.phone-btn.primary{background:var(--primary);color:#052e21;border-color:var(--primary)}
+.phone-empty{text-align:center;color:var(--txt3);font-size:11px;padding:24px 10px;line-height:1.5}
+.qr-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin-bottom:8px}
+.qr-mesa{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px}
+.qr-mesa .qm-n{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px}
+.qr-mesa .qm-cap{font-size:10.5px;color:var(--txt2);margin-top:3px}
+.qr-mesa .qm-mini{width:100%;aspect-ratio:1;background:#fff;border-radius:9px;margin:11px 0;padding:9px;overflow:hidden}
+.qr-mesa .qm-acts{display:flex;gap:7px}
+.qr-mesa .qm-acts button{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:11px;font-weight:700;padding:7px 4px;border-radius:8px;cursor:pointer;font-family:inherit}
+.qr-mesa .qm-acts button:hover{border-color:var(--primary);color:var(--primary)}
+.qr-big{width:200px;height:200px;background:#fff;border-radius:14px;padding:13px;margin:0 auto 14px}
+.cfg-field{margin-bottom:14px}
+.cfg-field .cl-lb{font-size:12px;color:var(--txt2);margin-bottom:6px}
+.cfg-in{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13px;outline:none}
+.cfg-in:focus{border-color:var(--primary)}
+@media(max-width:1180px){.qr-layout{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -411,6 +459,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 <div class="modal-bg" id="printModal"></div>
 <div class="modal-bg" id="mesaActModal"></div>
 <div class="modal-bg" id="moveModal"></div>
+<div class="modal-bg" id="qrModal"></div>
 
 <script>
 /* ─── ESTRUCTURA DEL PANEL (data-driven) ─── */
@@ -447,7 +496,7 @@ const S = {
   reportes:   {g:'Análisis', n:'Reportes', ico:'📈', st:'construccion', fase:'Fase 6', desc:'Todos los reportes del negocio: ventas por día/mes, productos más vendidos, ventas por mesero, movimientos de caja y más.', feat:['Ventas por periodo','Productos más vendidos','Ventas por mesero y por mesa','Movimientos de caja','Ticket promedio y horas pico','Exportar a Excel']},
   // CONFIGURACIÓN
   local:      {g:'Configuración', n:'Local y Sucursales', ico:'🏬', st:'construccion', fase:'Fase 1', desc:'Datos del negocio, logo, y gestión de varias sedes si tienes más de un local.', feat:['Datos y logo del negocio','Varias sedes/sucursales','Precios por sede','Horarios de atención']},
-  ambientes:  {g:'Configuración', n:'Mesas, QR y NFC', ico:'🪑', st:'construccion', fase:'Fase 1', desc:'Configura pisos, zonas y mesas con su capacidad. Cada mesa genera su código QR y su enlace NFC para que el cliente abra la carta acercando el celular o escaneando.', feat:['Pisos y ambientes (terraza, salón…)','Mesas con capacidad','Generar mesas en masa','QR por mesa','Enlace NFC por mesa (tocar con el celular)','Descargar/imprimir QR y stickers NFC']},
+  ambientes:  {g:'Configuración', n:'Mesas, QR y NFC', ico:'🪑', st:'activo', fase:'Fase 1', desc:'Configura pisos, zonas y mesas con su capacidad. Cada mesa genera su código QR y su enlace NFC para que el cliente abra la carta acercando el celular o escaneando.', feat:['Pisos y ambientes (terraza, salón…)','Mesas con capacidad','Generar mesas en masa','QR por mesa','Enlace NFC por mesa (tocar con el celular)','Descargar/imprimir QR y stickers NFC']},
   impresoras: {g:'Configuración', n:'Impresoras y Ticketeras', ico:'🖨️', st:'pronto', fase:'Fase 2', desc:'Configura las impresoras térmicas de cocina, barra y caja, y personaliza el ticket de comanda.', feat:['Impresoras por área','Personalizar ticket de comanda','Logo en comprobantes','Impresión térmica 58/80mm']},
   pagos:      {g:'Configuración', n:'Métodos de Pago', ico:'💳', st:'pronto', fase:'Fase 2', desc:'Define cómo cobra el negocio: efectivo, tarjeta, Nequi, Daviplata, y pago con QR.', feat:['Efectivo y tarjeta','Nequi y Daviplata','Pago con QR','Propinas','Redondeo']},
   integ:      {g:'Configuración', n:'Integraciones', ico:'🔌', st:'pronto', fase:'Fase 5', desc:'Conexiones con plataformas externas: apps de delivery, WhatsApp Business y más.', feat:['Rappi y PedidosYa','WhatsApp Business','Pasarelas de pago','Webhooks']},
@@ -497,9 +546,10 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
+  else if(k==='ambientes') initQrConfig();
   else if(DYN[k]) DYN[k].init();
 }
 function switchTab(k){
@@ -840,9 +890,11 @@ function orderView(target){
           <button class="ver-mesas" onclick="openTab('mesas')">🍴 Ver mesas</button>
           <span class="cnt" id="ccount_${target}">0 ítems</span>
         </div></div>
-      <div class="comanda-meta" id="cmeta_${target}"></div>
-      <div class="comanda-body" id="cbody_${target}"></div>
-      <div class="comanda-f" id="cfoot_${target}"></div>
+      <div class="comanda-scroll">
+        <div class="comanda-meta" id="cmeta_${target}"></div>
+        <div class="comanda-body" id="cbody_${target}"></div>
+        <div class="comanda-f" id="cfoot_${target}"></div>
+      </div>
     </div>
   </div>`;
 }
@@ -1309,6 +1361,105 @@ function extraTotal(){return pendingProd.opts.reduce((s,g,gi)=>s+pendingSel[gi].
 function confirmOpts(){const sel=[];pendingProd.opts.forEach((g,gi)=>pendingSel[gi].forEach(ii=>sel.push({n:g.items[ii].n,p:g.items[ii].p})));addLine(pendingTarget,pendingProd,sel);closeOpts();}
 function closeOpts(){document.getElementById('optModal').classList.remove('on');}
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
+
+/* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
+let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:false};
+const QR_OPTIONS=[
+  ['carta','📖','Ver la carta / Menú digital','Fotos, precios y descripciones de tus platos'],
+  ['mesero','🙋','Llamar al mesero','Manda un aviso al panel indicando la mesa'],
+  ['cuenta','🧾','Pedir la cuenta','El cliente solicita la cuenta desde el celular'],
+  ['autoped','🛒','Auto-pedido','El cliente arma y envía su pedido solo (llega a cocina)'],
+  ['resena','⭐','Reseña / Club VIP','Al terminar, invita a dejar reseña o unirse al Club VIP'],
+];
+const QLINK=n=>'pos.fenloravisual.com/m/el-fogon/'+pad(n);
+
+function pseudoQR(seed){
+  const N=21,cell=100/N;let s=(seed*7919+13)%233280;
+  const rnd=()=>{s=(s*9301+49297)%233280;return s/233280;};
+  const finder=(x,y)=>{let r='';for(let i=0;i<7;i++)for(let j=0;j<7;j++){const edge=i===0||i===6||j===0||j===6;const core=i>=2&&i<=4&&j>=2&&j<=4;if(edge||core)r+=`<rect x="${(x+i)*cell}" y="${(y+j)*cell}" width="${cell}" height="${cell}"/>`;}return r;};
+  let rects='';
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const inF=(i<8&&j<8)||(i>N-9&&j<8)||(i<8&&j>N-9);if(inF)continue;if(rnd()>0.52)rects+=`<rect x="${i*cell}" y="${j*cell}" width="${cell}" height="${cell}"/>`;}
+  rects+=finder(0,0)+finder(N-7,0)+finder(0,N-7);
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fff"/><g fill="#0b1020">${rects}</g></svg>`;
+}
+function qrConfigView(){
+  return `
+  <div class="page-head"><h1>🪑 Mesas, QR y NFC <span class="status-pill activo">Activo</span><span class="fase-tag">Configuración</span></h1>
+    <div class="sub">Configura tus mesas, su código QR/NFC y qué puede hacer el cliente al escanear. Esto se conecta con tu Carta / Menú QR.</div></div>
+  <div class="qr-layout">
+    <div class="qr-card">
+      <h3>🙋 Experiencia del cliente (QR)</h3>
+      <div class="qsub">Esto es lo que ve el comensal cuando escanea el QR de la mesa. Activa o desactiva cada opción; el celular de la derecha muestra en vivo cómo le queda.</div>
+      <div id="qrOpts"></div>
+    </div>
+    <div class="qr-card" style="padding:16px">
+      <div class="qsub" style="text-align:center;margin-bottom:12px">📱 Vista previa · lo que ve el cliente</div>
+      <div id="qrPhone"></div>
+    </div>
+  </div>
+  <div class="section-title">🗺️ Ambientes y mesas <button class="btn ghost" style="width:auto;padding:8px 13px;margin-left:auto" onclick="genMesas()">➕ Generar mesas</button></div>
+  <div id="qrMesas"></div>`;
+}
+function initQrConfig(){renderQrOpts();renderQrPhone();renderQrMesas();}
+function renderQrOpts(){
+  const el=document.getElementById('qrOpts');if(!el)return;
+  el.innerHTML=QR_OPTIONS.map(o=>`<div class="opt-toggle ${QROPTS[o[0]]?'on':''}" onclick="toggleQrOpt('${o[0]}')">
+    <div class="oi">${o[1]}</div><div class="ot"><b>${o[2]}</b><span>${o[3]}</span></div><div class="sw"></div></div>`).join('');
+}
+function toggleQrOpt(k){QROPTS[k]=!QROPTS[k];renderQrOpts();renderQrPhone();}
+function renderQrPhone(){
+  const el=document.getElementById('qrPhone');if(!el)return;
+  const btns=[];
+  if(QROPTS.carta)btns.push(['📖','Ver la carta',1]);
+  if(QROPTS.autoped)btns.push(['🛒','Hacer mi pedido',0]);
+  if(QROPTS.mesero)btns.push(['🙋','Llamar al mesero',0]);
+  if(QROPTS.cuenta)btns.push(['🧾','Pedir la cuenta',0]);
+  if(QROPTS.resena)btns.push(['⭐','Dejar reseña',0]);
+  el.innerHTML=`<div class="phone"><div class="phone-notch"></div>
+    <div class="phone-brand"><div class="pb-logo">🍖</div><div class="pb-n">El Fogón</div><div class="pb-m">Mesa 04 · Sede Centro</div></div>
+    ${btns.length?btns.map(b=>`<div class="phone-btn ${b[2]?'primary':''}"><span class="pbi">${b[0]}</span>${b[1]}</div>`).join(''):'<div class="phone-empty">Activa al menos una opción para que el cliente vea algo al escanear.</div>'}
+  </div>`;
+}
+function renderQrMesas(){
+  const el=document.getElementById('qrMesas');if(!el)return;
+  el.innerHTML=AMBIENTES.map(amb=>{
+    const ms=MESAS.filter(m=>m.piso===amb.n);if(!ms.length)return '';
+    return `<div class="amb-title">🍴 ${amb.n} <span class="amb-cnt">${ms.length} mesas</span></div>
+      <div class="qr-mesa-grid">${ms.map(m=>`
+        <div class="qr-mesa"><div class="qm-n">MESA ${pad(m.n)}</div><div class="qm-cap">👥 ${m.cap||4} personas · 📶 NFC</div>
+          <div class="qm-mini">${pseudoQR(m.n)}</div>
+          <div class="qm-acts"><button onclick="openQrView(${m.n})">🔍 Ver QR</button><button onclick="openMesaCfg(${m.n})">⚙️ Config</button></div>
+        </div>`).join('')}</div>`;
+  }).join('');
+}
+function genMesas(){toastT('Generador de mesas en masa (demo) — se conecta en Fase 1');}
+function openQrView(n){
+  const m=document.getElementById('qrModal');
+  m.innerHTML=`<div class="modal" style="width:340px"><div class="modal-h"><b>📱 QR · Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
+    <div class="modal-b"><div class="qr-big">${pseudoQR(n)}</div>
+      <div class="cfg-field"><div class="cl-lb">Enlace del cliente</div><input class="cfg-in" readonly value="${QLINK(n)}"></div>
+      <div style="font-size:11.5px;color:var(--txt2);text-align:center">El cliente escanea o acerca el celular (NFC) y abre esta experiencia.</div></div>
+    <div class="modal-f"><div class="print-actions">
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('Enlace copiado')">🔗 Copiar enlace</button>
+      <button class="btn primary" style="width:auto;padding:11px 16px" onclick="toastT('QR descargado (demo)')">⬇️ Descargar QR</button></div></div></div>`;
+  m.classList.add('on');
+}
+function openMesaCfg(n){
+  const mm=getMesa(n);const m=document.getElementById('qrModal');
+  m.innerHTML=`<div class="modal" style="width:420px"><div class="modal-h"><b>⚙️ Configurar Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
+    <div class="modal-b">
+      <div class="cfg-field"><div class="cl-lb">Ambiente / piso</div>
+        <select class="cfg-in">${AMBIENTES.map(a=>`<option ${a.n===mm.piso?'selected':''}>${a.n}</option>`).join('')}</select></div>
+      <div class="cfg-field"><div class="cl-lb">Capacidad (personas)</div><input class="cfg-in" type="number" value="${mm.cap||4}" min="1"></div>
+      <div class="cfg-field"><div class="cl-lb">Enlace QR del cliente</div><input class="cfg-in" readonly value="${QLINK(n)}"></div>
+      <div class="opt-toggle on" onclick="this.classList.toggle('on')"><div class="oi">📶</div><div class="ot"><b>NFC activo</b><span>El cliente abre la carta acercando el celular</span></div><div class="sw"></div></div>
+      <div class="opt-toggle" onclick="this.classList.toggle('on')"><div class="oi">🔒</div><div class="ot"><b>Opciones propias de esta mesa</b><span>Si se apaga, usa la config general de arriba</span></div><div class="sw"></div></div>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="toastT('Mesa ${pad(n)} guardada');closeQr()">Guardar mesa</button></div></div>`;
+  m.classList.add('on');
+}
+function closeQr(){document.getElementById('qrModal').classList.remove('on');}
+document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==='qrModal')closeQr();});
 
 buildPanel('panel');openTab('panel');
 </script>
