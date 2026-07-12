@@ -419,6 +419,65 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .cfg-in:focus{border-color:var(--primary)}
 @media(max-width:1180px){.qr-layout{grid-template-columns:1fr}}
 
+/* ── Ambientes (lista compacta) + lista de mesas en lightbox ── */
+.qsub-note{font-size:12px;color:var(--txt2);margin:-6px 0 14px;line-height:1.5;max-width:640px}
+.amb-row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px 15px;margin-bottom:10px}
+.amb-badge{width:40px;height:40px;border-radius:11px;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.amb-info{flex:1;min-width:0}
+.amb-info b{font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;display:block}
+.amb-info span{font-size:11.5px;color:var(--txt2)}
+.amb-acts{display:flex;align-items:center;gap:8px}
+.amb-cfg{background:var(--blue-dim);border:1px solid rgba(59,130,246,.35);color:var(--blue);font-size:12px;font-weight:700;padding:8px 13px;border-radius:9px;cursor:pointer;font-family:inherit}
+.amb-cfg:hover{background:var(--blue);color:#fff}
+.mi{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;line-height:0;flex-shrink:0}
+.mi.edit{color:var(--primary)}.mi.edit:hover{background:var(--primary-dim);border-color:var(--primary)}
+.mi.del{color:var(--red)}.mi.del:hover{background:var(--red-dim);border-color:var(--red)}
+.mi.qr{color:var(--blue)}.mi.qr:hover{background:var(--blue-dim);border-color:var(--blue)}
+.mi.link{color:var(--amber)}.mi.link:hover{background:var(--amber-dim);border-color:var(--amber)}
+
+.lb-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.lb-toolbar button{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:12px;font-weight:700;padding:9px 13px;border-radius:9px;cursor:pointer;font-family:inherit}
+.lb-toolbar button:hover{border-color:var(--primary);color:var(--primary)}
+.lb-toolbar button.danger{color:var(--red)}.lb-toolbar button.danger:hover{border-color:var(--red);background:var(--red-dim)}
+.mrow{display:flex;align-items:center;gap:12px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:9px 12px;margin-bottom:8px}
+.mrow-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#12a56f,#0b7d53);color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mrow-num.busy{background:linear-gradient(135deg,#d98a1f,#b06b11)}
+.mrow-name{flex:1;font-family:'Outfit',sans-serif;font-weight:600;font-size:13.5px}
+.mrow-name span{color:var(--txt2);font-weight:400;font-size:12px}
+.mrow-name em{color:var(--amber);font-style:normal;font-size:11px}
+.mrow-acts{display:flex;gap:6px}
+.lb-legend{font-size:11px;color:var(--txt3);margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-top:1px solid var(--border);padding-top:12px}
+.lb-legend .lg{display:inline-flex;align-items:center;gap:4px}
+.lb-legend .lg.edit{color:var(--primary)}.lb-legend .lg.del{color:var(--red)}.lb-legend .lg.qr{color:var(--blue)}.lb-legend .lg.link{color:var(--amber)}
+
+/* ── Mockup de celular premium ── */
+.phone2{width:288px;margin:0 auto;background:linear-gradient(155deg,#2c3654,#141a2e);border-radius:46px;padding:5px;box-shadow:0 30px 60px -18px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.07)}
+.phone2-screen{background:radial-gradient(120% 80% at 50% 0%,#12203c 0%,#0b1224 55%,#0a0f1e 100%);border-radius:42px;overflow:hidden;position:relative;min-height:566px;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:86px;height:23px;background:#000;border-radius:14px;z-index:6}
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 2px;color:#fff;position:relative;z-index:4}
+.statusbar .sb-time{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px}
+.statusbar .sb-icons{display:flex;align-items:center;gap:6px}
+.statusbar svg{display:block}
+.scr-body{flex:1;padding:16px 16px 6px;overflow:hidden}
+.scr-hero{text-align:center;margin:10px 0 18px}
+.hero-logo{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--primary),#00b381);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 10px;box-shadow:0 10px 24px -6px rgba(0,229,160,.55)}
+.hero-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.3px}
+.hero-sub{font-size:11.5px;color:#8892a4;margin-top:4px}
+.scr-welcome{font-size:10px;color:#6b7488;text-align:center;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:13px;font-weight:700}
+.scr-btn{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:13px 14px;margin-bottom:10px}
+.scr-btn .sbc{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:18px}
+.scr-btn .sbt{font-size:13.5px;font-weight:600;color:#f0f4ff}
+.scr-btn.primary{background:linear-gradient(135deg,var(--primary),#00c88d);border-color:transparent;box-shadow:0 8px 20px -8px rgba(0,229,160,.5)}
+.scr-btn.primary .sbt{color:#052e21;font-weight:700}
+.scr-btn.primary .sbc{background:rgba(5,46,33,.16)}
+.clubvip{background:linear-gradient(140deg,rgba(245,166,35,.18),rgba(245,166,35,.04));border:1px solid rgba(245,166,35,.32);border-radius:15px;padding:14px;margin-top:6px}
+.clubvip .cv-t{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--amber);display:flex;align-items:center;gap:7px}
+.clubvip .cv-d{font-size:10.5px;color:#d3b06f;margin:6px 0 11px;line-height:1.45}
+.clubvip .cv-d b{color:var(--amber)}
+.clubvip .cv-in{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:9px 11px;font-size:11px;color:#7f8aa0;margin-bottom:7px}
+.clubvip .cv-btn{background:var(--amber);color:#3a2a06;border-radius:9px;padding:9px;text-align:center;font-size:11.5px;font-weight:700;margin-top:2px}
+.home-ind{width:124px;height:4px;background:rgba(255,255,255,.3);border-radius:4px;margin:4px auto 10px}
+
 </style>
 </head>
 <body>
@@ -460,6 +519,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 <div class="modal-bg" id="mesaActModal"></div>
 <div class="modal-bg" id="moveModal"></div>
 <div class="modal-bg" id="qrModal"></div>
+<div class="modal-bg" id="mesasModal"></div>
 
 <script>
 /* ─── ESTRUCTURA DEL PANEL (data-driven) ─── */
@@ -1363,13 +1423,13 @@ function closeOpts(){document.getElementById('optModal').classList.remove('on');
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
 
 /* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
-let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:false};
+let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:true};
 const QR_OPTIONS=[
   ['carta','📖','Ver la carta / Menú digital','Fotos, precios y descripciones de tus platos'],
   ['mesero','🙋','Llamar al mesero','Manda un aviso al panel indicando la mesa'],
   ['cuenta','🧾','Pedir la cuenta','El cliente solicita la cuenta desde el celular'],
   ['autoped','🛒','Auto-pedido','El cliente arma y envía su pedido solo (llega a cocina)'],
-  ['resena','⭐','Reseña / Club VIP','Al terminar, invita a dejar reseña o unirse al Club VIP'],
+  ['resena','⭐','Reseña / Club VIP','Captura nombre, WhatsApp y cumpleaños para promos y regalo de cumpleaños'],
 ];
 const QLINK=n=>'pos.fenloravisual.com/m/el-fogon/'+pad(n);
 
@@ -1392,47 +1452,128 @@ function qrConfigView(){
       <div class="qsub">Esto es lo que ve el comensal cuando escanea el QR de la mesa. Activa o desactiva cada opción; el celular de la derecha muestra en vivo cómo le queda.</div>
       <div id="qrOpts"></div>
     </div>
-    <div class="qr-card" style="padding:16px">
+    <div class="qr-card" style="padding:16px 16px 6px">
       <div class="qsub" style="text-align:center;margin-bottom:12px">📱 Vista previa · lo que ve el cliente</div>
       <div id="qrPhone"></div>
     </div>
   </div>
-  <div class="section-title">🗺️ Ambientes y mesas <button class="btn ghost" style="width:auto;padding:8px 13px;margin-left:auto" onclick="genMesas()">➕ Generar mesas</button></div>
-  <div id="qrMesas"></div>`;
+  <div class="section-title">🗺️ Ambientes y mesas</div>
+  <div class="qsub-note">Cada ambiente agrupa sus mesas. Entra a “Configurar mesas” para crear, editar, generar en masa o eliminar mesas y ver su QR.</div>
+  <div id="qrAmbientes"></div>`;
 }
-function initQrConfig(){renderQrOpts();renderQrPhone();renderQrMesas();}
+function initQrConfig(){renderQrOpts();renderQrPhone();renderAmbientes();}
 function renderQrOpts(){
   const el=document.getElementById('qrOpts');if(!el)return;
   el.innerHTML=QR_OPTIONS.map(o=>`<div class="opt-toggle ${QROPTS[o[0]]?'on':''}" onclick="toggleQrOpt('${o[0]}')">
     <div class="oi">${o[1]}</div><div class="ot"><b>${o[2]}</b><span>${o[3]}</span></div><div class="sw"></div></div>`).join('');
 }
 function toggleQrOpt(k){QROPTS[k]=!QROPTS[k];renderQrOpts();renderQrPhone();}
+
+/* ── mockup de celular premium ── */
 function renderQrPhone(){
   const el=document.getElementById('qrPhone');if(!el)return;
+  const t=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const sig='<svg width="17" height="11" viewBox="0 0 17 11" fill="#fff"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.6" y="5" width="3" height="6" rx="1"/><rect x="9.2" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.8" y="0" width="3" height="11" rx="1"/></svg>';
+  const wifi='<svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.4"><path d="M2 5 Q8 -0.3 14 5"/><path d="M4.2 7.3 Q8 3.7 11.8 7.3"/><circle cx="8" cy="10" r="1.1" fill="#fff" stroke="none"/></svg>';
+  const bat='<svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.6" y="0.6" width="21" height="10.8" rx="3" fill="none" stroke="#fff" stroke-width="1"/><rect x="2" y="2" width="16.5" height="8" rx="1.5" fill="#fff"/><rect x="23" y="4" width="2.2" height="4" rx="1" fill="#fff"/></svg>';
   const btns=[];
   if(QROPTS.carta)btns.push(['📖','Ver la carta',1]);
   if(QROPTS.autoped)btns.push(['🛒','Hacer mi pedido',0]);
   if(QROPTS.mesero)btns.push(['🙋','Llamar al mesero',0]);
   if(QROPTS.cuenta)btns.push(['🧾','Pedir la cuenta',0]);
-  if(QROPTS.resena)btns.push(['⭐','Dejar reseña',0]);
-  el.innerHTML=`<div class="phone"><div class="phone-notch"></div>
-    <div class="phone-brand"><div class="pb-logo">🍖</div><div class="pb-n">El Fogón</div><div class="pb-m">Mesa 04 · Sede Centro</div></div>
-    ${btns.length?btns.map(b=>`<div class="phone-btn ${b[2]?'primary':''}"><span class="pbi">${b[0]}</span>${b[1]}</div>`).join(''):'<div class="phone-empty">Activa al menos una opción para que el cliente vea algo al escanear.</div>'}
-  </div>`;
+  const anyOpt=btns.length||QROPTS.resena;
+  el.innerHTML=`<div class="phone2"><div class="phone2-screen">
+    <div class="island"></div>
+    <div class="statusbar"><span class="sb-time">${t}</span><span class="sb-icons">${sig}${wifi}${bat}</span></div>
+    <div class="scr-body">
+      <div class="scr-hero"><div class="hero-logo">🍖</div><div class="hero-name">El Fogón</div><div class="hero-sub">📍 Mesa 04 · Sede Centro</div></div>
+      ${anyOpt?'<div class="scr-welcome">¿Qué deseas hacer?</div>':''}
+      ${btns.map(b=>`<div class="scr-btn ${b[2]?'primary':''}"><div class="sbc">${b[0]}</div><div class="sbt">${b[1]}</div></div>`).join('')}
+      ${QROPTS.resena?`<div class="clubvip">
+        <div class="cv-t">⭐ Únete al Club VIP</div>
+        <div class="cv-d">Déjanos tus datos y recibe un <b>postre gratis en tu cumpleaños</b> 🎂 más promos exclusivas.</div>
+        <div class="cv-in">👤 Tu nombre</div>
+        <div class="cv-in">📱 WhatsApp</div>
+        <div class="cv-in">🎂 Fecha de cumpleaños</div>
+        <div class="cv-btn">Quiero ser VIP</div></div>`:''}
+      ${!anyOpt?'<div class="phone-empty">Activa al menos una opción para que el cliente vea algo al escanear.</div>':''}
+    </div>
+    <div class="home-ind"></div>
+  </div></div>`;
 }
-function renderQrMesas(){
-  const el=document.getElementById('qrMesas');if(!el)return;
-  el.innerHTML=AMBIENTES.map(amb=>{
-    const ms=MESAS.filter(m=>m.piso===amb.n);if(!ms.length)return '';
-    return `<div class="amb-title">🍴 ${amb.n} <span class="amb-cnt">${ms.length} mesas</span></div>
-      <div class="qr-mesa-grid">${ms.map(m=>`
-        <div class="qr-mesa"><div class="qm-n">MESA ${pad(m.n)}</div><div class="qm-cap">👥 ${m.cap||4} personas · 📶 NFC</div>
-          <div class="qm-mini">${pseudoQR(m.n)}</div>
-          <div class="qm-acts"><button onclick="openQrView(${m.n})">🔍 Ver QR</button><button onclick="openMesaCfg(${m.n})">⚙️ Config</button></div>
-        </div>`).join('')}</div>`;
-  }).join('');
+
+/* ── ambientes (lista compacta) ── */
+function renderAmbientes(){
+  const el=document.getElementById('qrAmbientes');if(!el)return;
+  el.innerHTML=AMBIENTES.map(a=>{
+    const c=MESAS.filter(m=>m.piso===a.n).length;
+    return `<div class="amb-row">
+      <div class="amb-badge">🍴</div>
+      <div class="amb-info"><b>${a.n}</b><span>${c} mesa(s)</span></div>
+      <div class="amb-acts">
+        <button class="mi edit" title="Editar ambiente" onclick="toastT('Editar ${a.n} (demo)')">✏️</button>
+        <button class="mi del" title="Eliminar ambiente" onclick="toastT('Eliminar ${a.n} (demo)')">🗑️</button>
+        <button class="amb-cfg" onclick="openMesasLB('${a.n}')">🪑 Configurar mesas</button>
+      </div></div>`;
+  }).join('')+`<button class="btn ghost" style="width:auto;padding:9px 15px;margin-top:12px" onclick="toastT('Nuevo ambiente (demo)')">➕ Nuevo ambiente</button>`;
 }
-function genMesas(){toastT('Generador de mesas en masa (demo) — se conecta en Fase 1');}
+
+/* ── lightbox: lista de mesas de un ambiente (estilo ApiWorking) ── */
+function openMesasLB(amb){
+  const m=document.getElementById('mesasModal');
+  m.innerHTML=`<div class="modal" style="width:600px"><div class="modal-h"><b>🪑 Mesas · ${amb}</b><div class="mx" onclick="closeMesasLB()">✕</div></div>
+    <div class="modal-b">
+      <div class="lb-toolbar">
+        <button onclick="addMesa('${amb}')">➕ Nueva mesa</button>
+        <button onclick="genMasivo('${amb}')">⚡ Generar masivo</button>
+        <button class="danger" onclick="delAllMesas('${amb}')">🗑️ Eliminar todas</button>
+        <button onclick="toastT('QR en PDF generado (demo)')">🖨️ Imprimir QR (PDF)</button>
+      </div>
+      <div id="mesasLB" data-amb="${amb}"></div>
+      <div class="lb-legend">Leyenda: <span class="lg edit">✏️ Editar</span> <span class="lg del">🗑️ Eliminar</span> <span class="lg qr">📱 Ver / descargar QR</span> <span class="lg link">🔗 Copiar enlace</span></div>
+    </div></div>`;
+  m.classList.add('on');renderMesasLB(amb);
+}
+function renderMesasLB(amb){
+  const el=document.getElementById('mesasLB');if(!el)return;
+  const ms=MESAS.filter(m=>m.piso===amb);
+  el.innerHTML=ms.length?ms.map((m,i)=>`
+    <div class="mrow">
+      <div class="mrow-num ${m.est==='libre'?'':'busy'}">${i+1}</div>
+      <div class="mrow-name">MESA ${pad(m.n)} <span>· Capacidad ${m.cap||4}</span>${m.est!=='libre'?' <em>· ocupada</em>':''}</div>
+      <div class="mrow-acts">
+        <button class="mi edit" title="Editar" onclick="openMesaCfg(${m.n})">✏️</button>
+        <button class="mi del" title="Eliminar" onclick="delMesa(${m.n})">🗑️</button>
+        <button class="mi qr" title="Ver / descargar QR" onclick="openQrView(${m.n})">📱</button>
+        <button class="mi link" title="Copiar enlace" onclick="toastT('Enlace copiado: ${QLINK(m.n)}')">🔗</button>
+      </div>
+    </div>`).join(''):`<div class="empty" style="padding:26px">Sin mesas en ${amb}. Crea una con “Nueva mesa”.</div>`;
+}
+function nextMesaN(){return MESAS.reduce((mx,m)=>Math.max(mx,m.n),0)+1;}
+function addMesa(amb){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});toastT('Mesa '+pad(n)+' creada en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();}
+function genMasivo(amb){
+  const v=prompt('¿Cuántas mesas quieres generar en '+amb+'?','4');const c=parseInt(v);if(!c||c<1)return;
+  for(let i=0;i<c;i++){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});}
+  toastT(c+' mesas generadas en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+}
+function delMesa(n){
+  const mm=getMesa(n);if(!mm)return;const amb=mm.piso;
+  const msg=mm.est!=='libre'?'La Mesa '+pad(n)+' está ocupada/tiene consumo. ¿Eliminar de todas formas?':'¿Eliminar la Mesa '+pad(n)+'?';
+  if(!confirm(msg))return;
+  const i=MESAS.findIndex(m=>m.n===n);if(i>=0)MESAS.splice(i,1);
+  toastT('Mesa '+pad(n)+' eliminada');
+  if(document.getElementById('mesasLB'))renderMesasLB(amb);
+  renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+}
+function delAllMesas(amb){
+  if(!confirm('¿Eliminar TODAS las mesas de '+amb+'? Esta acción no se puede deshacer.'))return;
+  for(let i=MESAS.length-1;i>=0;i--){if(MESAS[i].piso===amb)MESAS.splice(i,1);}
+  toastT('Mesas de '+amb+' eliminadas');renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+}
+function closeMesasLB(){document.getElementById('mesasModal').classList.remove('on');}
+document.getElementById('mesasModal').addEventListener('click',e=>{if(e.target.id==='mesasModal')closeMesasLB();});
+
+/* ── ver QR / configurar mesa (diálogos individuales) ── */
 function openQrView(n){
   const m=document.getElementById('qrModal');
   m.innerHTML=`<div class="modal" style="width:340px"><div class="modal-h"><b>📱 QR · Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
@@ -1445,18 +1586,29 @@ function openQrView(n){
   m.classList.add('on');
 }
 function openMesaCfg(n){
-  const mm=getMesa(n);const m=document.getElementById('qrModal');
+  const mm=getMesa(n);if(!mm)return;const m=document.getElementById('qrModal');
   m.innerHTML=`<div class="modal" style="width:420px"><div class="modal-h"><b>⚙️ Configurar Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
     <div class="modal-b">
       <div class="cfg-field"><div class="cl-lb">Ambiente / piso</div>
-        <select class="cfg-in">${AMBIENTES.map(a=>`<option ${a.n===mm.piso?'selected':''}>${a.n}</option>`).join('')}</select></div>
-      <div class="cfg-field"><div class="cl-lb">Capacidad (personas)</div><input class="cfg-in" type="number" value="${mm.cap||4}" min="1"></div>
+        <select id="cfgPiso" class="cfg-in">${AMBIENTES.map(a=>`<option ${a.n===mm.piso?'selected':''}>${a.n}</option>`).join('')}</select></div>
+      <div class="cfg-field"><div class="cl-lb">Capacidad (personas)</div><input id="cfgCap" class="cfg-in" type="number" value="${mm.cap||4}" min="1"></div>
       <div class="cfg-field"><div class="cl-lb">Enlace QR del cliente</div><input class="cfg-in" readonly value="${QLINK(n)}"></div>
       <div class="opt-toggle on" onclick="this.classList.toggle('on')"><div class="oi">📶</div><div class="ot"><b>NFC activo</b><span>El cliente abre la carta acercando el celular</span></div><div class="sw"></div></div>
-      <div class="opt-toggle" onclick="this.classList.toggle('on')"><div class="oi">🔒</div><div class="ot"><b>Opciones propias de esta mesa</b><span>Si se apaga, usa la config general de arriba</span></div><div class="sw"></div></div>
     </div>
-    <div class="modal-f"><button class="btn primary" onclick="toastT('Mesa ${pad(n)} guardada');closeQr()">Guardar mesa</button></div></div>`;
+    <div class="modal-f"><div style="display:flex;gap:9px">
+      <button class="btn ghost" style="width:auto;padding:12px 15px;color:var(--red);border-color:rgba(255,77,109,.3)" onclick="delMesa(${n});closeQr()">🗑️ Eliminar</button>
+      <button class="btn primary" style="flex:1" onclick="saveMesaCfg(${n})">Guardar mesa</button>
+    </div></div></div>`;
   m.classList.add('on');
+}
+function saveMesaCfg(n){
+  const mm=getMesa(n);if(!mm)return;
+  const cap=parseInt((document.getElementById('cfgCap')||{}).value)||mm.cap||4;
+  const piso=(document.getElementById('cfgPiso')||{}).value||mm.piso;
+  mm.cap=cap;mm.piso=piso;
+  toastT('Mesa '+pad(n)+' guardada');closeQr();
+  if(document.getElementById('mesasLB'))renderMesasLB(document.getElementById('mesasLB').dataset.amb);
+  renderAmbientes();if(document.getElementById('comContent'))renderComContent();
 }
 function closeQr(){document.getElementById('qrModal').classList.remove('on');}
 document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==='qrModal')closeQr();});
