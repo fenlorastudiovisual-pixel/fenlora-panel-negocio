@@ -371,12 +371,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .ticket .tk-foot{text-align:center;font-size:9.5px;color:#666;margin-top:8px}
 .print-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 
-/* ── FIX: comanda hace scroll como una sola columna (no oculta la lista) ── */
-.comanda{overflow:hidden;max-height:calc(100vh - 118px)}
-.comanda-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
-.comanda-scroll::-webkit-scrollbar{width:6px}.comanda-scroll::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
-.comanda-body{flex:none !important;overflow:visible !important}
-.comanda-meta{position:sticky;top:0;background:var(--card);z-index:3}
+/* ── Layout POS: header/meta/campos fijos, lista con scroll propio, botones fijos abajo ── */
+.comanda{overflow:hidden;max-height:calc(100vh - 96px)}
+.comanda-h,.comanda-meta,.comanda-fields,.comanda-f{flex-shrink:0}
+.comanda-body{flex:1 1 auto;min-height:96px;overflow-y:auto;padding:12px 14px;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
+.comanda-body::-webkit-scrollbar{width:6px}.comanda-body::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
+.comanda-fields{display:flex;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.comanda-fields .cf-in{flex:1;min-width:0;padding:7px 10px;margin:0}
+.comanda-fields .cf-in input{font-size:12px}
+.cl-addnote{font-size:11px;color:var(--blue);cursor:pointer;margin-top:6px;display:inline-flex;align-items:center;gap:5px;opacity:.9;font-weight:600}
+.cl-addnote:hover{opacity:1;text-decoration:underline}
+.cl-notes{cursor:pointer}
+.cl-notes .edit-note{font-style:normal;color:var(--txt3);font-size:9px;text-decoration:underline;margin-left:4px}
 
 /* ── Módulo Mesas / QR / NFC ── */
 .qr-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;margin-bottom:6px}
@@ -760,6 +766,30 @@ const pad=n=>String(n).padStart(2,'0');
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const CATS=['Recomendados','Entradas','Fuertes','Acompañam.','Postres','Bebidas'];
 const QN_DEFAULT=['SIN SAL','SIN PICANTE','SIN CEBOLLA','BIEN COCIDO','PARA LLEVAR','MUCHO LIMÓN'];
+/* Sugeridor local de observaciones según el plato (sin IA: instantáneo, gratis, offline) */
+function suggestNotes(p){
+  const n=norm(p.n||''),c=p.cat||'';const has=(...ks)=>ks.some(k=>n.includes(k));
+  if(has('perro','hot dog','hotdog','choripan','salchipapa')) return ['SIN CEBOLLA','POCA SALSA','SOLO SALSA DE TOMATE','SOLO SALSA DE PIÑA','SIN PAPITAS','EXTRA QUESO','SIN SALSAS'];
+  if(has('hamburgues','burger')) return ['SIN CEBOLLA','SIN TOMATE','TÉRMINO MEDIO','BIEN COCIDA','SIN SALSAS','EXTRA QUESO','SIN PEPINILLOS'];
+  if(has('lomo','carne','res','churrasco','bife','punta','asado','costilla','chuleta','parrilla','picada')) return ['TÉRMINO ROJO','TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','SIN SAL','EXTRA SALSA'];
+  if(has('pollo','pechuga','alitas','ala','gallina')) return ['SIN PIEL','BIEN DORADO','SIN SAL','PECHUGA','PIERNA','EXTRA CRUJIENTE'];
+  if(has('pescado','marisco','ceviche','pulpo','camaron','trucha','mojarra','cazuela')) return ['SIN CEBOLLA','POCO LIMÓN','MUCHO LIMÓN','SIN AJÍ','SIN CILANTRO'];
+  if(has('ensalada')) return ['SIN CEBOLLA','ADEREZO APARTE','SIN CROUTONES','EXTRA AGUACATE','SIN QUESO'];
+  if(has('papa','fritas','yuca','patacon','tostones')) return ['BIEN DORADAS','SIN SAL','CON QUESO','EXTRA CRUJIENTES','CON SALSAS'];
+  if(has('pasta','spaghetti','lasagna','fetuccini','ravioli','macarron')) return ['SIN QUESO','POCA SALSA','SIN AJÍ','AL DENTE','EXTRA SALSA'];
+  if(has('pizza')) return ['SIN CEBOLLA','EXTRA QUESO','BIEN HORNEADA','SIN ORÉGANO','MASA DELGADA'];
+  if(has('taco','burrito','quesadilla','nacho')) return ['SIN CILANTRO','SIN CEBOLLA','SIN PICANTE','EXTRA PICANTE','EXTRA QUESO'];
+  if(has('sopa','caldo','crema','ajiaco','sancocho','mondongo')) return ['SIN CILANTRO','BIEN CALIENTE','SIN SAL','APARTE EL ARROZ','SIN VERDURAS'];
+  if(has('arroz')) return ['SIN VERDURAS','BIEN SECO','SIN SAL','EXTRA PORCIÓN'];
+  if(has('empanada','arepa','pastel','buñuelo')) return ['SIN AJÍ','CON AJÍ','BIEN DORADA','CON QUESO','SIN SAL'];
+  if(has('torta','postre','helado','cheesecake','brownie','flan','malteada','waffle')) return ['SIN AZÚCAR AÑADIDA','PORCIÓN GRANDE','SIN CREMA','EXTRA SALSA','BIEN FRÍO'];
+  if(has('limonada','jugo','gaseosa','soda','cafe','té','tinto','cerveza','agua','frappe')||c==='Bebidas') return ['SIN AZÚCAR','POCA AZÚCAR','SIN HIELO','POCO HIELO','BIEN FRÍO','EXTRA GRANDE'];
+  if(c==='Postres') return ['SIN AZÚCAR AÑADIDA','PORCIÓN GRANDE','SIN CREMA','EXTRA SALSA'];
+  if(c==='Fuertes') return ['TÉRMINO MEDIO','BIEN COCIDO','SIN SAL','SIN PICANTE','EXTRA SALSA'];
+  if(c==='Entradas') return ['SIN AJÍ','SIN CEBOLLA','PARA COMPARTIR','BIEN CALIENTE'];
+  if(c==='Acompañam.') return ['SIN SAL','BIEN DORADO','EXTRA PORCIÓN','CON SALSAS'];
+  return QN_DEFAULT;
+}
 const PRODUCTS=[
   {id:'p1',n:'Pulpo a la Brasa',pr:58000,cat:'Fuertes',rec:1,e:'🐙',area:'COCINA'},
   {id:'p2',n:'Lomo al Carbón',pr:74000,cat:'Fuertes',rec:1,e:'🥩',area:'COCINA',qn:['TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','SIN SAL','EXTRA JUGOSO'],opts:[
@@ -780,6 +810,8 @@ const PRODUCTS=[
   ]},
   {id:'p11',n:'Café Americano',pr:6000,cat:'Bebidas',e:'☕',area:'BARRA',qn:['SIN AZÚCAR','DOBLE CARGA','CON LECHE']},
   {id:'p12',n:'Gaseosa',pr:6000,cat:'Bebidas',e:'🥤',area:'BARRA',qn:['SIN HIELO','BIEN FRÍA']},
+  {id:'p13',n:'Perro Caliente',pr:12000,cat:'Fuertes',rec:1,e:'🌭',area:'COCINA'},
+  {id:'p14',n:'Hamburguesa Clásica',pr:18000,cat:'Fuertes',rec:1,e:'🍔',area:'COCINA'},
 ];
 const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
 const MESEROS=['Sebastián','Laura','Andrés','Kelly'];
@@ -950,11 +982,10 @@ function orderView(target){
           <button class="ver-mesas" onclick="openTab('mesas')">🍴 Ver mesas</button>
           <span class="cnt" id="ccount_${target}">0 ítems</span>
         </div></div>
-      <div class="comanda-scroll">
-        <div class="comanda-meta" id="cmeta_${target}"></div>
-        <div class="comanda-body" id="cbody_${target}"></div>
-        <div class="comanda-f" id="cfoot_${target}"></div>
-      </div>
+      <div class="comanda-meta" id="cmeta_${target}"></div>
+      <div class="comanda-fields" id="cfld_${target}"></div>
+      <div class="comanda-body" id="cbody_${target}"></div>
+      <div class="comanda-f" id="cfoot_${target}"></div>
     </div>
   </div>`;
 }
@@ -972,7 +1003,12 @@ function renderMeta(target){
 }
 function initOrder(target){
   document.getElementById('chips_'+target).innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[target]?' active':''}" onclick="setCat('${target}','${c}')">${c}</div>`).join('');
-  renderMeta(target);renderProds(target);renderComanda(target);
+  renderMeta(target);renderFields(target);renderProds(target);renderComanda(target);
+}
+function renderFields(target){
+  const el=document.getElementById('cfld_'+target);if(!el)return;const meta=ORDMETA[target]||{};
+  el.innerHTML=`<div class="cf-in"><span class="lb">👤</span><input placeholder="Comensal / cliente (opcional)" value="${(meta.cliente||'').replace(/"/g,'&quot;')}" onchange="setCliente('${target}',this.value)"></div>
+    <div class="cf-in"><span class="lb">📝</span><input placeholder="Observación general" value="${(meta.obs||'').replace(/"/g,'&quot;')}" onchange="setObs('${target}',this.value)"></div>`;
 }
 function setView(target,mode){viewMode=mode;
   const g=document.getElementById('vg_'+target),l=document.getElementById('vl_'+target);
@@ -1067,7 +1103,7 @@ function renderComanda(target){
         <div class="cl-info">
           <div class="cl-name">${l.n}${tags}</div>
           ${o?`<div class="cl-opts">${o}</div>`:''}
-          ${ns?`<div class="cl-notes">📝 ${ns}</div>`:''}
+          ${ns?`<div class="cl-notes" onclick="openNotes('${target}',${l.lid})">📝 ${ns} <span class="edit-note">editar</span></div>`:`<div class="cl-addnote" onclick="openNotes('${target}',${l.lid})">📝 Agregar observación (sin ají, término medio…)</div>`}
           <span class="cl-area">🍳 ${l.area}</span>
         </div></div>
       <div class="cl-ctrl">${qty}${price}<div class="cl-imp">${COP(l.unit*l.qty)}</div>${posSel}${hold}</div></div>`;
@@ -1079,13 +1115,8 @@ function renderComanda(target){
   const pend=lines.filter(l=>!l.sent&&!l.held).length;
   const held=lines.filter(l=>l.held).length;
   foot.innerHTML=`
-    <div class="cf-fields">
-      <div class="cf-in"><span class="lb">👤 Comensal</span><input placeholder="Nombre del cliente (opcional)" value="${(meta.cliente||'').replace(/"/g,'&quot;')}" onchange="setCliente('${target}',this.value)"></div>
-      <div class="cf-in"><span class="lb">📝 Observación</span><input placeholder="Observación general de la comanda" value="${(meta.obs||'').replace(/"/g,'&quot;')}" onchange="setObs('${target}',this.value)"></div>
-    </div>
     <div class="trow"><span>Subtotal</span><span>${COP(subtotal)}</span></div>
     ${cortAmt?`<div class="trow cortr"><span>Cortesías</span><span>− ${COP(cortAmt)}</span></div>`:''}
-    <div class="trow"><span>IVA incluido</span><span>—</span></div>
     <div class="trow tot"><span>TOTAL</span><span class="tv">${COP(total)}</span></div>
     <div class="save-grid">
       <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
@@ -1304,14 +1335,14 @@ function curLine(){return ORD[notesTarget].find(x=>x.lid===notesLid);}
 function renderNotes(){
   const l=curLine(); if(!l)return;
   const p=PRODUCTS.find(x=>x.id===l.id)||{};
-  const qn=p.qn||QN_DEFAULT;
+  const qn=(p.qn&&p.qn.length)?p.qn:suggestNotes(p);
   const units=[];
   for(let i=0;i<l.qty;i++){
     const tags=l.notes[i]||[];
     units.push(`<div class="note-unit">
       <div class="nut">Notas${l.qty>1?' · unidad '+(i+1):''}</div>
       <input class="note-in" placeholder="Escribe notas separadas por COMA y presiona ENTER" onkeydown="noteEnter(${i},event)">
-      <div class="qn-lbl">Clic para añadir:</div>
+      <div class="qn-lbl">✨ Sugeridas para «${l.n}» · toca para añadir:</div>
       <div class="qn-row">${qn.map(q=>`<button class="qn-btn ${tags.includes(q)?'on':''}" onclick="qnToggle(${i},'${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>
       ${tags.length?`<div class="note-tags">${tags.map((tg,ti)=>`<span class="note-tag">${tg}<span class="rmx" onclick="rmTag(${i},${ti})">✕</span></span>`).join('')}</div>`:''}
     </div>`);
