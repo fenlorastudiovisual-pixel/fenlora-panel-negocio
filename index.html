@@ -484,6 +484,13 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .clubvip .cv-btn{background:var(--amber);color:#3a2a06;border-radius:9px;padding:9px;text-align:center;font-size:11.5px;font-weight:700;margin-top:2px}
 .home-ind{width:124px;height:4px;background:rgba(255,255,255,.3);border-radius:4px;margin:4px auto 10px}
 
+/* ── Clúster de mesas unidas (se ven unificadas, no fusionadas) ── */
+.mesa-cluster{border:1.5px dashed var(--primary);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.01));border-radius:16px;padding:11px 12px 13px;margin-bottom:16px;position:relative}
+.cluster-rib{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.4px;color:#052e21;background:var(--primary);padding:4px 12px;border-radius:20px;margin-bottom:11px;box-shadow:0 6px 14px -6px rgba(0,229,160,.6)}
+.cluster-body{display:flex;align-items:stretch;flex-wrap:wrap;gap:0}
+.cluster-body .mesa{flex:1 1 130px;margin:0}
+.cluster-link{flex:0 0 34px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--primary);align-self:center}
+
 </style>
 </head>
 <body>
@@ -865,8 +872,17 @@ function renderComContent(){
     AMBIENTES.forEach(amb=>{
       const ms=MESAS.filter(m=>m.piso===amb.n);
       if(!ms.length)return;
-      html+=`<div class="amb-title">🍴 ${amb.n} <span class="amb-cnt">${ms.length} mesas</span></div>
-        <div class="mesa-map">${ms.map(mesaCard).join('')}</div>`;
+      const groups={},singles=[];
+      ms.forEach(m=>{ if(m.grp){(groups[m.grp]=groups[m.grp]||[]).push(m);} else singles.push(m); });
+      html+=`<div class="amb-title">🍴 ${amb.n} <span class="amb-cnt">${ms.length} mesas</span></div>`;
+      Object.keys(groups).forEach(gid=>{
+        const g=groups[gid];
+        html+=`<div class="mesa-cluster">
+          <div class="cluster-rib">🔗 Mesas unidas · ${g.map(x=>pad(x.n)).join(' + ')}</div>
+          <div class="cluster-body">${g.map((m,i)=>(i>0?'<div class="cluster-link">🔗</div>':'')+mesaCard(m)).join('')}</div>
+        </div>`;
+      });
+      if(singles.length) html+=`<div class="mesa-map">${singles.map(mesaCard).join('')}</div>`;
     });
     if(unirMode) html+=`<div class="unir-bar"><span>${unirSel.length} mesa(s) seleccionada(s)</span>
       <button class="btn primary" style="width:auto;padding:9px 16px" onclick="confirmarUnir()">Unir y abrir comanda</button></div>`;
@@ -884,15 +900,18 @@ function toggleUnir(){unirMode=!unirMode;unirSel=[];renderComContent();}
 function confirmarUnir(){
   if(unirSel.length<2){toastT('Selecciona al menos 2 mesas');return;}
   const nums=unirSel.slice().sort((a,b)=>a-b);
-  nums.forEach(n=>{const m=getMesa(n);m.est='ocup';m.t='unida';m.merged=true;});
   const key='mesa_'+nums.join('_');
-  const title='Mesa '+nums.map(pad).join('+');
+  const title='Mesa '+nums.map(pad).join(' + ');
+  nums.forEach(n=>{const m=getMesa(n);m.est='ocup';m.t='unida';m.merged=true;m.grp=key;m.grpLabel=title;});
   unirMode=false;unirSel=[];
   openOrder(key,title,'🔗',{com:nums.length*2});
 }
 function clickMesa(n,est){
   if(unirMode){ if(est==='libre'){const i=unirSel.indexOf(n);i>-1?unirSel.splice(i,1):unirSel.push(n);renderComContent();} else {toastT('Solo puedes unir mesas disponibles');} return; }
-  if(est==='libre'){askComensales(n);} else {openOrder('mesa_'+n,'Mesa '+pad(n),'🍽️');}
+  const m=getMesa(n);
+  if(est==='libre'){askComensales(n);}
+  else if(m&&m.grp){openOrder(m.grp,m.grpLabel||('Mesa '+pad(n)),'🔗');}
+  else {openOrder('mesa_'+n,'Mesa '+pad(n),'🍽️');}
 }
 function newOrder(type){
   if(type==='delivery'){askAddress();return;}
@@ -1272,7 +1291,7 @@ function confirmPay(){
   const t=payTotals();const target=payTarget;const label=(PAGOS.find(p=>p[0]===pay.m)||[])[2];
   closePay();
   toastT(`🧾 Comprobante DIAN generado · ${COP(t.total)} en ${label} · ${DYN[target].title}`);
-  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;}});}
+  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
   closeTab(target);
 }
@@ -1363,15 +1382,15 @@ document.getElementById('notesModal').addEventListener('click',e=>{if(e.target.i
 
 /* ── acciones por mesa ── */
 function openMesaAct(n){
-  mesaActN=n;const key='mesa_'+n;const has=ORD[key]&&ORD[key].length;
+  mesaActN=n;const mm=getMesa(n);const key=(mm&&mm.grp)||('mesa_'+n);const label=(mm&&mm.grpLabel)||('Mesa '+pad(n));const ico=(mm&&mm.grp)?'🔗':'🍽️';const has=ORD[key]&&ORD[key].length;
   const m=document.getElementById('mesaActModal');
   m.innerHTML=`<div class="modal" style="width:360px">
-    <div class="modal-h"><b>⚙️ Acciones · Mesa ${pad(n)}</b><div class="mx" onclick="closeMesaAct()">✕</div></div>
+    <div class="modal-h"><b>⚙️ Acciones · ${label}</b><div class="mx" onclick="closeMesaAct()">✕</div></div>
     <div class="modal-b"><div class="act-list">
-      <div class="act-item" onclick="closeMesaAct();openOrder('mesa_${n}','Mesa ${pad(n)}','🍽️')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
-      <div class="act-item" onclick="closeMesaAct();${has?`printComanda('mesa_${n}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
-      <div class="act-item" onclick="closeMesaAct();${has?`openPay('mesa_${n}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>
-      <div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>
+      <div class="act-item" onclick="closeMesaAct();openOrder('${key}','${label}','${ico}')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
+      <div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
+      <div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>
+      ${(mm&&mm.grp)?'':`<div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>`}
     </div></div></div>`;
   m.classList.add('on');
 }
