@@ -484,12 +484,26 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .clubvip .cv-btn{background:var(--amber);color:#3a2a06;border-radius:9px;padding:9px;text-align:center;font-size:11.5px;font-weight:700;margin-top:2px}
 .home-ind{width:124px;height:4px;background:rgba(255,255,255,.3);border-radius:4px;margin:4px auto 10px}
 
-/* ── Clúster de mesas unidas (se ven unificadas, no fusionadas) ── */
-.mesa-cluster{border:1.5px dashed var(--primary);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.01));border-radius:16px;padding:11px 12px 13px;margin-bottom:16px;position:relative}
-.cluster-rib{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.4px;color:#052e21;background:var(--primary);padding:4px 12px;border-radius:20px;margin-bottom:11px;box-shadow:0 6px 14px -6px rgba(0,229,160,.6)}
-.cluster-body{display:flex;align-items:stretch;flex-wrap:wrap;gap:0}
-.cluster-body .mesa{flex:1 1 130px;margin:0}
-.cluster-link{flex:0 0 34px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--primary);align-self:center}
+/* ── Clúster de mesas unidas (compacto, tarjetas tamaño normal) ── */
+.mesa-cluster{display:inline-block;vertical-align:top;border:1.5px dashed var(--primary);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.01));border-radius:16px;padding:10px 12px 12px;margin:0 14px 14px 0;position:relative;max-width:100%}
+.cluster-rib{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.4px;color:#052e21;background:var(--primary);padding:4px 12px;border-radius:20px;margin-bottom:10px;box-shadow:0 6px 14px -6px rgba(0,229,160,.6)}
+.cluster-body{display:flex;align-items:stretch;flex-wrap:nowrap;gap:0}
+.cluster-body .mesa{flex:0 0 168px;width:168px;margin:0}
+.cluster-link{flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--primary);align-self:center}
+
+/* ── Info extra en las tarjetas de mesa ── */
+.mesa{display:flex;flex-direction:column;min-height:128px}
+.mesa-m{position:static !important;margin-top:auto;padding-top:8px}
+.mesa-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.mb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(0,0,0,.22);color:#fff;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.mb.k-ready{background:rgba(255,255,255,.92);color:#0b7d53}
+.mb.alert{color:#111}
+.mb.alert.mesero{background:#fff;color:#a15a10;animation:mbpulse 1.4s infinite}
+.mb.alert.cuenta{background:#fff;color:#9e2739;animation:mbpulse 1.4s infinite}
+@keyframes mbpulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.55)}50%{transform:scale(1.05);box-shadow:0 0 0 5px rgba(255,255,255,0)}}
+.tdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.tdot.g{background:#39d98a}.tdot.a{background:#f5c542}
+.tdot.r{background:#ff5b5b;animation:mbpulse 1.6s infinite}
 
 </style>
 </head>
@@ -832,11 +846,11 @@ let pendingTarget=null, pendingProd=null, pendingSel={}, pendingMesa=null, comen
 let notesTarget=null, notesLid=null, payTarget=null, pay={m:null,tip:0,disc:0}, mesaActN=null, moveTarget=null;
 
 const MESAS=[
-  {n:1,est:'ocup',t:'hace 45 min',m:16500,piso:'Piso 1',mesero:'Laura'},
-  {n:2,est:'cobr',t:'hace 3 h',m:68000,piso:'Piso 1',mesero:'Andrés'},
-  {n:3,est:'ocup',t:'hace 20 min',m:42000,piso:'Piso 1',mesero:'Sebastián'},
+  {n:1,est:'ocup',t:'hace 45 min',mins:45,com:2,ped:'cocina',m:16500,piso:'Piso 1',mesero:'Laura'},
+  {n:2,est:'cobr',t:'hace 3 h',mins:180,com:4,ped:'listo',alerta:'cuenta',m:68000,piso:'Piso 1',mesero:'Andrés'},
+  {n:3,est:'ocup',t:'hace 20 min',mins:20,com:3,ped:'sinpedir',alerta:'mesero',m:42000,piso:'Piso 1',mesero:'Sebastián'},
   {n:4,est:'libre',piso:'Piso 1'},{n:5,est:'libre',piso:'Piso 1'},
-  {n:6,est:'ocup',t:'hace 1 h',m:120000,piso:'Piso 1',mesero:'Kelly'},
+  {n:6,est:'ocup',t:'hace 1 h',mins:60,com:5,ped:'cocina',m:120000,piso:'Piso 1',mesero:'Kelly'},
   {n:7,est:'libre',piso:'Terraza'},{n:8,est:'libre',piso:'Terraza'},
   {n:9,est:'libre',piso:'Terraza'},{n:10,est:'libre',piso:'Terraza'},
 ];
@@ -856,12 +870,35 @@ function initComandas(){
 }
 function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelectorAll('#comTypes .comtype').forEach((el,i)=>el.classList.toggle('active',COMTYPES[i][0]===t));renderComContent();}
 
+function mesaKitchen(m){
+  const key=m.grp||('mesa_'+m.n);const lines=ORD[key];
+  if(lines&&lines.length){return lines.some(l=>!l.sent)?'sinpedir':'cocina';}
+  return m.ped||null;
+}
+function timeDot(m){
+  if(m.mins==null)return '';
+  const c=m.mins<30?'g':(m.mins<=60?'a':'r');
+  return `<span class="tdot ${c}"></span>`;
+}
 function mesaCard(m){
-  const s=m.est==='libre'?'Disponible':(m.est==='cobr'?'Por cobrar · '+(m.t||''):(m.t||'ahora'));
+  const libre=m.est==='libre';
+  const key=m.grp||('mesa_'+m.n);
+  const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(m.t||'ahora'));
+  const koc=mesaKitchen(m);
+  const K={sinpedir:['⏳','Sin enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo','k-ready']};
+  const com=m.com||(ORDMETA[key]||{}).com||2;
+  const badges=[];
+  if(!libre){
+    if(m.alerta) badges.push(`<span class="mb alert ${m.alerta}">${m.alerta==='mesero'?'🔔 Llamó':'🧾 Pidió cuenta'}</span>`);
+    badges.push(`<span class="mb com">👥 ${com}</span>`);
+    if(koc&&K[koc]) badges.push(`<span class="mb ${K[koc][2]}">${K[koc][0]} ${K[koc][1]}</span>`);
+  }
   return `<div class="mesa ${m.est}${unirSel.includes(m.n)?' sel':''}" onclick="clickMesa(${m.n},'${m.est}')">
-    ${m.est!=='libre'?`<button class="mesa-act" title="Acciones" onclick="event.stopPropagation();openMesaAct(${m.n})">⋮</button>`:''}
-    <div class="mesa-ic">🪑</div><div class="mesa-n">MESA ${pad(m.n)}</div>
-    <div class="mesa-s">${s}${m.mesero&&m.est!=='libre'?' · '+m.mesero:''}</div>
+    ${!libre?`<button class="mesa-act" title="Acciones" onclick="event.stopPropagation();openMesaAct(${m.n})">⋮</button>`:''}
+    <div class="mesa-ic">🪑</div>
+    <div class="mesa-n">MESA ${pad(m.n)}</div>
+    <div class="mesa-s">${libre?'':timeDot(m)}${timeStr}${m.mesero&&!libre?' · '+m.mesero:''}</div>
+    ${badges.length?`<div class="mesa-badges">${badges.join('')}</div>`:''}
     ${m.m?`<div class="mesa-m">${COP(m.m)}</div>`:''}</div>`;
 }
 function renderComContent(){
