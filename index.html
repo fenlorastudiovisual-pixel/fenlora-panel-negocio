@@ -546,6 +546,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .order-card .oc-foot{margin-top:auto;padding-top:10px}
 .order-card .oc-tot{font-family:'Outfit',sans-serif;font-weight:800;font-size:17px}
 
+/* ── Marcador "Para llevar" por plato ── */
+.accb.b4{color:var(--amber)}.accb.b4:hover{background:var(--amber-dim);border-color:var(--amber)}
+.accb.b4.on{background:var(--amber);color:#3a2a06;border-color:var(--amber)}
+.llevar-tag{font-size:9px;background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+
 </style>
 </head>
 <body>
@@ -1166,7 +1171,7 @@ function searchEnter(target,e){
 function pick(target,id){const p=PRODUCTS.find(x=>x.id===id);if(p.opts){openOpts(target,p);}else{addLine(target,p,[]);}}
 function addLine(target,p,sel){
   const extra=sel.reduce((s,o)=>s+o.p,0);
-  ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,area:p.area||'COCINA',notes:[[]]});
+  ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,llevar:false,area:p.area||'COCINA',notes:[[]]});
   renderComanda(target);syncMesa(target);toastT('Se agregó '+p.n+' a la comanda');
 }
 function changeQty(target,lid,d){
@@ -1186,6 +1191,7 @@ function delLine(target,lid){
 }
 function toggleHold(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l&&!l.sent){l.held=!l.held;renderComanda(target);}}
 function toggleCort(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l){l.cort=!l.cort;toastT(l.cort?'🎁 Cortesía: '+l.n:'Cortesía quitada');renderComanda(target);syncMesa(target);}}
+function toggleLlevar(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l){l.llevar=!l.llevar;toastT(l.llevar?'🥡 Para llevar: '+l.n:'Ya no es para llevar');renderComanda(target);}}
 function changePrice(target,lid,v){const l=ORD[target].find(x=>x.lid===lid);if(!l)return;const n=parseInt((v+'').replace(/\D/g,''))||0;l.unit=n;renderComanda(target);syncMesa(target);}
 function setPos(target,lid,v){
   const lines=ORD[target];const from=lines.findIndex(x=>x.lid===lid);const to=Math.max(0,Math.min(lines.length-1,(+v)-1));
@@ -1211,11 +1217,12 @@ function renderComanda(target){
   body.innerHTML=lines.map((l,idx)=>{
     const o=l.opts.map(x=>x.n+(x.p?` (+${COP(x.p)})`:'')).join(' · ');
     const ns=noteStr(l);
-    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
+    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
     const acc=`<div class="cl-acc">
       <button class="accb b1" title="Notas / observación por unidad" onclick="openNotes('${target}',${l.lid})">🗒️</button>
       <button class="accb b2" title="Quitar / anular" onclick="delLine('${target}',${l.lid})">🗑️</button>
-      <button class="accb b3 ${l.cort?'on':''}" title="Cortesía (no se cobra)" onclick="toggleCort('${target}',${l.lid})">🎁</button></div>`;
+      <button class="accb b3 ${l.cort?'on':''}" title="Cortesía (no se cobra)" onclick="toggleCort('${target}',${l.lid})">🎁</button>
+      <button class="accb b4 ${l.llevar?'on':''}" title="Para llevar (empacar)" onclick="toggleLlevar('${target}',${l.lid})">🥡</button></div>`;
     const qty=l.sent?`<span class="cl-static-q">Cant: ${l.qty}</span>`:`<div class="qstep"><div class="qb" onclick="changeQty('${target}',${l.lid},-1)">−</div><span class="qv">${l.qty}</span><div class="qb" onclick="changeQty('${target}',${l.lid},1)">+</div></div>`;
     const price=l.sent?`<div class="cl-pricebox" style="opacity:.6">$ <span class="cl-price-in">${l.unit.toLocaleString('es-CO')}</span></div>`:`<div class="cl-pricebox">$ <input class="cl-price-in" value="${l.unit.toLocaleString('es-CO')}" onchange="changePrice('${target}',${l.lid},this.value)"></div>`;
     const posSel=`<div class="cl-pos">Pos <select class="cl-pos-sel" onchange="setPos('${target}',${l.lid},this.value)">${lines.map((_,i)=>`<option value="${i+1}" ${i===idx?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
@@ -1286,7 +1293,7 @@ function printComanda(target,mode){
   const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   const pre=mode==='precuenta';
   const rows=lines.map(l=>{const ns=noteStr(l);
-    return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+    return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}${l.llevar?' 🥡PARA LLEVAR':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
   const splitLine=(pre&&meta.split)?`<div class="tk-hr"></div><div class="tk-row tk-b"><span>Dividida en ${meta.split.n}</span><span>${COP(meta.split.per)} c/u</span></div>`:'';
   const ticket=`<div class="ticket">
     <div class="tk-c tk-big">${DYN[target].title.toUpperCase()}${mesaObj?' · '+mesaObj.piso.toUpperCase():''}</div>
@@ -1331,7 +1338,7 @@ function printCocina(target,items){
   const areas=[...new Set(items.map(l=>l.area))];
   const tickets=areas.map(area=>{
     const rows=items.filter(l=>l.area===area).map(l=>{const ns=noteStr(l);
-      return `<div class="tk-row tk-b"><span>${l.qty}  ${l.n}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+      return `<div class="tk-row tk-b"><span>${l.qty}  ${l.n}${l.llevar?'  🥡 PARA LLEVAR':''}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
     return `<div class="ticket">
       <div class="tk-c tk-b">Impresora ${area}</div>
       <div class="tk-c">${meta.num||''}</div>
