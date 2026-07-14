@@ -524,6 +524,16 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 /* ── Banner de cuenta dividida en el cobro ── */
 .split-banner{background:var(--amber-dim);border:1px solid rgba(245,166,35,.35);color:var(--amber);font-size:12.5px;font-weight:700;padding:10px 13px;border-radius:10px;margin-bottom:16px;text-align:center}
 
+/* ── Cobro dividido (filas de pago) ── */
+.sc-list{display:flex;flex-direction:column;gap:9px}
+.sc-row{display:flex;align-items:center;gap:8px}
+.sc-row .sc-i{width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.sc-amt{flex:1;min-width:0;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--txt);font-family:inherit;font-size:13px;outline:none}
+.sc-amt:focus{border-color:var(--primary)}
+.sc-med{background:var(--card2);border:1px solid var(--border);border-radius:9px;color:var(--txt);font-family:inherit;font-size:12px;padding:9px;outline:none;cursor:pointer;flex-shrink:0}
+.sc-x{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--red);cursor:pointer;flex-shrink:0;font-size:12px}
+.sc-x:hover{border-color:var(--red);background:var(--red-dim)}
+
 </style>
 </head>
 <body>
@@ -1372,6 +1382,7 @@ function confirmPay(){
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
   closeTab(target);
+  saveState();
 }
 function closePay(){document.getElementById('payModal').classList.remove('on');}
 document.getElementById('payModal').addEventListener('click',e=>{if(e.target.id==='payModal')closePay();});
@@ -1384,12 +1395,11 @@ function dividir(target){
   m.innerHTML=`<div class="modal" style="width:440px">
     <div class="modal-h"><b>✂️ Dividir cuenta · ${COP(total)}</b><div class="mx" onclick="closeSplit()">✕</div></div>
     <div class="modal-b" id="splitBody">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px">
         <button class="btn ghost" onclick="splitEqual('${target}')">👥 Partes iguales</button>
-        <button class="btn ghost" onclick="splitItems('${target}')">🍽️ Por producto</button>
-        <button class="btn ghost" onclick="splitMonto('${target}')">💲 Por monto</button>
+        <button class="btn ghost" onclick="splitCheckout('${target}','monto')">💲 Montos distintos</button>
       </div>
-      <div style="font-size:12px;color:var(--txt2);text-align:center">Elige cómo dividir la cuenta.</div>
+      <div style="font-size:12px;color:var(--txt2);text-align:center">Elige cómo dividir. Cada persona podrá pagar con su propio medio y se genera una factura por persona.</div>
     </div></div>`;
   m.classList.add('on');
 }
@@ -1400,35 +1410,76 @@ function splitEqual(target){
     <div style="text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">¿Entre cuántas personas?</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:20px">
         <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(-1)">−</div>
-        <span id="splitN" style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700">${n}</span>
+        <span style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700">${n}</span>
         <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(1)">+</div></div></div>
-    <div class="trow tot" style="justify-content:space-between;margin-bottom:14px"><span>Cada persona paga</span><span class="tv">${COP(per)}</span></div>
-    <button class="btn primary" onclick="aplicarDivision('${target}',${n},${per})">✅ Aplicar y cobrar dividido</button>
-    <button class="btn ghost" style="margin-top:8px" onclick="printSplitPre('${target}',${n},${per})">🧾 Imprimir precuenta dividida</button>`;};
+    <div class="trow tot" style="justify-content:space-between;margin-bottom:14px"><span>Cada persona paga aprox.</span><span class="tv">${COP(per)}</span></div>
+    <button class="btn primary" onclick="splitCheckout('${target}','iguales',${n})">💵 Continuar al cobro dividido</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="dividir('${target}')">← Volver</button>`;};
   window._sn=(d)=>{n=Math.max(2,n+d);draw();};
   draw();
 }
-function aplicarDivision(target,n,per){
-  ORDMETA[target]=ORDMETA[target]||{};ORDMETA[target].split={mode:'iguales',n,per};
-  closeSplit();toastT('Cuenta dividida en '+n+' · '+COP(per)+' c/u');openPay(target);
-}
-function printSplitPre(target,n,per){
-  ORDMETA[target]=ORDMETA[target]||{};ORDMETA[target].split={mode:'iguales',n,per};
-  closeSplit();printComanda(target,'precuenta');
-}
-function splitItems(target){
-  const lines=ORD[target];
-  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Referencia: cada producto por separado. Para cobrar aparte, usa <b>Mover platos</b> a otra mesa/cuenta y factura cada una.</div>
-    ${lines.map(l=>`<div class="trow"><span>${l.qty}x ${l.n}${l.cort?' (cortesía)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>`).join('')}
-    <button class="btn ghost" style="margin-top:12px" onclick="dividir('${target}')">← Volver</button>`;
-}
-function splitMonto(target){
+/* ── Cobro dividido: cada parte con su monto y medio → genera una factura por parte ── */
+function splitCheckout(target,mode,n){
   const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
-  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Ingresa cuánto paga la primera persona; el resto queda para las demás.</div>
-    <input class="disc-in" inputmode="numeric" placeholder="Monto de la persona 1" oninput="window._sm(this.value)">
-    <div class="trow tot" id="smRest"><span>Queda por pagar</span><span class="tv">${COP(total)}</span></div>
-    <button class="btn ghost" style="margin-top:12px" onclick="dividir('${target}')">← Volver</button>`;
-  window._sm=(v)=>{const p=parseInt((v+'').replace(/\D/g,''))||0;const el=document.querySelector('#smRest .tv');if(el)el.textContent=COP(Math.max(0,total-p));};
+  let parts;
+  if(mode==='iguales'){const per=Math.floor(total/n);parts=Array.from({length:n},(_,i)=>({amount:i===n-1?total-per*(n-1):per,medio:'efectivo'}));}
+  else{parts=[{amount:0,medio:'efectivo'},{amount:0,medio:'efectivo'}];}
+  window._sc={target,total,parts};
+  renderSplitCheckout();
+}
+function renderSplitCheckout(){
+  const {target,total,parts}=window._sc;
+  const cub=parts.reduce((s,p)=>s+(p.amount||0),0);const falta=total-cub;
+  const rows=parts.map((p,i)=>`<div class="sc-row">
+      <div class="sc-i">${i+1}</div>
+      <input class="sc-amt" inputmode="numeric" value="${p.amount||''}" placeholder="Monto" oninput="scAmt(${i},this.value)">
+      <select class="sc-med" onchange="scMed(${i},this.value)">${PAGOS.map(pg=>`<option value="${pg[0]}" ${p.medio===pg[0]?'selected':''}>${pg[2]}</option>`).join('')}</select>
+      ${parts.length>2?`<button class="sc-x" onclick="scDel(${i})">✕</button>`:''}
+    </div>`).join('');
+  const m=document.getElementById('splitModal');
+  m.innerHTML=`<div class="modal" style="width:470px">
+    <div class="modal-h"><b>💵 Cobro dividido · ${COP(total)}</b><div class="mx" onclick="closeSplit()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:11.5px;color:var(--txt2);margin-bottom:12px">Ajusta el monto y el medio de pago de cada persona. Se genera una factura por cada pago.</div>
+      <div class="sc-list">${rows}</div>
+      <button class="btn ghost" style="margin-top:10px;width:auto;padding:9px 14px" onclick="scAdd()">＋ Agregar pago</button>
+      <div class="pay-sum" style="margin-top:14px" id="scSum">
+        <div class="trow"><span>Cubierto</span><span>${COP(cub)}</span></div>
+        <div class="trow tot"><span>${falta>0?'Falta':(falta<0?'Sobra':'Completo ✓')}</span><span class="tv">${COP(Math.abs(falta))}</span></div>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn primary" id="scBtn" ${Math.abs(falta)<1?'':'disabled'} onclick="confirmSplitCheckout()">🧾 Generar ${parts.length} factura(s)</button></div></div>`;
+  m.classList.add('on');
+}
+function scUpdateSummary(){
+  const {total,parts}=window._sc;const cub=parts.reduce((s,p)=>s+(p.amount||0),0);const falta=total-cub;
+  const el=document.getElementById('scSum');if(el)el.innerHTML=`<div class="trow"><span>Cubierto</span><span>${COP(cub)}</span></div><div class="trow tot"><span>${falta>0?'Falta':(falta<0?'Sobra':'Completo ✓')}</span><span class="tv">${COP(Math.abs(falta))}</span></div>`;
+  const btn=document.getElementById('scBtn');if(btn)btn.disabled=!(Math.abs(falta)<1);
+}
+function scAmt(i,v){window._sc.parts[i].amount=parseInt((v+'').replace(/\D/g,''))||0;scUpdateSummary();}
+function scMed(i,v){window._sc.parts[i].medio=v;}
+function scAdd(){window._sc.parts.push({amount:0,medio:'efectivo'});renderSplitCheckout();}
+function scDel(i){window._sc.parts.splice(i,1);renderSplitCheckout();}
+function confirmSplitCheckout(){
+  const {target,parts}=window._sc;const meta=ORDMETA[target]||{};const lines=ORD[target]||[];
+  const baseNum=meta.num||('F-'+Date.now());
+  parts.forEach((p,i)=>{
+    addFactura({
+      num: baseNum+'-'+(i+1), ts: Date.now(),
+      origen: (DYN[target]&&DYN[target].title)||target,
+      mesero: meta.mesero||'', cliente: meta.cliente||'',
+      items: i===0?lines.map(l=>({n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})):[],
+      nItems: i===0?lines.reduce((s,l)=>s+l.qty,0):0,
+      subtotal: p.amount, propina:0, descuento:0, total: p.amount,
+      medio: p.medio, medioLabel:(PAGOS.find(x=>x[0]===p.medio)||[])[2],
+      split:{parte:i+1, de:parts.length}
+    });
+  });
+  toastT(parts.length+' facturas generadas · '+COP(parts.reduce((s,p)=>s+p.amount,0)));
+  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const mm=getMesa(+x);if(mm){mm.est='libre';mm.t='';mm.m=0;mm.merged=false;mm.grp=null;mm.grpLabel=null;}});}
+  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
+  closeSplit();closeTab(target);saveState();
+  if(document.getElementById('comContent'))renderComContent();
 }
 function closeSplit(){document.getElementById('splitModal').classList.remove('on');}
 document.getElementById('splitModal').addEventListener('click',e=>{if(e.target.id==='splitModal')closeSplit();});
@@ -1840,9 +1891,34 @@ function verFactura(num){
     <div class="modal-f"><div class="print-actions"><button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpresa')">🖨️ Reimprimir</button><button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint()">Cerrar</button></div></div></div>`;
   m.classList.add('on');
 }
+/* ── Persistencia del ESTADO OPERATIVO (comandas, mesas, contadores) ── */
+function _serMesas(){return MESAS.map(m=>({n:m.n,est:m.est,piso:m.piso,cap:m.cap,m:m.m,t:m.t,mins:m.mins,com:m.com,ped:m.ped,alerta:m.alerta,grp:m.grp,grpLabel:m.grpLabel,merged:m.merged}));}
+function _openTabsInfo(){try{return (openTabs||[]).filter(k=>/^(mesa_|llevar_|delivery_|dext_|online_)/.test(k)&&DYN[k]).map(k=>({k,title:DYN[k].title,ico:DYN[k].ico}));}catch(e){return [];}}
+function saveState(){ try{ localStorage.setItem('fenlora_estado',JSON.stringify({ORD,ORDMETA,ORDCAT,mesas:_serMesas(),LID,ordNumSeq,tabs:_openTabsInfo()})); }catch(e){} }
+function loadState(){
+  try{
+    const r=localStorage.getItem('fenlora_estado'); if(!r)return;
+    const s=JSON.parse(r);
+    Object.keys(ORD).forEach(k=>delete ORD[k]); Object.assign(ORD,s.ORD||{});
+    Object.keys(ORDMETA).forEach(k=>delete ORDMETA[k]); Object.assign(ORDMETA,s.ORDMETA||{});
+    Object.keys(ORDCAT).forEach(k=>delete ORDCAT[k]); Object.assign(ORDCAT,s.ORDCAT||{});
+    if(Array.isArray(s.mesas)&&s.mesas.length){ MESAS.length=0; s.mesas.forEach(m=>MESAS.push(m)); }
+    if(typeof s.LID==='number') LID=Math.max(LID,s.LID);
+    if(typeof s.ordNumSeq==='number') ordNumSeq=Math.max(ordNumSeq,s.ordNumSeq);
+    window._restoreTabs=s.tabs||[];
+  }catch(e){}
+}
+function restoreWorkspace(){
+  const tabs=window._restoreTabs||[];
+  tabs.forEach(t=>{ if(ORD[t.k]) openOrder(t.k,t.title,t.ico); });
+  if(tabs.length) openTab('panel');
+}
 loadFacturas();
+loadState();
+try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); }catch(e){}
 
 buildPanel('panel');openTab('panel');
+  if(typeof restoreWorkspace==='function') restoreWorkspace();
 </script>
 </body>
 </html>
