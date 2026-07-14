@@ -534,6 +534,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .sc-x{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--red);cursor:pointer;flex-shrink:0;font-size:12px}
 .sc-x:hover{border-color:var(--red);background:var(--red-dim)}
 
+/* ── Tarjetas de pedidos no-mesa (llevar/domicilio/online) reabribles ── */
+.order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+.order-card{background:linear-gradient(160deg,#d98a1f,#c47a15);border:none;border-radius:16px;padding:16px;cursor:pointer;color:#fff;transition:.14s;position:relative;min-height:120px;display:flex;flex-direction:column}
+.order-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(217,138,31,.55)}
+.order-card.cobr{background:linear-gradient(160deg,#d64560,#b33049)}
+.order-card .oc-top{display:flex;align-items:center;gap:9px;font-family:'Outfit',sans-serif;font-weight:700;font-size:15px}
+.order-card .oc-ico{font-size:18px}
+.order-card .oc-sub{font-size:11.5px;opacity:.92;margin-top:5px}
+.order-card .oc-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.order-card .oc-foot{margin-top:auto;padding-top:10px}
+.order-card .oc-tot{font-family:'Outfit',sans-serif;font-weight:800;font-size:17px}
+
 </style>
 </head>
 <body>
@@ -891,8 +903,9 @@ function comandasView(){
   <div class="comtypes" id="comTypes"></div>
   <div id="comContent"></div>`;
 }
+function comCount(t){ if(t==='mesas') return MESAS.filter(m=>m.est!=='libre').length; return Object.keys(ORD).filter(k=>k.startsWith(t+'_')&&ORD[k]&&ORD[k].length).length; }
 function initComandas(){
-  document.getElementById('comTypes').innerHTML=COMTYPES.map(c=>`<div class="comtype${c[0]===comType?' active':''}" onclick="setComType('${c[0]}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${c[3]}</span></div>`).join('');
+  document.getElementById('comTypes').innerHTML=COMTYPES.map(c=>`<div class="comtype${c[0]===comType?' active':''}" onclick="setComType('${c[0]}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${comCount(c[0])}</span></div>`).join('');
   renderComContent();
 }
 function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelectorAll('#comTypes .comtype').forEach((el,i)=>el.classList.toggle('active',COMTYPES[i][0]===t));renderComContent();}
@@ -911,13 +924,17 @@ function timeDot(m){
   const c=m.mins<30?'g':(m.mins<=60?'a':'r');
   return `<span class="tdot ${c}"></span>`;
 }
+function dotByMins(mins){ if(mins==null)return ''; const c=mins<30?'g':(mins<=60?'a':'r'); return `<span class="tdot ${c}"></span>`; }
 function mesaCard(m){
   const libre=m.est==='libre';
   const key=m.grp||('mesa_'+m.n);
-  const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(m.t||'ahora'));
+  const ometa=ORDMETA[key]||{};
+  const mins=(!libre&&ometa.openedAt)?Math.max(0,Math.floor((Date.now()-ometa.openedAt)/60000)):null;
+  const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(mins!=null?('hace '+mins+' min'):(m.t||'ahora')));
+  const mesero=ometa.mesero||m.mesero;
   const koc=mesaKitchen(m);
   const K={sinpedir:['⏳','Sin enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo','k-ready']};
-  const com=m.com||(ORDMETA[key]||{}).com||2;
+  const com=(ometa.com)||m.com||2;
   const badges=[];
   if(!libre){
     if(m.alerta) badges.push(`<span class="mb alert ${m.alerta}">${m.alerta==='mesero'?'🔔 Llamó':'🧾 Pidió cuenta'}</span>`);
@@ -928,12 +945,13 @@ function mesaCard(m){
     ${!libre?`<button class="mesa-act" title="Acciones" onclick="event.stopPropagation();openMesaAct(${m.n})">⋮</button>`:''}
     <div class="mesa-ic">🪑</div>
     <div class="mesa-n">MESA ${pad(m.n)}</div>
-    <div class="mesa-s">${libre?'':timeDot(m)}${timeStr}${m.mesero&&!libre?' · '+m.mesero:''}</div>
+    <div class="mesa-s">${libre?'':dotByMins(mins)}${timeStr}${mesero&&!libre?' · '+mesero:''}</div>
     ${badges.length?`<div class="mesa-badges">${badges.join('')}</div>`:''}
     ${m.m?`<div class="mesa-m">${COP(m.m)}</div>`:''}</div>`;
 }
 function renderComContent(){
   const c=document.getElementById('comContent'); if(!c)return;
+  const ct=document.getElementById('comTypes'); if(ct) ct.querySelectorAll('.comtype').forEach((el,i)=>{const b=el.querySelector('.ct-badge'); if(b&&COMTYPES[i])b.textContent=comCount(COMTYPES[i][0]);});
   if(comType==='mesas'){
     let html=`<div class="mesas-head"><b>🗺️ Mapa de mesas</b>
       <button class="btn ghost" style="width:auto;padding:9px 14px" onclick="toggleUnir()">${unirMode?'✕ Cancelar':'🔗 Unir mesas'}</button></div>`;
@@ -958,10 +976,25 @@ function renderComContent(){
   } else {
     const label={llevar:'para llevar',delivery:'a domicilio',dext:'de Rappi / PedidosYa',online:'online'}[comType];
     const ico={llevar:'🥡',delivery:'🛵',dext:'🛴',online:'🌐'}[comType];
-    c.innerHTML=`<div class="empty-type"><div class="et-ic">${ico}</div>
-      <div class="et-t">Pedidos ${label}</div>
-      <div class="et-d">Estos pedidos no ocupan mesa. ${comType==='delivery'?'Al crearlo se pide la dirección del cliente.':'Se va directo a tomar el pedido.'}</div>
-      <button class="btn primary" style="width:auto;padding:12px 22px;margin-top:16px;display:inline-flex" onclick="newOrder('${comType}')">➕ Nueva orden ${label}</button></div>`;
+    const active=Object.keys(ORD).filter(k=>k.startsWith(comType+'_')&&ORD[k]&&ORD[k].length);
+    let html=`<div class="mesas-head"><b>${ico} Pedidos ${label}</b><button class="btn primary" style="width:auto;padding:9px 16px" onclick="newOrder('${comType}')">➕ Nueva orden</button></div>`;
+    if(active.length){
+      html+=`<div class="order-grid">`+active.map(k=>{
+        const mt=ORDMETA[k]||{};const tot=ORD[k].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);const nit=ORD[k].reduce((s,l)=>s+l.qty,0);
+        const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',cocina:'🍳 En cocina',listo:'✅ Listo'}[koc]||'';
+        return `<div class="order-card" onclick="reopenOrder('${k}')">
+          <div class="oc-top"><span class="oc-ico">${mt.ico||ico}</span><b>${mt.title||k}</b></div>
+          ${mt.address?`<div class="oc-sub">📍 ${mt.address}</div>`:''}${mt.phone?`<div class="oc-sub">📞 ${mt.phone}</div>`:''}${mt.cliente?`<div class="oc-sub">👤 ${mt.cliente}</div>`:''}
+          <div class="oc-badges">${kl?`<span class="mb">${kl}</span>`:''}<span class="mb com">${nit} ítems</span></div>
+          <div class="oc-foot"><span class="oc-tot">${COP(tot)}</span></div>
+        </div>`;
+      }).join('')+`</div>`;
+    } else {
+      html+=`<div class="empty-type" style="margin-top:24px"><div class="et-ic">${ico}</div>
+        <div class="et-t">Sin pedidos ${label} activos</div>
+        <div class="et-d">Toca “Nueva orden” para crear uno.${comType==='delivery'?' Se pedirá la dirección del cliente.':''}</div></div>`;
+    }
+    c.innerHTML=html;
   }
 }
 function toggleUnir(){unirMode=!unirMode;unirSel=[];renderComContent();}
@@ -1037,11 +1070,13 @@ function startDelivery(){
 function openOrder(target,title,ico,meta){
   if(!ORD[target]){
     ORD[target]=[];ORDCAT[target]='Recomendados';
-    ORDMETA[target]=Object.assign({com:4,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'},meta||{});
+    ORDMETA[target]=Object.assign({com:4,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',openedAt:Date.now(),title,ico},meta||{});
   }
-  DYN[target]={title,ico,render:()=>orderView(target),init:()=>initOrder(target)};
+  const mt=ORDMETA[target]; if(mt){ if(!mt.title)mt.title=title; if(!mt.ico)mt.ico=ico; if(!mt.openedAt)mt.openedAt=Date.now(); }
+  DYN[target]={title:(mt&&mt.title)||title,ico:(mt&&mt.ico)||ico,render:()=>orderView(target),init:()=>initOrder(target)};
   openTab(target);
 }
+function reopenOrder(k){const mt=ORDMETA[k]||{};openOrder(k,mt.title||k,mt.ico||'🧾');}
 function orderView(target){
   const meta=ORDMETA[target]||{}; const isMesa=target.startsWith('mesa_');
   const mesaObj=isMesa?getMesa(+target.replace('mesa_','').split('_')[0]):null;
@@ -1894,7 +1929,7 @@ function verFactura(num){
 /* ── Persistencia del ESTADO OPERATIVO (comandas, mesas, contadores) ── */
 function _serMesas(){return MESAS.map(m=>({n:m.n,est:m.est,piso:m.piso,cap:m.cap,m:m.m,t:m.t,mins:m.mins,com:m.com,ped:m.ped,alerta:m.alerta,grp:m.grp,grpLabel:m.grpLabel,merged:m.merged}));}
 function _openTabsInfo(){try{return (openTabs||[]).filter(k=>/^(mesa_|llevar_|delivery_|dext_|online_)/.test(k)&&DYN[k]).map(k=>({k,title:DYN[k].title,ico:DYN[k].ico}));}catch(e){return [];}}
-function saveState(){ try{ localStorage.setItem('fenlora_estado',JSON.stringify({ORD,ORDMETA,ORDCAT,mesas:_serMesas(),LID,ordNumSeq,tabs:_openTabsInfo()})); }catch(e){} }
+function saveState(){ try{ localStorage.setItem('fenlora_estado',JSON.stringify({ORD,ORDMETA,ORDCAT,mesas:_serMesas(),LID,ordSeq,ordNumSeq,tabs:_openTabsInfo()})); }catch(e){} }
 function loadState(){
   try{
     const r=localStorage.getItem('fenlora_estado'); if(!r)return;
@@ -1904,6 +1939,7 @@ function loadState(){
     Object.keys(ORDCAT).forEach(k=>delete ORDCAT[k]); Object.assign(ORDCAT,s.ORDCAT||{});
     if(Array.isArray(s.mesas)&&s.mesas.length){ MESAS.length=0; s.mesas.forEach(m=>MESAS.push(m)); }
     if(typeof s.LID==='number') LID=Math.max(LID,s.LID);
+    if(typeof s.ordSeq==='number') ordSeq=Math.max(ordSeq,s.ordSeq);
     if(typeof s.ordNumSeq==='number') ordNumSeq=Math.max(ordNumSeq,s.ordNumSeq);
     window._restoreTabs=s.tabs||[];
   }catch(e){}
@@ -1915,7 +1951,7 @@ function restoreWorkspace(){
 }
 loadFacturas();
 loadState();
-try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); }catch(e){}
+try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); setInterval(()=>{ if(!document.hidden&&comType==='mesas'&&document.getElementById('comContent')) renderComContent(); },30000); }catch(e){}
 
 buildPanel('panel');openTab('panel');
   if(typeof restoreWorkspace==='function') restoreWorkspace();
