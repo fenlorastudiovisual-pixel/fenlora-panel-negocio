@@ -521,6 +521,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .medio-row b{font-family:'Outfit',sans-serif;font-size:13px}
 .dash-empty{background:var(--card);border:1px dashed var(--border2);border-radius:12px;padding:22px;font-size:12.5px;color:var(--txt2);line-height:1.7;text-align:center}
 
+/* ── Banner de cuenta dividida en el cobro ── */
+.split-banner{background:var(--amber-dim);border:1px solid rgba(245,166,35,.35);color:var(--amber);font-size:12.5px;font-weight:700;padding:10px 13px;border-radius:10px;margin-bottom:16px;text-align:center}
+
 </style>
 </head>
 <body>
@@ -1236,12 +1239,13 @@ function printComanda(target,mode){
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
-  const titulo=mode==='precuenta'?'PRECUENTA':'COMANDA';
+  const pre=mode==='precuenta';
   const rows=lines.map(l=>{const ns=noteStr(l);
     return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+  const splitLine=(pre&&meta.split)?`<div class="tk-hr"></div><div class="tk-row tk-b"><span>Dividida en ${meta.split.n}</span><span>${COP(meta.split.per)} c/u</span></div>`:'';
   const ticket=`<div class="ticket">
     <div class="tk-c tk-big">${DYN[target].title.toUpperCase()}${mesaObj?' · '+mesaObj.piso.toUpperCase():''}</div>
-    <div class="tk-c">${titulo}</div>
+    <div class="tk-c">${pre?'SU CUENTA':'COMANDA'}</div>
     <div class="tk-hr"></div>
     <div>Cliente: ${meta.cliente||'—'}</div>
     <div>Mesero: ${meta.mesero||'—'}</div>
@@ -1252,19 +1256,24 @@ function printComanda(target,mode){
     ${rows}
     <div class="tk-hr"></div>
     <div class="tk-row tk-big"><span>TOTAL</span><span>${COP(total)}</span></div>
+    ${splitLine}
     ${meta.obs?`<div class="tk-hr"></div><div>Obs: ${meta.obs}</div>`:''}
-    <div class="tk-foot">${fecha}<br>FENLORA CLOUD</div>
+    <div class="tk-foot">${pre?'Documento NO fiscal · para revisión del cliente<br>':''}${fecha}<br>FENLORA CLOUD</div>
   </div>`;
+  const acts=pre
+    ? `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Precuenta impresa')">🖨️ Imprimir</button>
+       <button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint();openPay('${target}')">💵 Cobrar ahora</button>`
+    : `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Comanda impresa')">🖨️ Imprimir</button>
+       <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🔁 Reimpresa')">🔁 Reimprimir</button>
+       <button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint();enviarProduccion('${target}')">🔥 Enviar a Producción</button>`;
   const m=document.getElementById('printModal');
   m.innerHTML=`<div class="modal" style="width:520px">
-    <div class="modal-h"><b>🧾 Imprimir ${titulo.toLowerCase()}</b><div class="mx" onclick="closePrint()">✕</div></div>
-    <div class="modal-b"><div class="ticket-wrap">${ticket}</div></div>
-    <div class="modal-f"><div class="print-actions">
-      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Enviado a impresora')">🖨️ Imprimir</button>
-      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpreso')">🔁 Reimprimir</button>
-      <button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint();enviarProduccion('${target}')">🔥 Enviar a Producción</button>
-    </div></div></div>`;
+    <div class="modal-h"><b>${pre?'🧾 Precuenta · cuenta del cliente':'📋 Comanda · comprobante interno'}</b><div class="mx" onclick="closePrint()">✕</div></div>
+    <div class="modal-b"><div class="ticket-wrap">${ticket}</div>
+      <div style="font-size:11.5px;color:var(--txt2);text-align:center;margin-top:10px">${pre?'Se entrega al cliente para que revise antes de pagar. No cobra ni cierra la mesa.':'Comprobante del pedido para el mesero/registro. Con “Enviar a Producción” va a cocina.'}</div></div>
+    <div class="modal-f"><div class="print-actions">${acts}</div></div></div>`;
   m.classList.add('on');
+  if(pre&&isMesa){ target.replace('mesa_','').split('_').forEach(x=>{const mm=getMesa(+x);if(mm&&mm.est!=='libre')mm.est='cobr';}); if(document.getElementById('comContent'))renderComContent(); }
 }
 function closePrint(){document.getElementById('printModal').classList.remove('on');}
 document.getElementById('printModal').addEventListener('click',e=>{if(e.target.id==='printModal')closePrint();});
@@ -1321,6 +1330,7 @@ function renderPay(){
   m.innerHTML=`<div class="modal" style="width:460px">
     <div class="modal-h"><b>💵 Cobrar · ${DYN[payTarget].title}</b><div class="mx" onclick="closePay()">✕</div></div>
     <div class="modal-b">
+      ${(ORDMETA[payTarget]&&ORDMETA[payTarget].split)?`<div class="split-banner">✂️ Cuenta dividida en ${ORDMETA[payTarget].split.n} · ${COP(ORDMETA[payTarget].split.per)} por persona</div>`:''}
       <div class="pay-sec">Medio de pago</div>
       <div class="pay-grid">${PAGOS.map(p=>`<div class="pay-m ${pay.m===p[0]?'on':''}" onclick="payMethod('${p[0]}')"><div class="pmi">${p[1]}</div><div class="pml">${p[2]}</div></div>`).join('')}</div>
       <div class="pay-sec">Propina</div>
@@ -1354,7 +1364,7 @@ function confirmPay(){
     items: lines.map(l=>({n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})),
     nItems: lines.reduce((s,l)=>s+l.qty,0),
     subtotal: t.subtotal, propina: t.tipAmt, descuento: t.disc, total: t.total,
-    medio: pay.m, medioLabel: label
+    medio: pay.m, medioLabel: label, split: meta.split||null
   };
   addFactura(factura);
   closePay();
@@ -1371,14 +1381,13 @@ function dividir(target){
   const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   if(!total){toastT('La comanda está vacía');return;}
   const m=document.getElementById('splitModal');
-  m.innerHTML=`<div class="modal" style="width:430px">
+  m.innerHTML=`<div class="modal" style="width:440px">
     <div class="modal-h"><b>✂️ Dividir cuenta · ${COP(total)}</b><div class="mx" onclick="closeSplit()">✕</div></div>
     <div class="modal-b" id="splitBody">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px">
         <button class="btn ghost" onclick="splitEqual('${target}')">👥 Partes iguales</button>
         <button class="btn ghost" onclick="splitItems('${target}')">🍽️ Por producto</button>
         <button class="btn ghost" onclick="splitMonto('${target}')">💲 Por monto</button>
-        <button class="btn ghost" onclick="splitItems('${target}')">🙋 Por comensal</button>
       </div>
       <div style="font-size:12px;color:var(--txt2);text-align:center">Elige cómo dividir la cuenta.</div>
     </div></div>`;
@@ -1387,26 +1396,38 @@ function dividir(target){
 function splitEqual(target){
   const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   let n=2;
-  const draw=()=>{document.getElementById('splitBody').innerHTML=`
-    <div style="text-align:center;margin-bottom:16px"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">¿Entre cuántas personas?</div>
+  const draw=()=>{const per=Math.ceil(total/n);document.getElementById('splitBody').innerHTML=`
+    <div style="text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">¿Entre cuántas personas?</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:20px">
         <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(-1)">−</div>
         <span id="splitN" style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700">${n}</span>
         <div class="qb" style="width:38px;height:38px;font-size:19px" onclick="window._sn(1)">+</div></div></div>
-    <div class="trow tot" style="justify-content:space-between"><span>Cada persona paga</span><span class="tv">${COP(Math.ceil(total/n))}</span></div>`;};
+    <div class="trow tot" style="justify-content:space-between;margin-bottom:14px"><span>Cada persona paga</span><span class="tv">${COP(per)}</span></div>
+    <button class="btn primary" onclick="aplicarDivision('${target}',${n},${per})">✅ Aplicar y cobrar dividido</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="printSplitPre('${target}',${n},${per})">🧾 Imprimir precuenta dividida</button>`;};
   window._sn=(d)=>{n=Math.max(2,n+d);draw();};
   draw();
 }
+function aplicarDivision(target,n,per){
+  ORDMETA[target]=ORDMETA[target]||{};ORDMETA[target].split={mode:'iguales',n,per};
+  closeSplit();toastT('Cuenta dividida en '+n+' · '+COP(per)+' c/u');openPay(target);
+}
+function printSplitPre(target,n,per){
+  ORDMETA[target]=ORDMETA[target]||{};ORDMETA[target].split={mode:'iguales',n,per};
+  closeSplit();printComanda(target,'precuenta');
+}
 function splitItems(target){
   const lines=ORD[target];
-  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Cada producto como pago aparte:</div>
-    ${lines.map(l=>`<div class="trow"><span>${l.qty}x ${l.n}${l.cort?' (cortesía)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>`).join('')}`;
+  document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Referencia: cada producto por separado. Para cobrar aparte, usa <b>Mover platos</b> a otra mesa/cuenta y factura cada una.</div>
+    ${lines.map(l=>`<div class="trow"><span>${l.qty}x ${l.n}${l.cort?' (cortesía)':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>`).join('')}
+    <button class="btn ghost" style="margin-top:12px" onclick="dividir('${target}')">← Volver</button>`;
 }
 function splitMonto(target){
   const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   document.getElementById('splitBody').innerHTML=`<div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Ingresa cuánto paga la primera persona; el resto queda para las demás.</div>
     <input class="disc-in" inputmode="numeric" placeholder="Monto de la persona 1" oninput="window._sm(this.value)">
-    <div class="trow tot" id="smRest"><span>Queda por pagar</span><span class="tv">${COP(total)}</span></div>`;
+    <div class="trow tot" id="smRest"><span>Queda por pagar</span><span class="tv">${COP(total)}</span></div>
+    <button class="btn ghost" style="margin-top:12px" onclick="dividir('${target}')">← Volver</button>`;
   window._sm=(v)=>{const p=parseInt((v+'').replace(/\D/g,''))||0;const el=document.querySelector('#smRest .tv');if(el)el.textContent=COP(Math.max(0,total-p));};
 }
 function closeSplit(){document.getElementById('splitModal').classList.remove('on');}
@@ -1810,6 +1831,7 @@ function verFactura(num){
     ${f.propina?`<div class="tk-row"><span>Propina</span><span>${COP(f.propina)}</span></div>`:''}
     ${f.descuento?`<div class="tk-row"><span>Descuento</span><span>- ${COP(f.descuento)}</span></div>`:''}
     <div class="tk-row tk-big"><span>TOTAL</span><span>${COP(f.total)}</span></div>
+    ${f.split?`<div class="tk-row tk-b"><span>Dividida en ${f.split.n}</span><span>${COP(f.split.per)} c/u</span></div>`:''}
     <div class="tk-row"><span>Pago</span><span>${f.medioLabel||f.medio}</span></div>
     <div class="tk-foot">FENLORA CLOUD</div></div>`;
   const m=document.getElementById('printModal');
