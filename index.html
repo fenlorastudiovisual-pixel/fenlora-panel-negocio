@@ -661,6 +661,52 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .served-tag{font-size:9px;background:var(--card2);color:var(--txt2);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle;border:1px solid var(--border)}
 .mb.k-served{background:var(--card);color:var(--txt2);border:1px solid var(--border2)}
 
+
+/* ── Módulo Productos ── */
+.prd-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.prd-cats{display:flex;gap:8px;flex-wrap:wrap}
+.prd-ctab{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:9px;cursor:pointer;font-family:inherit}
+.prd-ctab.on{background:var(--primary);color:#052e21;border-color:var(--primary)}
+.prd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-items:start}
+.prd-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.prd-ph{height:130px;background-size:cover;background-position:center;background-color:var(--card2)}
+.prd-ph.emoji{display:flex;align-items:center;justify-content:center;font-size:52px}
+.prd-body{padding:12px 13px 6px}
+.prd-nm{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px}
+.prd-meta{font-size:11.5px;color:var(--txt2);margin-top:3px}
+.prd-flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pf{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:9px;background:var(--card2);color:var(--txt2)}
+.pf.qr{background:var(--blue-dim);color:var(--blue)}.pf.rec{background:var(--amber-dim);color:var(--amber)}
+.pf.off{background:var(--red-dim);color:var(--red)}.pf.opt{background:var(--primary-dim);color:var(--primary)}
+.prd-acts{display:flex;gap:7px;padding:8px 11px 12px;margin-top:auto}
+.pe-img{width:100%;height:100%;background-size:cover;background-position:center;border-radius:12px}
+.prod .pe-img{position:absolute;inset:0;border-radius:16px}
+.pe2-img{display:inline-block;width:26px;height:26px;background-size:cover;background-position:center;border-radius:7px}
+/* formulario de producto */
+.pf-photo{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.pf-ph{width:88px;height:88px;border-radius:14px;background:var(--card2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;border:1px solid var(--border)}
+.pf-f{margin-bottom:12px;display:flex;flex-direction:column}
+.pf-f label{font-size:11.5px;color:var(--txt2);font-weight:700;margin-bottom:5px}
+.pf-in{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;width:100%}
+.pf-in:focus{border-color:var(--primary)}
+.pf-in.sm{padding:7px 9px;font-size:12.5px}
+.pf-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pf-toggles{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0 8px;padding:12px;background:var(--card2);border-radius:11px}
+.pf-tgl{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;cursor:pointer}
+.pf-tgl.sm{font-size:11px}
+.pf-sec{display:flex;align-items:center;justify-content:space-between;margin:16px 0 9px;font-family:'Outfit',sans-serif;font-size:13.5px}
+.pf-grp{border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:10px;background:var(--card2)}
+.pf-grp-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.pf-grp-h .pf-in.sm{flex:1;min-width:120px}
+.pf-item{display:flex;gap:8px;margin-bottom:7px}
+.pf-item .pf-in.sm{flex:1}
+.pf-item .pf-in.price{flex:0 0 100px}
+.pf-del{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--red);cursor:pointer;flex-shrink:0}
+.pf-notes{display:flex;flex-wrap:wrap;gap:7px;padding:11px;background:var(--card2);border-radius:11px;align-items:center}
+.pf-note{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.pf-note b{cursor:pointer;color:var(--red);font-weight:700}
+.pf-note-in{flex:1;min-width:140px;background:transparent;border:none;color:var(--txt);font-family:inherit;font-size:13px;outline:none;padding:5px}
+
 </style>
 </head>
 <body>
@@ -706,6 +752,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="qrModal"></div>
 <div class="modal-bg" id="mesasModal"></div>
 <div class="modal-bg" id="lineModal"></div>
+<div class="modal-bg" id="prodModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -718,7 +765,7 @@ const S = {
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'construccion', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
   // CATÁLOGO
-  productos:  {g:'Catálogo', n:'Productos', ico:'🍔', st:'construccion', fase:'Fase 3', desc:'Tu catálogo: crear productos con foto, precio, categoría, área de producción, y definir sus adicionales, variantes y combos.', feat:['Producto con foto y descripción','Variantes (tamaños, presentaciones)','Adicionales y toppings con precio','Combos con selector de opciones','Precio por sede','Importar productos desde Excel']},
+  productos:  {g:'Catálogo', n:'Productos', ico:'🍔', st:'activo', fase:'Fase 3', desc:'Tu catálogo: crear productos con foto, precio, categoría, área de producción, y definir sus adicionales, variantes y combos.', feat:['Producto con foto y descripción','Variantes (tamaños, presentaciones)','Adicionales y toppings con precio','Combos con selector de opciones','Precio por sede','Importar productos desde Excel']},
   carta:      {g:'Catálogo', n:'Carta / Menú QR', ico:'📱', st:'activo', fase:'Fase 4', desc:'El editor de tu carta digital QR — la que ve el cliente al escanear en la mesa. Aquí decides qué se muestra, el diseño y las fotos.', feat:['Editor visual de la carta','Fotos grandes por plato','Recomendados y "más pedido"','Promos y combos del día','Juegos de espera (diferenciador)','Captura de Club VIP por WhatsApp']},
   categorias: {g:'Catálogo', n:'Categorías y Áreas', ico:'🗂️', st:'pronto', fase:'Fase 3', desc:'Organiza el menú en categorías (entradas, fuertes, bebidas…) y define las áreas de producción (cocina, barra, horno) para enrutar cada comanda.', feat:['Categorías ordenables','Áreas de producción','Enrutamiento de comandas por área','Orden de aparición en la carta']},
   juegos:     {g:'Catálogo', n:'Juegos de Espera', ico:'🎮', st:'construccion', fase:'Fase 4', desc:'Los minijuegos que el cliente juega en su celular mientras espera el pedido (Serpiente, Bloques, Pinball). Aquí el negocio los activa, elige cuáles y ve el tablero de puntajes para premiar.', feat:['Activar/desactivar juegos','Elegir qué juegos se muestran','Tablero de puntajes (leaderboard)','Premios por puntaje (ej. postre gratis)','Juego destacado de la semana','Es un diferenciador vs otros POS']},
@@ -793,10 +840,11 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
+  else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
   else if(DYN[k]) DYN[k].init();
 }
@@ -1073,7 +1121,153 @@ function kdsToggleItem(k,lid){const l=ORD[k].find(x=>x.lid===lid);if(l){l.ready=
 function kdsReadyAll(k){kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
 function kdsServe(k){kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
 
+/* ═══ PRODUCTOS (catálogo, fuente única del panel y el menú QR) ═══ */
+let productSeq=100, prdCat='Todos', _pf=null;
+function saveProductos(){try{localStorage.setItem('fenlora_productos',JSON.stringify(PRODUCTS));}catch(e){toastT('No se pudo guardar (almacenamiento lleno)');}}
+function loadProductos(){
+  try{const r=localStorage.getItem('fenlora_productos');if(r){const arr=JSON.parse(r);if(Array.isArray(arr)&&arr.length){PRODUCTS.length=0;arr.forEach(p=>PRODUCTS.push(p));}}}catch(e){}
+  let mx=100;PRODUCTS.forEach(p=>{const m=/^p(\d+)$/.exec(p.id||'');if(m)mx=Math.max(mx,+m[1]);});productSeq=mx+1;
+}
+function _resizeImg(file,cb){
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{
+    const max=520;let w=img.width,h=img.height;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    try{cb(c.toDataURL('image/jpeg',0.82));}catch(err){cb(e.target.result);}
+  };img.onerror=()=>cb(e.target.result);img.src=e.target.result;};
+  r.readAsDataURL(file);
+}
+function productosView(){
+  return `
+  <div class="page-head"><h1>🍔 Productos <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Tu catálogo real. Lo que creas aquí alimenta el panel de comandas (y en Fase 1, el menú QR del cliente). Puedes reemplazar los productos de ejemplo por los tuyos.</div></div>
+  <div class="prd-bar">
+    <div class="prd-cats" id="prdCats"></div>
+    <button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button>
+  </div>
+  <div id="prdGrid"></div>`;
+}
+function initProductos(){renderPrdCats();renderProductos();}
+function renderPrdCats(){
+  const el=document.getElementById('prdCats');if(!el)return;
+  const cats=['Todos',...CATS.filter(c=>c!=='Recomendados')];
+  PRODUCTS.forEach(p=>{if(p.cat&&!cats.includes(p.cat))cats.push(p.cat);});
+  el.innerHTML=cats.map(c=>`<button class="prd-ctab ${prdCat===c?'on':''}" onclick="prdSetCat('${c}')">${c}</button>`).join('');
+}
+function prdSetCat(c){prdCat=c;renderPrdCats();renderProductos();}
+function renderProductos(){
+  const g=document.getElementById('prdGrid');if(!g)return;
+  const list=PRODUCTS.filter(p=>prdCat==='Todos'||p.cat===prdCat);
+  if(!list.length){g.innerHTML=`<div class="dash-empty" style="margin-top:20px">No hay productos en esta categoría.<br>Toca "Nuevo producto" para crear el primero.</div>`;return;}
+  g.innerHTML=`<div class="prd-grid">${list.map(p=>{
+    const img=p.img?`<div class="prd-ph" style="background-image:url(${p.img})"></div>`:`<div class="prd-ph emoji">${p.e||'🍽️'}</div>`;
+    const flags=[];
+    if(p.activo===false)flags.push('<span class="pf off">No disponible</span>');
+    if(p.enPanel!==false)flags.push('<span class="pf">Panel</span>');
+    if(p.enQR!==false)flags.push('<span class="pf qr">Menú QR</span>');
+    if(p.rec)flags.push('<span class="pf rec">⭐ Recomendado</span>');
+    if(p.opts&&p.opts.length)flags.push('<span class="pf opt">Opciones</span>');
+    return `<div class="prd-card">${img}
+      <div class="prd-body">
+        <div class="prd-nm">${p.n}</div>
+        <div class="prd-meta">${COP(p.pr)} · ${p.cat||'—'} · ${p.area||'COCINA'}</div>
+        <div class="prd-flags">${flags.join('')}</div>
+      </div>
+      <div class="prd-acts">
+        <button class="btn ghost" style="flex:1;padding:8px" onclick="openProdForm('${p.id}')">✏️ Editar</button>
+        <button class="btn ghost" style="flex:0 0 auto;padding:8px 12px;color:var(--red)" onclick="delProd('${p.id}')">🗑️</button>
+      </div></div>`;
+  }).join('')}</div>`;
+}
+function openProdForm(id){
+  if(id){const p=PRODUCTS.find(x=>x.id===id);_pf=JSON.parse(JSON.stringify(p));}
+  else{_pf={id:null,n:'',pr:0,cat:(prdCat!=='Todos'?prdCat:'Fuertes'),area:'COCINA',e:'🍽️',img:null,desc:'',activo:true,enPanel:true,enQR:true,rec:false,opts:[],qn:[]};}
+  renderProdForm();
+}
+function renderProdForm(){
+  const p=_pf;const areas=['COCINA','BARRA','HORNO','PARRILLA','POSTRES'];const cats=CATS.filter(c=>c!=='Recomendados');
+  const tgl=(k,label)=>`<label class="pf-tgl"><input type="checkbox" ${p[k]?'checked':''} onchange="_pf.${k}=this.checked"> ${label}</label>`;
+  const m=document.getElementById('prodModal');
+  m.innerHTML=`<div class="modal" style="width:580px;max-width:96vw">
+    <div class="modal-h"><b>${p.id?'✏️ Editar producto':'➕ Nuevo producto'}</b><div class="mx" onclick="closeProdForm()">✕</div></div>
+    <div class="modal-b">
+      <div class="pf-photo">
+        <div class="pf-ph" style="${p.img?`background-image:url(${p.img})`:''}">${p.img?'':(p.e||'🍽️')}</div>
+        <div style="flex:1">
+          <label class="btn ghost" style="width:auto;padding:9px 14px;cursor:pointer;display:inline-block">📷 Subir foto<input type="file" accept="image/*" style="display:none" onchange="pfPhoto(this)"></label>
+          ${p.img?`<button class="btn ghost" style="width:auto;padding:9px 14px;margin-left:6px;color:var(--red)" onclick="pfClearPhoto()">Quitar</button>`:''}
+          <div style="font-size:11px;color:var(--txt2);margin-top:8px">Sin foto se usa un emoji. Ideal: foto cuadrada y con buena luz (se optimiza sola).</div>
+        </div>
+      </div>
+      <div class="pf-f"><label>Nombre del producto</label><input class="pf-in" value="${(p.n||'').replace(/"/g,'&quot;')}" oninput="_pf.n=this.value"></div>
+      <div class="pf-row2">
+        <div class="pf-f"><label>Precio (COP)</label><input class="pf-in" inputmode="numeric" value="${p.pr||''}" oninput="_pf.pr=parseInt(this.value.replace(/\D/g,''))||0"></div>
+        <div class="pf-f"><label>Categoría</label><input class="pf-in" list="pfCats" value="${(p.cat||'').replace(/"/g,'&quot;')}" oninput="_pf.cat=this.value"><datalist id="pfCats">${cats.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+      </div>
+      <div class="pf-row2">
+        <div class="pf-f"><label>Área de producción</label><select class="pf-in" onchange="_pf.area=this.value">${areas.map(a=>`<option ${p.area===a?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="pf-f"><label>Emoji (si no hay foto)</label><input class="pf-in" value="${p.e||''}" oninput="_pf.e=this.value" maxlength="4"></div>
+      </div>
+      <div class="pf-f"><label>Descripción (opcional)</label><textarea class="pf-in" rows="2" oninput="_pf.desc=this.value">${p.desc||''}</textarea></div>
+      <div class="pf-toggles">${tgl('activo','Disponible')}${tgl('enPanel','Mostrar en panel')}${tgl('enQR','Mostrar en menú QR')}${tgl('rec','⭐ Recomendado')}</div>
+      <div class="pf-sec"><b>🍽️ Opciones y adicionales</b><button class="btn ghost" style="width:auto;padding:6px 12px;font-size:12px" onclick="pfAddGroup()">+ Grupo</button></div>
+      <div id="pfOpts"></div>
+      <div class="pf-sec"><b>📝 Observaciones sugeridas</b><button class="btn ghost" style="width:auto;padding:6px 12px;font-size:12px" onclick="pfSuggest()">✨ Sugerir</button></div>
+      <div id="pfNotes"></div>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="saveProd()">${p.id?'Guardar cambios':'Crear producto'}</button></div>
+  </div>`;
+  m.classList.add('on');renderPfOpts();renderPfNotes();
+}
+function pfPhoto(input){const f=input.files&&input.files[0];if(!f)return;_resizeImg(f,url=>{_pf.img=url;renderProdForm();});}
+function pfClearPhoto(){_pf.img=null;renderProdForm();}
+function renderPfOpts(){
+  const el=document.getElementById('pfOpts');if(!el)return;
+  el.innerHTML=(_pf.opts||[]).map((g,gi)=>`<div class="pf-grp">
+    <div class="pf-grp-h">
+      <input class="pf-in sm" placeholder="Grupo (ej: Término, Tamaño)" value="${(g.t||'').replace(/"/g,'&quot;')}" oninput="_pf.opts[${gi}].t=this.value">
+      <select class="pf-in sm" style="width:auto" onchange="_pf.opts[${gi}].type=this.value"><option value="single" ${g.type==='single'?'selected':''}>Elige 1</option><option value="multi" ${g.type==='multi'?'selected':''}>Varios</option></select>
+      <label class="pf-tgl sm"><input type="checkbox" ${g.req?'checked':''} onchange="_pf.opts[${gi}].req=this.checked?1:0"> Oblig.</label>
+      <button class="pf-del" onclick="pfDelGroup(${gi})">✕</button>
+    </div>
+    ${(g.items||[]).map((it,ii)=>`<div class="pf-item">
+      <input class="pf-in sm" placeholder="Opción (ej: Extra papas)" value="${(it.n||'').replace(/"/g,'&quot;')}" oninput="_pf.opts[${gi}].items[${ii}].n=this.value">
+      <input class="pf-in sm price" inputmode="numeric" placeholder="+precio" value="${it.p||''}" oninput="_pf.opts[${gi}].items[${ii}].p=parseInt(this.value.replace(/\D/g,''))||0">
+      <button class="pf-del" onclick="pfDelItem(${gi},${ii})">✕</button></div>`).join('')}
+    <button class="btn ghost" style="width:auto;padding:6px 12px;font-size:12px;margin-top:6px" onclick="pfAddItem(${gi})">+ Opción</button>
+  </div>`).join('')||`<div style="font-size:12px;color:var(--txt2);padding:4px 0">Sin opciones. Agrega un grupo si el producto tiene variantes (término, tamaño) o adicionales (extras con precio).</div>`;
+}
+function pfAddGroup(){_pf.opts=_pf.opts||[];_pf.opts.push({t:'',type:'single',req:0,items:[{n:'',p:0}]});renderPfOpts();}
+function pfDelGroup(gi){_pf.opts.splice(gi,1);renderPfOpts();}
+function pfAddItem(gi){_pf.opts[gi].items.push({n:'',p:0});renderPfOpts();}
+function pfDelItem(gi,ii){_pf.opts[gi].items.splice(ii,1);renderPfOpts();}
+function renderPfNotes(){
+  const el=document.getElementById('pfNotes');if(!el)return;
+  el.innerHTML=`<div class="pf-notes">${(_pf.qn||[]).map((t,i)=>`<span class="pf-note">${t}<b onclick="pfDelNote(${i})">✕</b></span>`).join('')}<input class="pf-note-in" placeholder="Escribe y Enter…" onkeydown="pfNoteKey(event)"></div>`;
+}
+function pfNoteKey(e){if(e.key==='Enter'){e.preventDefault();const v=(e.target.value||'').trim().toUpperCase();if(v){_pf.qn=_pf.qn||[];if(!_pf.qn.includes(v))_pf.qn.push(v);e.target.value='';renderPfNotes();}}}
+function pfDelNote(i){_pf.qn.splice(i,1);renderPfNotes();}
+function pfSuggest(){const s=suggestNotes(_pf);_pf.qn=[...new Set([...(_pf.qn||[]),...s])].slice(0,15);renderPfNotes();toastT('Sugerencias añadidas');}
+function saveProd(){
+  const p=_pf;
+  if(!p.n||!p.n.trim()){toastT('Ponle un nombre al producto');return;}
+  if(!p.pr||p.pr<=0){toastT('Ponle un precio válido');return;}
+  p.n=p.n.trim();
+  p.opts=(p.opts||[]).filter(g=>g.t&&g.items&&g.items.some(it=>it.n)).map(g=>({t:g.t,type:g.type||'single',req:g.req?1:0,items:g.items.filter(it=>it.n).map(it=>({n:it.n,p:it.p||0}))}));
+  if(!p.opts.length)delete p.opts;
+  p.qn=(p.qn||[]).filter(Boolean);if(!p.qn.length)delete p.qn;
+  if(p.id){const idx=PRODUCTS.findIndex(x=>x.id===p.id);if(idx>=0)PRODUCTS[idx]=p;else PRODUCTS.push(p);}
+  else{p.id='p'+(productSeq++);PRODUCTS.push(p);}
+  saveProductos();closeProdForm();renderProductos();renderPrdCats();
+  Object.keys(ORD).forEach(k=>{if(document.getElementById('prods_'+k))renderProds(k);});
+  toastT('✅ Producto guardado');
+}
+function closeProdForm(){_pf=null;const m=document.getElementById('prodModal');if(m)m.classList.remove('on');}
+function delProd(id){if(!confirm('¿Eliminar este producto del catálogo?'))return;const i=PRODUCTS.findIndex(x=>x.id===id);if(i>=0)PRODUCTS.splice(i,1);saveProductos();renderProductos();renderPrdCats();toastT('Producto eliminado');}
+
 function comandasView(){
+
   return `
   <div class="page-head"><h1>🍽️ Comandas <span class="status-pill activo">Activo</span></h1>
     <div class="sub">Elige el tipo de pedido. En "Mesas" toca una mesa para abrir su comanda; cada una se abre en su propia pestaña.</div></div>
@@ -1327,7 +1521,10 @@ function setCat(target,c){ORDCAT[target]=c;document.querySelectorAll('#chips_'+t
 function prodList(target){
   const q=norm(document.getElementById('search_'+target)?.value||'');
   const cat=ORDCAT[target];
-  return PRODUCTS.filter(p=>{const inCat=cat==='Recomendados'?p.rec:p.cat===cat;return q?norm(p.n).includes(q):inCat;});
+  return PRODUCTS.filter(p=>{
+    if(p.activo===false||p.enPanel===false)return false;
+    const inCat=cat==='Recomendados'?p.rec:p.cat===cat;
+    return q?norm(p.n).includes(q):inCat;});
 }
 function renderProds(target){
   const cont=document.getElementById('prods_'+target); if(!cont)return;
@@ -1336,11 +1533,11 @@ function renderProds(target){
   if(viewMode==='list'){
     cont.className='prod-list';
     cont.innerHTML=list.map(p=>`<div class="prow" onclick="pick('${target}','${p.id}')">
-      <span class="pe2">${p.e}</span><span class="pn2">${p.n}</span>${p.opts?'<span class="popt2">opciones</span>':''}<span class="pp2">${COP(p.pr)}</span><span class="padd2">+</span></div>`).join('');
+      ${p.img?`<span class="pe2 pe2-img" style="background-image:url(${p.img})"></span>`:`<span class="pe2">${p.e||'🍽️'}</span>`}<span class="pn2">${p.n}</span>${p.opts?'<span class="popt2">opciones</span>':''}<span class="pp2">${COP(p.pr)}</span><span class="padd2">+</span></div>`).join('');
   } else {
     cont.className='prod-grid';
     cont.innerHTML=list.map(p=>`<div class="prod" onclick="pick('${target}','${p.id}')">${p.opts?'<span class="popt">opciones</span>':''}
-      <div class="pe">${p.e}</div><div class="pn">${p.n}</div><div class="pp">${COP(p.pr)}</div><div class="padd">+</div></div>`).join('');
+      ${p.img?`<div class="pe pe-img" style="background-image:url(${p.img})"></div>`:`<div class="pe">${p.e||'🍽️'}</div>`}<div class="pn">${p.n}</div><div class="pp">${COP(p.pr)}</div><div class="padd">+</div></div>`).join('');
   }
 }
 function searchEnter(target,e){
@@ -2233,6 +2430,7 @@ function restoreWorkspace(){
   if(tabs.length) openTab('panel');
 }
 loadFacturas();
+loadProductos();
 loadState();
 
 /* ── Barra superior: tema, notificaciones, cuenta ── */
