@@ -567,9 +567,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .fv-x{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px}
 .fv-x:hover{border-color:var(--red);color:var(--red);background:var(--red-dim)}
 .fv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 22px}
-.fv-list{max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.fv-list{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:12px;align-items:start}
+@media(max-width:900px){.fv-list{grid-template-columns:1fr}}
 .fv-foot{flex-shrink:0;border-top:1px solid var(--border);padding:15px 22px;background:var(--surface)}
-.fv-foot>*{max-width:940px;margin-left:auto;margin-right:auto}
+.fv-foot>*{max-width:1360px;margin-left:auto;margin-right:auto}
 @media(max-width:1200px){
   .tp{grid-template-columns:1fr !important;gap:16px}
   .comanda{position:static !important;max-height:none !important;overflow:visible !important}
