@@ -749,6 +749,37 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .prd-ph.elegant .pe-emoji{font-size:46px;line-height:1}
 .prd-ph.elegant .pe-cat{font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
 
+
+/* ── Caja ── */
+.caja-open-card{display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px}
+.caja-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.caja-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative}
+.caja-card .cc-ic{font-size:22px;position:absolute;top:14px;right:16px;opacity:.5}
+.caja-card .cc-t{font-size:12px;color:var(--txt2);font-weight:600}
+.caja-card .cc-v{font-family:'Outfit',sans-serif;font-size:23px;font-weight:800;margin-top:6px}
+.medio-row.tot{border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-weight:800}
+.medio-row.tot b{color:var(--primary)}
+.mov-list{display:flex;flex-direction:column;gap:7px}
+.mov-row{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:10px 13px}
+.mv-t{font-size:15px}
+.mv-mid{flex:1;min-width:0}
+.mv-mid b{font-size:13.5px;font-weight:600;display:block}
+.mv-mid span{font-size:11px;color:var(--txt2)}
+.mv-amt{font-weight:800;font-size:13.5px}
+.mv-amt.ingreso{color:var(--primary)}.mv-amt.egreso{color:var(--red)}
+.mv-del{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--card2);color:var(--txt3);cursor:pointer;flex-shrink:0}
+.arqueo-res{padding:12px 14px;border-radius:11px;background:var(--card2);font-size:13.5px;text-align:center;font-weight:600}
+.arqueo-res.ok{background:var(--primary-dim);color:var(--primary)}
+.arqueo-res.plus{background:var(--blue-dim);color:var(--blue)}
+.arqueo-res.minus{background:var(--red-dim);color:var(--red)}
+.cierre-list{display:flex;flex-direction:column;gap:8px}
+.cierre-row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer}
+.cierre-row:hover{border-color:var(--primary)}
+.cierre-dif{font-weight:800;font-size:12.5px;padding:4px 11px;border-radius:9px}
+.cierre-dif.ok{background:var(--primary-dim);color:var(--primary)}
+.cierre-dif.plus{background:var(--blue-dim);color:var(--blue)}
+.cierre-dif.minus{background:var(--red-dim);color:var(--red)}
+
 </style>
 </head>
 <body>
@@ -798,6 +829,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="lineModal"></div>
 <div class="modal-bg" id="prodModal"></div>
 <div class="modal-bg" id="kdsModal"></div>
+<div class="modal-bg" id="cajaModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -807,7 +839,7 @@ const S = {
   panel:      {g:'Operación', n:'Panel', ico:'📊', st:'activo', fase:'Fase 3'},
   mesas:      {g:'Operación', n:'Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El centro de todos los pedidos: mesas del salón, para llevar, domicilio, Rappi/PedidosYa y online. En "Mesas" tocas una mesa para abrir su comanda.', feat:['Filtros: mesas, llevar, delivery, online','Mapa de mesas con semáforo','Unir mesas para grupos','Tocar mesa → abre su comanda','Cada comanda en su pestaña','Cambiar de mesero']},
   cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'activo', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
-  caja:       {g:'Operación', n:'Caja', ico:'💵', st:'construccion', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
+  caja:       {g:'Operación', n:'Caja', ico:'💵', st:'activo', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
   // CATÁLOGO
   productos:  {g:'Catálogo', n:'Productos', ico:'🍔', st:'activo', fase:'Fase 3', desc:'Tu catálogo: crear productos con foto, precio, categoría, área de producción, y definir sus adicionales, variantes y combos.', feat:['Producto con foto y descripción','Variantes (tamaños, presentaciones)','Adicionales y toppings con precio','Combos con selector de opciones','Precio por sede','Importar productos desde Excel']},
@@ -885,10 +917,11 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
+  else if(k==='caja') initCaja();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
   else if(DYN[k]) DYN[k].init();
@@ -1473,7 +1506,165 @@ function saveProd(){
 function closeProdForm(){_pf=null;const m=document.getElementById('prodModal');if(m)m.classList.remove('on');}
 function delProd(id){if(!confirm('¿Eliminar este producto del catálogo?'))return;const i=PRODUCTS.findIndex(x=>x.id===id);if(i>=0)PRODUCTS.splice(i,1);saveProductos();renderProductos();renderPrdCats();toastT('Producto eliminado');}
 
+/* ═══ CAJA (apertura, movimientos, arqueo/cierre de turno) ═══ */
+let CAJA=null, CIERRES=[];
+function saveCaja(){try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){}}
+function saveCierres(){try{localStorage.setItem('fenlora_cierres',JSON.stringify(CIERRES));}catch(e){}}
+function loadCaja(){try{const r=localStorage.getItem('fenlora_caja');CAJA=r?JSON.parse(r):null;const c=localStorage.getItem('fenlora_cierres');CIERRES=c?JSON.parse(c):[];}catch(e){CAJA=null;CIERRES=[];}}
+function cajaResumen(){
+  if(!CAJA)return null;
+  const fs=FACTURAS.filter(f=>f.ts>=CAJA.abiertaEn);
+  const porMedio={};fs.forEach(f=>{const k=f.medioLabel||f.medio;porMedio[k]=(porMedio[k]||0)+f.total;});
+  const ventas=fs.reduce((s,f)=>s+f.total,0);
+  const efectivoVentas=fs.filter(f=>f.medio==='efectivo').reduce((s,f)=>s+f.total,0);
+  const propinas=fs.reduce((s,f)=>s+(f.propina||0),0);
+  const ingresos=(CAJA.movimientos||[]).filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0);
+  const egresos=(CAJA.movimientos||[]).filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.monto,0);
+  const efectivoEsperado=CAJA.base+efectivoVentas+ingresos-egresos;
+  return {fs,porMedio,ventas,efectivoVentas,propinas,ingresos,egresos,efectivoEsperado,nFacturas:fs.length};
+}
+function fhora(ts){return new Date(ts).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+function cajaView(){
+  if(!CAJA){
+    return `
+    <div class="page-head"><h1>💵 Caja <span class="status-pill activo">Activo</span></h1>
+      <div class="sub">Controla el dinero del turno: abre la caja con una base, registra los cobros del día y al final haz el arqueo (cuadre esperado vs. contado).</div></div>
+    <div class="caja-open-card">
+      <div style="font-size:40px">🔓</div>
+      <div style="flex:1">
+        <b style="font-family:'Outfit';font-size:17px">La caja está cerrada</b>
+        <div style="font-size:13px;color:var(--txt2);margin:4px 0 12px">Ingresa la base inicial (el efectivo con el que arrancas) para abrir el turno.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="pf-in" style="display:flex;align-items:center;gap:6px;width:auto"><span style="color:var(--txt3)">$</span><input id="cajaBase" inputmode="numeric" placeholder="Base inicial (ej: 100000)" style="background:none;border:none;outline:none;color:var(--txt);font-family:inherit;font-size:14px;width:200px"></div>
+          <button class="btn primary" style="width:auto;padding:11px 20px" onclick="abrirCaja()">🔓 Abrir caja</button>
+        </div>
+      </div>
+    </div>
+    ${cierresHistorial()}`;
+  }
+  const r=cajaResumen();
+  const cards=[
+    ['Base inicial',COP(CAJA.base),'💼'],
+    ['Ventas del turno',COP(r.ventas),'💰'],
+    ['Efectivo esperado',COP(r.efectivoEsperado),'💵'],
+    ['Propinas',COP(r.propinas),'🙌'],
+  ];
+  const medios=Object.keys(r.porMedio);
+  return `
+  <div class="page-head"><h1>💵 Caja <span class="status-pill activo">Turno abierto</span></h1>
+    <div class="sub">Abierta ${fhora(CAJA.abiertaEn)} · ${r.nFacturas} factura(s) en el turno.</div></div>
+  <div class="caja-cards">${cards.map(c=>`<div class="caja-card"><div class="cc-ic">${c[2]}</div><div class="cc-t">${c[0]}</div><div class="cc-v">${c[1]}</div></div>`).join('')}</div>
+  <div class="dash-2col" style="margin-top:20px">
+    <div>
+      <div class="section-title">💳 Ventas por medio de pago</div>
+      ${medios.length?`<div class="medio-list">${medios.map(k=>`<div class="medio-row"><span>${k}</span><b>${COP(r.porMedio[k])}</b></div>`).join('')}</div>`:`<div class="dash-empty">Sin cobros en este turno todavía.</div>`}
+      <div class="section-title" style="margin-top:20px">🧾 Efectivo esperado en caja</div>
+      <div class="medio-list">
+        <div class="medio-row"><span>Base inicial</span><b>${COP(CAJA.base)}</b></div>
+        <div class="medio-row"><span>+ Ventas en efectivo</span><b>${COP(r.efectivoVentas)}</b></div>
+        <div class="medio-row"><span>+ Ingresos manuales</span><b>${COP(r.ingresos)}</b></div>
+        <div class="medio-row"><span>− Egresos / gastos</span><b>− ${COP(r.egresos)}</b></div>
+        <div class="medio-row tot"><span>Efectivo esperado</span><b>${COP(r.efectivoEsperado)}</b></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">🔁 Movimientos de caja</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn ghost" style="flex:1" onclick="openMov('ingreso')">➕ Ingreso</button>
+        <button class="btn ghost" style="flex:1" onclick="openMov('egreso')">➖ Egreso / gasto</button>
+      </div>
+      ${(CAJA.movimientos&&CAJA.movimientos.length)?`<div class="mov-list">${CAJA.movimientos.map((m,i)=>`<div class="mov-row"><span class="mv-t ${m.tipo}">${m.tipo==='ingreso'?'➕':'➖'}</span><div class="mv-mid"><b>${m.concepto}</b><span>${fhora(m.ts)}</span></div><div class="mv-amt ${m.tipo}">${m.tipo==='ingreso'?'+':'−'} ${COP(m.monto)}</div><button class="mv-del" onclick="delMov(${i})">✕</button></div>`).join('')}</div>`:`<div class="dash-empty">Sin movimientos. Registra ingresos (préstamos, etc.) o gastos (compras, domicilios pagados de caja).</div>`}
+      <button class="btn primary" style="width:100%;margin-top:16px;padding:13px" onclick="openArqueo()">🔒 Cerrar caja / Hacer arqueo</button>
+    </div>
+  </div>
+  ${cierresHistorial()}`;
+}
+function cierresHistorial(){
+  if(!CIERRES.length)return '';
+  return `<div class="section-title" style="margin-top:24px">📚 Cierres anteriores</div>
+    <div class="cierre-list">${CIERRES.slice(0,10).map((c,i)=>`<div class="cierre-row" onclick="verCierre(${i})">
+      <div class="fr-ic">🧾</div>
+      <div class="fr-mid"><b>${fhora(c.cerradaEn)}</b><span>${c.nFacturas} facturas · ventas ${COP(c.ventasTotal)}</span></div>
+      <div class="cierre-dif ${c.diferencia===0?'ok':(c.diferencia>0?'plus':'minus')}">${c.diferencia===0?'Cuadrada':(c.diferencia>0?'Sobra '+COP(c.diferencia):'Falta '+COP(-c.diferencia))}</div>
+    </div>`).join('')}</div>`;
+}
+function initCaja(){/* render vía buildPanel innerHTML */}
+function abrirCaja(){
+  const v=parseInt((document.getElementById('cajaBase').value||'').replace(/\D/g,''))||0;
+  CAJA={abierta:true,base:v,abiertaEn:Date.now(),cajero:'Sebastián',movimientos:[]};
+  saveCaja();rerenderCaja();toastT('🔓 Caja abierta con base '+COP(v));
+}
+function openMov(tipo){
+  const m=document.getElementById('cajaModal');
+  m.innerHTML=`<div class="modal" style="width:400px"><div class="modal-h"><b>${tipo==='ingreso'?'➕ Registrar ingreso':'➖ Registrar egreso / gasto'}</b><div class="mx" onclick="closeCajaModal()">✕</div></div>
+    <div class="modal-b">
+      <div class="pf-f"><label>Concepto</label><input class="pf-in" id="movConcepto" placeholder="${tipo==='ingreso'?'Ej: préstamo a caja':'Ej: compra de servilletas'}"></div>
+      <div class="pf-f"><label>Monto (COP)</label><input class="pf-in" id="movMonto" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="addMov('${tipo}')">Registrar</button></div></div>`;
+  m.classList.add('on');
+}
+function addMov(tipo){
+  const concepto=(document.getElementById('movConcepto').value||'').trim()||(tipo==='ingreso'?'Ingreso':'Egreso');
+  const monto=parseInt((document.getElementById('movMonto').value||'').replace(/\D/g,''))||0;
+  if(monto<=0){toastT('Ingresa un monto válido');return;}
+  CAJA.movimientos.push({tipo,concepto,monto,ts:Date.now()});saveCaja();closeCajaModal();rerenderCaja();toastT('Movimiento registrado');
+}
+function delMov(i){CAJA.movimientos.splice(i,1);saveCaja();rerenderCaja();}
+function openArqueo(){
+  const r=cajaResumen();
+  const m=document.getElementById('cajaModal');
+  m.innerHTML=`<div class="modal" style="width:440px"><div class="modal-h"><b>🔒 Arqueo y cierre de caja</b><div class="mx" onclick="closeCajaModal()">✕</div></div>
+    <div class="modal-b">
+      <div class="medio-list" style="margin-bottom:14px">
+        <div class="medio-row"><span>Ventas del turno</span><b>${COP(r.ventas)}</b></div>
+        <div class="medio-row"><span>Efectivo esperado en caja</span><b>${COP(r.efectivoEsperado)}</b></div>
+      </div>
+      <div class="pf-f"><label>💵 Efectivo contado (lo que hay físicamente en caja)</label><input class="pf-in" id="arqueoContado" inputmode="numeric" placeholder="0" oninput="arqueoDif()"></div>
+      <div id="arqueoResult" class="arqueo-res">Ingresa el efectivo contado para ver el cuadre.</div>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="cerrarCaja()">🔒 Confirmar cierre</button></div></div>`;
+  m.classList.add('on');
+}
+function arqueoDif(){
+  const r=cajaResumen();
+  const contado=parseInt((document.getElementById('arqueoContado').value||'').replace(/\D/g,''))||0;
+  const dif=contado-r.efectivoEsperado;
+  const el=document.getElementById('arqueoResult');
+  el.className='arqueo-res '+(dif===0?'ok':(dif>0?'plus':'minus'));
+  el.innerHTML=dif===0?'✅ Caja cuadrada perfectamente.':(dif>0?`🔵 Sobrante: <b>${COP(dif)}</b> (hay más de lo esperado)`:`🔴 Faltante: <b>${COP(-dif)}</b> (falta dinero)`);
+}
+function cerrarCaja(){
+  const r=cajaResumen();
+  const contado=parseInt((document.getElementById('arqueoContado').value||'').replace(/\D/g,''))||0;
+  const cierre={abiertaEn:CAJA.abiertaEn,cerradaEn:Date.now(),base:CAJA.base,cajero:CAJA.cajero,
+    ventasTotal:r.ventas,porMedio:r.porMedio,efectivoVentas:r.efectivoVentas,propinas:r.propinas,
+    ingresos:r.ingresos,egresos:r.egresos,efectivoEsperado:r.efectivoEsperado,efectivoContado:contado,
+    diferencia:contado-r.efectivoEsperado,nFacturas:r.nFacturas,movimientos:CAJA.movimientos};
+  CIERRES.unshift(cierre);CAJA=null;saveCierres();saveCaja();closeCajaModal();rerenderCaja();
+  toastT('🔒 Caja cerrada · '+(cierre.diferencia===0?'cuadrada':(cierre.diferencia>0?'sobra '+COP(cierre.diferencia):'falta '+COP(-cierre.diferencia))));
+}
+function verCierre(i){
+  const c=CIERRES[i];if(!c)return;const medios=Object.keys(c.porMedio||{});
+  const m=document.getElementById('cajaModal');
+  m.innerHTML=`<div class="modal" style="width:440px"><div class="modal-h"><b>🧾 Cierre · ${fhora(c.cerradaEn)}</b><div class="mx" onclick="closeCajaModal()">✕</div></div>
+    <div class="modal-b"><div class="medio-list">
+      <div class="medio-row"><span>Base inicial</span><b>${COP(c.base)}</b></div>
+      <div class="medio-row"><span>Ventas del turno</span><b>${COP(c.ventasTotal)}</b></div>
+      ${medios.map(k=>`<div class="medio-row"><span style="padding-left:12px;color:var(--txt2)">· ${k}</span><b>${COP(c.porMedio[k])}</b></div>`).join('')}
+      <div class="medio-row"><span>Propinas</span><b>${COP(c.propinas)}</b></div>
+      <div class="medio-row"><span>Efectivo esperado</span><b>${COP(c.efectivoEsperado)}</b></div>
+      <div class="medio-row"><span>Efectivo contado</span><b>${COP(c.efectivoContado)}</b></div>
+      <div class="medio-row tot"><span>Diferencia</span><b class="${c.diferencia===0?'':(c.diferencia>0?'':'')}" style="color:${c.diferencia===0?'var(--primary)':(c.diferencia>0?'var(--blue)':'var(--red)')}">${c.diferencia===0?'Cuadrada':(c.diferencia>0?'Sobra '+COP(c.diferencia):'Falta '+COP(-c.diferencia))}</b></div>
+    </div></div>
+    <div class="modal-f"><button class="btn ghost" onclick="closeCajaModal()">Cerrar</button></div></div>`;
+  m.classList.add('on');
+}
+function closeCajaModal(){const m=document.getElementById('cajaModal');if(m)m.classList.remove('on');}
+function rerenderCaja(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='caja');if(tp)tp.innerHTML=cajaView();}
+
 function comandasView(){
+
 
   return `
   <div class="page-head"><h1>🍽️ Comandas <span class="status-pill activo">Activo</span></h1>
@@ -2638,6 +2829,7 @@ function restoreWorkspace(){
 }
 loadFacturas();
 loadProductos();
+loadCaja();
 loadState();
 
 /* ── Barra superior: tema, notificaciones, cuenta ── */
