@@ -20,7 +20,7 @@
   --sidebar-w:246px;--hdr:60px;
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree',sans-serif;overflow:hidden}
-.app{display:flex;height:100vh}
+.app{display:flex;height:100vh;height:100dvh}
 .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:10}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .hdr{height:var(--hdr);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0}
@@ -78,7 +78,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .prod .padd{position:absolute;bottom:14px;right:12px;width:26px;height:26px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:300;line-height:0}
 
 /* COMANDA panel */
-.comanda{position:sticky;top:0;background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;max-height:calc(100vh - 150px)}
+.comanda{position:sticky;top:0;background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;max-height:calc(100dvh - 150px)}
 .comanda-h{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .comanda-h b{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700}
 .comanda-h .cnt{font-size:11px;color:var(--txt2);background:var(--card2);padding:3px 9px;border-radius:12px;font-weight:600}
@@ -374,7 +374,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .print-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 
 /* ── Layout POS: header/meta/campos fijos, lista con scroll propio, botones fijos abajo ── */
-.comanda{overflow:hidden;max-height:calc(100vh - 96px)}
+.comanda{overflow:hidden;max-height:calc(100dvh - 96px)}
 .comanda-h,.comanda-meta,.comanda-fields,.comanda-f{flex-shrink:0}
 .comanda-body{flex:1 1 auto;min-height:96px;overflow-y:auto;padding:12px 14px;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
 .comanda-body::-webkit-scrollbar{width:6px}.comanda-body::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
@@ -707,6 +707,17 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .pf-note b{cursor:pointer;color:var(--red);font-weight:700}
 .pf-note-in{flex:1;min-width:140px;background:transparent;border:none;color:var(--txt);font-family:inherit;font-size:13px;outline:none;padding:5px}
 
+
+/* KDS tarjetas uniformes + lightbox */
+.kds-card{cursor:pointer;transition:.13s}
+.kds-card:hover{border-color:var(--primary)}
+.kds-items.preview{max-height:none}
+.kds-more{font-size:11.5px;color:var(--primary);font-weight:700;padding:8px 10px}
+.kds-foot{display:flex;align-items:center;gap:10px}
+.kds-prog{font-size:11px;color:var(--txt2);font-weight:700;white-space:nowrap}
+.kds-items.big{display:flex;flex-direction:column;gap:2px}
+.kds-area-tag{display:inline-block;font-size:9px;color:var(--txt3);border:1px solid var(--border);border-radius:8px;padding:1px 7px;margin-top:3px;font-weight:700}
+
 </style>
 </head>
 <body>
@@ -724,7 +735,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
   <div class="main">
     <header class="hdr">
       <div class="hdr-left">
-        <div class="biz-sel"><span class="bl">🍖</span><div>El Fogón<div class="cv">Sede Centro</div></div><span style="color:var(--txt3)">▾</span></div>
+        <div class="biz-sel"><span class="bl">🍖</span><div>Dulce Café<div class="cv">Sede Centro</div></div><span style="color:var(--txt3)">▾</span></div>
         <div class="search">🔎<input placeholder="Buscar opción del menú…"><span style="font-size:11px">Ctrl K</span></div>
       </div>
       <div class="hdr-right">
@@ -753,6 +764,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="mesasModal"></div>
 <div class="modal-bg" id="lineModal"></div>
 <div class="modal-bg" id="prodModal"></div>
+<div class="modal-bg" id="kdsModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -959,7 +971,7 @@ function dashboard(){
     ['MESA 05','libre','Disponible',''],['MESA 06','ocup','hace 1 h','$120.000'],
   ];
   return `
-  <div class="page-head"><h1>👋 Buen día, Sebastián</h1><div class="sub">Esto es lo que está pasando en El Fogón · Sede Centro hoy.</div></div>
+  <div class="page-head"><h1>👋 Buen día, Sebastián</h1><div class="sub">Esto es lo que está pasando en Dulce Café · Sede Centro hoy.</div></div>
   <div class="kpi-grid">${kpis.map(k=>`
     <div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}
   </div>
@@ -996,7 +1008,7 @@ function moduleView(k){
 const COP=n=>'$'+Math.round(n).toLocaleString('es-CO');
 const pad=n=>String(n).padStart(2,'0');
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-const CATS=['Recomendados','Entradas','Fuertes','Acompañam.','Postres','Bebidas'];
+const CATS=['Recomendados','Calientes','Frías','Sodas','Frappes','Con licor','Postres','Pa comer','Combos','Otros','Filtrados'];
 const QN_DEFAULT=['SIN SAL','SIN PICANTE','SIN CEBOLLA','BIEN COCIDO','PARA LLEVAR','MUCHO LIMÓN'];
 /* Sugeridor local de observaciones según el plato (sin IA: instantáneo, gratis, offline) */
 function suggestNotes(p){
@@ -1026,29 +1038,116 @@ function suggestNotes(p){
   const out=[];[...base,...fill].forEach(x=>{if(!out.includes(x)&&out.length<15)out.push(x);});
   return out;
 }
-const PRODUCTS=[
-  {id:'p1',n:'Pulpo a la Brasa',pr:58000,cat:'Fuertes',rec:1,e:'🐙',area:'COCINA'},
-  {id:'p2',n:'Lomo al Carbón',pr:74000,cat:'Fuertes',rec:1,e:'🥩',area:'COCINA',qn:['TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','SIN SAL','EXTRA JUGOSO'],opts:[
-    {t:'Término',type:'single',req:1,items:[{n:'Término medio',p:0},{n:'Tres cuartos',p:0},{n:'Bien cocido',p:0}]},
-    {t:'Adicionales',type:'multi',items:[{n:'Extra papas',p:8000},{n:'Huevo frito',p:4000},{n:'Salsa de la casa',p:3000}]}
-  ]},
-  {id:'p3',n:'Costillas BBQ',pr:62000,cat:'Fuertes',rec:1,e:'🍖',area:'COCINA',qn:['SIN BBQ','EXTRA SALSA','BIEN DORADAS','SIN SAL']},
-  {id:'p4',n:'Ensalada César',pr:22000,cat:'Entradas',e:'🥗',area:'COCINA',opts:[
-    {t:'Proteína',type:'single',req:1,items:[{n:'Sin proteína',p:0},{n:'Pollo',p:6000},{n:'Camarón',p:12000}]}
-  ]},
-  {id:'p5',n:'Empanadas (x3)',pr:15000,cat:'Entradas',e:'🥟',area:'COCINA'},
-  {id:'p6',n:'Papas Rústicas',pr:14000,cat:'Acompañam.',e:'🍟',area:'COCINA'},
-  {id:'p7',n:'Arroz de la Casa',pr:10000,cat:'Acompañam.',e:'🍚',area:'COCINA'},
-  {id:'p8',n:'Torta de Chocolate',pr:28000,cat:'Postres',rec:1,e:'🍫',area:'COCINA'},
-  {id:'p9',n:'Cheesecake',pr:24000,cat:'Postres',e:'🍰',area:'COCINA'},
-  {id:'p10',n:'Limonada Natural',pr:9000,cat:'Bebidas',e:'🍋',area:'BARRA',qn:['SIN AZÚCAR','POCO HIELO','SIN HIELO','MUCHO LIMÓN'],opts:[
-    {t:'Tamaño',type:'single',req:1,items:[{n:'Vaso',p:0},{n:'Jarra (1L)',p:6000}]}
-  ]},
-  {id:'p11',n:'Café Americano',pr:6000,cat:'Bebidas',e:'☕',area:'BARRA',qn:['SIN AZÚCAR','DOBLE CARGA','CON LECHE']},
-  {id:'p12',n:'Gaseosa',pr:6000,cat:'Bebidas',e:'🥤',area:'BARRA',qn:['SIN HIELO','BIEN FRÍA']},
-  {id:'p13',n:'Perro Caliente',pr:12000,cat:'Fuertes',rec:1,e:'🌭',area:'COCINA'},
-  {id:'p14',n:'Hamburguesa Clásica',pr:18000,cat:'Fuertes',rec:1,e:'🍔',area:'COCINA'},
+const ADIC={t:'Agrégale algo más',type:'multi',items:[{n:'Leche vegetal',p:1000},{n:'Crema batida',p:1000},{n:'Sabor extra',p:800}]};
+const SABOR={t:'Sabor',type:'single',req:1,items:[{n:'Vainilla',p:0},{n:'Caramelo',p:0},{n:'Amaretto',p:0},{n:'Macadamia',p:0}]};
+const TAZAS={t:'Tazas',type:'single',req:1,items:[{n:'2 tazas',p:0},{n:'3 tazas',p:4000},{n:'4 tazas',p:8000},{n:'6 tazas',p:14000},{n:'8 tazas',p:22000}]};
+const DULCE_CAFE=[
+  {id:'d1',n:'Café Americano (tinto)',pr:3000,cat:'Calientes',e:'☕',area:'BARRA',rec:1},
+  {id:'d2',n:'Café Americano Grande',pr:5500,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d3',n:'Expresso',pr:3000,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d4',n:'Expresso Doppio',pr:5500,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d5',n:'Café Campesino',pr:4000,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d6',n:'Machiato',pr:4500,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d7',n:'Café Bombom',pr:8000,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d8',n:'Capuccino Tradicional',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1,opts:[ADIC]},
+  {id:'d9',n:'Capuccino Saborizado',pr:8500,cat:'Calientes',e:'☕',area:'BARRA',opts:[SABOR,ADIC]},
+  {id:'d10',n:'Café Latte',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1,opts:[ADIC]},
+  {id:'d11',n:'Café Latte Oreo',pr:8000,cat:'Calientes',e:'☕',area:'BARRA',opts:[ADIC]},
+  {id:'d12',n:'Mocca',pr:7000,cat:'Calientes',e:'☕',area:'BARRA',opts:[ADIC]},
+  {id:'d13',n:'Milo',pr:6000,cat:'Calientes',e:'🍫',area:'BARRA'},
+  {id:'d14',n:'Infusión de frutas',pr:5500,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d15',n:'Infusión de frutos rojos',pr:5000,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d16',n:'Infusión de frutos deshidratados',pr:5000,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d17',n:'Aromática natural (hierbas)',pr:3000,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d18',n:'Aromática de sobre',pr:2500,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d19',n:'Aromática de panela',pr:3000,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d20',n:'Té Chai',pr:6000,cat:'Calientes',e:'🍵',area:'BARRA'},
+  {id:'d21',n:'Aguapanela con queso y bizcocho',pr:8000,cat:'Calientes',e:'🧀',area:'BARRA'},
+  {id:'d22',n:'Carajillo',pr:6500,cat:'Con licor',e:'🍸',area:'BARRA'},
+  {id:'d23',n:'Cappuccino tradicional (con licor)',pr:10000,cat:'Con licor',e:'🍸',area:'BARRA'},
+  {id:'d24',n:'Café Irlandés',pr:16000,cat:'Con licor',e:'🥃',area:'BARRA'},
+  {id:'d25',n:'Cappuccino frío (con licor)',pr:13000,cat:'Con licor',e:'🍸',area:'BARRA'},
+  {id:'d26',n:'Malteada de café con whisky',pr:17000,cat:'Con licor',e:'🥃',area:'BARRA'},
+  {id:'d27',n:'Afogato Italiano con crema',pr:12000,cat:'Con licor',e:'🍨',area:'BARRA'},
+  {id:'d28',n:'Afogato',pr:7000,cat:'Frías',e:'🍨',area:'BARRA'},
+  {id:'d29',n:'Tinto frío',pr:6000,cat:'Frías',e:'🧊',area:'BARRA'},
+  {id:'d30',n:'Cold brew (18h de extracción)',pr:7500,cat:'Frías',e:'🧊',area:'BARRA'},
+  {id:'d31',n:'Capuccino Frío',pr:7500,cat:'Frías',e:'🧋',area:'BARRA'},
+  {id:'d32',n:'Capuccino Frío Saborizado',pr:12000,cat:'Frías',e:'🧋',area:'BARRA',opts:[SABOR]},
+  {id:'d33',n:'Capuccino con Helado',pr:10000,cat:'Frías',e:'🍨',area:'BARRA'},
+  {id:'d34',n:'Latte Frío',pr:7500,cat:'Frías',e:'🧋',area:'BARRA'},
+  {id:'d35',n:'Frappe de café',pr:7000,cat:'Frías',e:'🧋',area:'BARRA',opts:[ADIC]},
+  {id:'d36',n:'Frappucino',pr:9000,cat:'Frías',e:'🧋',area:'BARRA'},
+  {id:'d37',n:'Mocca Frío',pr:8000,cat:'Frías',e:'🧋',area:'BARRA'},
+  {id:'d38',n:'Malteada de café',pr:11500,cat:'Frías',e:'🥤',area:'BARRA'},
+  {id:'d39',n:'Limonada de café',pr:7000,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d40',n:'Jugo en Agua',pr:6000,cat:'Frías',e:'🧃',area:'BARRA'},
+  {id:'d41',n:'Jugo en Leche',pr:7000,cat:'Frías',e:'🥛',area:'BARRA'},
+  {id:'d42',n:'Malteada (vainilla o chocolate)',pr:11500,cat:'Frías',e:'🥤',area:'BARRA'},
+  {id:'d43',n:'Malteada de Oreo',pr:14000,cat:'Frías',e:'🥤',area:'BARRA'},
+  {id:'d44',n:'Limonada tradicional',pr:6000,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d45',n:'Limonada de panela',pr:6000,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d46',n:'Limonada de panela y jengibre',pr:7500,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d47',n:'Limonada hierbabuena',pr:7500,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d48',n:'Limonada de coco',pr:8000,cat:'Frías',e:'🥥',area:'BARRA',rec:1},
+  {id:'d49',n:'Limonada de mango',pr:7500,cat:'Frías',e:'🥭',area:'BARRA'},
+  {id:'d50',n:'Limonada de sandía',pr:7500,cat:'Frías',e:'🍉',area:'BARRA'},
+  {id:'d51',n:'Limonada de lulo',pr:7500,cat:'Frías',e:'🍋',area:'BARRA'},
+  {id:'d52',n:'Cerezada',pr:8000,cat:'Frías',e:'🍒',area:'BARRA'},
+  {id:'d53',n:'Ginger',pr:6500,cat:'Frías',e:'🫚',area:'BARRA'},
+  {id:'d54',n:'Soda con limón',pr:6000,cat:'Frías',e:'🥤',area:'BARRA'},
+  {id:'d55',n:'Milo frío',pr:7000,cat:'Frías',e:'🥤',area:'BARRA'},
+  {id:'d56',n:'Soda artesanal Café',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d57',n:'Soda artesanal Frutos rojos',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d58',n:'Soda artesanal Limón',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d59',n:'Soda artesanal Mango',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d60',n:'Soda artesanal Maracuyá',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d61',n:'Soda artesanal Lulo',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d62',n:'Soda artesanal Sandía',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d63',n:'Soda artesanal Hierbabuena',pr:7500,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d64',n:'Soda artesanal Maracupiña',pr:8000,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d65',n:'Soda artesanal Maracumango',pr:8000,cat:'Sodas',e:'🥤',area:'BARRA'},
+  {id:'d66',n:'Frappé maracuyá',pr:8000,cat:'Frappes',e:'🧋',area:'BARRA'},
+  {id:'d67',n:'Frappé mora',pr:8000,cat:'Frappes',e:'🧋',area:'BARRA'},
+  {id:'d68',n:'Frappé mango',pr:8000,cat:'Frappes',e:'🧋',area:'BARRA'},
+  {id:'d69',n:'Frappe oreo',pr:11000,cat:'Frappes',e:'🧋',area:'BARRA',rec:1},
+  {id:'d70',n:'Mojito',pr:15000,cat:'Con licor',e:'🍹',area:'BARRA',rec:1},
+  {id:'d71',n:'Michelada Club Colombia',pr:7500,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d72',n:'Michelada Coronita',pr:7500,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d73',n:'Michelada Corona',pr:10000,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d74',n:'Club Colombia',pr:5000,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d75',n:'Corona',pr:7000,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d76',n:'Coronita',pr:5000,cat:'Con licor',e:'🍺',area:'BARRA'},
+  {id:'d77',n:'Smoothie',pr:10000,cat:'Postres',e:'🥤',area:'BARRA'},
+  {id:'d78',n:'Ensalada de fruta pequeña',pr:11000,cat:'Postres',e:'🍓',area:'COCINA'},
+  {id:'d79',n:'Ensalada de fruta grande',pr:13000,cat:'Postres',e:'🍓',area:'COCINA'},
+  {id:'d80',n:'Fresas con crema',pr:9000,cat:'Postres',e:'🍓',area:'COCINA'},
+  {id:'d81',n:'Copa de helado (1 bola)',pr:6000,cat:'Postres',e:'🍨',area:'COCINA'},
+  {id:'d82',n:'Copa de helado (2 bolas)',pr:8000,cat:'Postres',e:'🍨',area:'COCINA'},
+  {id:'d83',n:'Porción de fruta',pr:5000,cat:'Postres',e:'🍉',area:'COCINA'},
+  {id:'d84',n:'Vaso de yogur con granola y banano',pr:9000,cat:'Postres',e:'🍌',area:'COCINA'},
+  {id:'d85',n:'Mini waffle con helado',pr:8500,cat:'Postres',e:'🧇',area:'COCINA'},
+  {id:'d86',n:'Brownie con helado',pr:8500,cat:'Postres',e:'🍫',area:'COCINA',rec:1},
+  {id:'d87',n:'Sanduche de jamón y queso',pr:4500,cat:'Pa comer',e:'🥪',area:'COCINA'},
+  {id:'d88',n:'Sanduche de pollo',pr:14000,cat:'Pa comer',e:'🥪',area:'COCINA'},
+  {id:'d89',n:'Arepa de yuca (2 porciones)',pr:6000,cat:'Pa comer',e:'🫓',area:'COCINA'},
+  {id:'d90',n:'Empanada de plátano rellena de pollo (2 porciones)',pr:9000,cat:'Pa comer',e:'🥟',area:'COCINA'},
+  {id:'d91',n:'Flauta',pr:5000,cat:'Pa comer',e:'🌯',area:'COCINA',opts:[{t:'Relleno',type:'single',req:1,items:[{n:'Carne',p:0},{n:'Pollo',p:0},{n:'Mixta',p:0}]}]},
+  {id:'d92',n:'Torta de panela',pr:6000,cat:'Postres',e:'🍰',area:'COCINA'},
+  {id:'d93',n:'Torta casera',pr:6000,cat:'Postres',e:'🍰',area:'COCINA'},
+  {id:'d94',n:'Torta de almojábana',pr:6500,cat:'Postres',e:'🍰',area:'COCINA'},
+  {id:'d95',n:'Combo: Capuccino + Torta Casera',pr:11000,cat:'Combos',e:'🍰',area:'BARRA'},
+  {id:'d96',n:'Combo: 2 Capuccino + Arepa de yuca',pr:17000,cat:'Combos',e:'☕',area:'BARRA'},
+  {id:'d97',n:'Botella de agua 600ml',pr:3000,cat:'Otros',e:'💧',area:'BARRA'},
+  {id:'d98',n:'Botella de agua 300ml',pr:1500,cat:'Otros',e:'💧',area:'BARRA'},
+  {id:'d99',n:'Coca cola',pr:4000,cat:'Otros',e:'🥤',area:'BARRA'},
+  {id:'d100',n:'Soda Personal',pr:4000,cat:'Otros',e:'🥤',area:'BARRA'},
+  {id:'d101',n:'Adicional de Chantilly',pr:3000,cat:'Otros',e:'🍥',area:'BARRA'},
+  {id:'d102',n:'Filtrado V60',pr:10000,cat:'Filtrados',e:'☕',area:'BARRA',opts:[TAZAS]},
+  {id:'d103',n:'Filtrado Chemex',pr:10000,cat:'Filtrados',e:'☕',area:'BARRA',opts:[TAZAS]},
+  {id:'d104',n:'Filtrado Prensa Francesa',pr:10000,cat:'Filtrados',e:'☕',area:'BARRA',opts:[TAZAS]},
 ];
+const PRODUCTS=DULCE_CAFE.map(p=>JSON.parse(JSON.stringify(p)));
 const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
 const MESEROS=['Sebastián','Laura','Andrés','Kelly'];
 const ALMACENES=['Almacén principal','Barra'];
@@ -1103,20 +1202,41 @@ function renderKds(){
   board.innerHTML=`<div class="kds-grid">${tickets.map(t=>{
     const mins=Math.floor((Date.now()-t.sentAt)/60000);
     const age=mins<5?'g':(mins<=10?'a':'r');
-    return `<div class="kds-card ${t.allReady?'ready':''} age-${age}">
+    const shown=t.items.slice(0,5);const extra=t.items.length-shown.length;
+    const readyN=t.items.filter(l=>l.ready).length;
+    return `<div class="kds-card ${t.allReady?'ready':''} age-${age}" onclick="kdsOpen('${t.k}')">
       <div class="kds-head"><b>${t.title}</b><span class="kds-time">⏱ ${mins} min</span></div>
-      <div class="kds-items">${t.items.map(l=>{
-        const opts=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';const ns=noteStr(l);
-        return `<div class="kds-item ${l.ready?'done':''}" onclick="kdsToggleItem('${t.k}',${l.lid})">
-          <div class="kds-chk">${l.ready?'✅':'⬜'}</div>
-          <div class="kds-it"><b>${l.qty}× ${l.n}${l.llevar?' 🥡 llevar':''}</b>${opts?`<span>▸ ${opts}</span>`:''}${ns?`<span>📝 ${ns}</span>`:''}</div>
-        </div>`;}).join('')}</div>
-      <div class="kds-foot">${t.allReady
-        ? `<button class="btn primary" onclick="kdsServe('${t.k}')">🍽️ Entregado a la mesa</button>`
-        : `<button class="btn ghost" onclick="kdsReadyAll('${t.k}')">✅ Marcar todo listo</button>`}</div>
+      <div class="kds-items preview">${shown.map(l=>{
+        const opts=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';
+        return `<div class="kds-item ${l.ready?'done':''}"><div class="kds-chk">${l.ready?'✅':'⬜'}</div><div class="kds-it"><b>${l.qty}× ${l.n}${l.llevar?' 🥡':''}</b>${opts?`<span>▸ ${opts}</span>`:''}</div></div>`;
+      }).join('')}${extra>0?`<div class="kds-more">＋ ${extra} más · toca para ver todo</div>`:''}</div>
+      <div class="kds-foot"><span class="kds-prog">${readyN}/${t.items.length} listos</span>${t.allReady
+        ? `<button class="btn primary" style="flex:1" onclick="event.stopPropagation();kdsServe('${t.k}')">🍽️ Entregado</button>`
+        : `<button class="btn ghost" style="flex:1" onclick="event.stopPropagation();kdsReadyAll('${t.k}')">✅ Todo listo</button>`}</div>
     </div>`;}).join('')}</div>`;
 }
-function _kdsRefreshAll(k){syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();saveState();if(document.getElementById('comContent'))renderComContent();}
+function kdsOpen(k){window._kdsOpen=k;renderKdsModal();}
+function closeKdsModal(){window._kdsOpen=null;const m=document.getElementById('kdsModal');if(m)m.classList.remove('on');}
+function renderKdsModal(){
+  const k=window._kdsOpen;if(!k)return;const items=kdsItemsOf(k);const m=document.getElementById('kdsModal');
+  if(!items.length){closeKdsModal();return;}
+  const title=(DYN[k]&&DYN[k].title)||(ORDMETA[k]||{}).title||k;
+  const mins=Math.floor((Date.now()-Math.min(...items.map(l=>l.sentAt||Date.now())))/60000);
+  const allReady=items.every(l=>l.ready);const readyN=items.filter(l=>l.ready).length;
+  m.innerHTML=`<div class="modal" style="width:520px;max-width:96vw">
+    <div class="modal-h"><b>👨‍🍳 ${title} · ⏱ ${mins} min</b><div class="mx" onclick="closeKdsModal()">✕</div></div>
+    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:10px">${readyN}/${items.length} listos · toca cada plato para marcarlo</div>
+      <div class="kds-items big">${items.map(l=>{
+        const opts=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';const ns=noteStr(l);
+        return `<div class="kds-item ${l.ready?'done':''}" onclick="kdsToggleItem('${k}',${l.lid})">
+          <div class="kds-chk">${l.ready?'✅':'⬜'}</div>
+          <div class="kds-it"><b>${l.qty}× ${l.n}${l.llevar?' 🥡 llevar':''}</b>${opts?`<span>▸ ${opts}</span>`:''}${ns?`<span>📝 ${ns}</span>`:''}<span class="kds-area-tag">${l.area}</span></div>
+        </div>`;}).join('')}</div>
+    </div>
+    <div class="modal-f">${allReady?`<button class="btn primary" onclick="kdsServe('${k}');closeKdsModal()">🍽️ Entregado a la mesa</button>`:`<button class="btn ghost" onclick="kdsReadyAll('${k}')">✅ Marcar todo listo</button>`}</div></div>`;
+  m.classList.add('on');
+}
+function _kdsRefreshAll(k){syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();if(window._kdsOpen)renderKdsModal();saveState();if(document.getElementById('comContent'))renderComContent();}
 function kdsToggleItem(k,lid){const l=ORD[k].find(x=>x.lid===lid);if(l){l.ready=!l.ready;_kdsRefreshAll(k);}}
 function kdsReadyAll(k){kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
 function kdsServe(k){kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
@@ -1144,10 +1264,11 @@ function productosView(){
     <div class="sub">Tu catálogo real. Lo que creas aquí alimenta el panel de comandas (y en Fase 1, el menú QR del cliente). Puedes reemplazar los productos de ejemplo por los tuyos.</div></div>
   <div class="prd-bar">
     <div class="prd-cats" id="prdCats"></div>
-    <button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button>
+    <div style="display:flex;gap:8px"><button class="btn ghost" style="width:auto;padding:10px 14px" onclick="loadDulceCafe()">☕ Cargar menú Dulce Café</button><button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button></div>
   </div>
   <div id="prdGrid"></div>`;
 }
+function loadDulceCafe(){if(!confirm("Esto reemplaza el catálogo actual por el menú de Dulce Café. ¿Continuar?"))return;PRODUCTS.length=0;DULCE_CAFE.forEach(p=>PRODUCTS.push(JSON.parse(JSON.stringify(p))));saveProductos();renderPrdCats();renderProductos();Object.keys(ORD).forEach(k=>{if(document.getElementById("prods_"+k))renderProds(k);});toastT("☕ Menú Dulce Café cargado");}
 function initProductos(){renderPrdCats();renderProductos();}
 function renderPrdCats(){
   const el=document.getElementById('prdCats');if(!el)return;
@@ -2191,7 +2312,7 @@ function renderQrPhone(){
     <div class="island"></div>
     <div class="statusbar"><span class="sb-time">${t}</span><span class="sb-icons">${sig}${wifi}${bat}</span></div>
     <div class="scr-body">
-      <div class="scr-hero"><div class="hero-logo">🍖</div><div class="hero-name">El Fogón</div><div class="hero-sub">📍 Mesa 04 · Sede Centro</div></div>
+      <div class="scr-hero"><div class="hero-logo">🍖</div><div class="hero-name">Dulce Café</div><div class="hero-sub">📍 Mesa 04 · Sede Centro</div></div>
       ${anyOpt?'<div class="scr-welcome">¿Qué deseas hacer?</div>':''}
       ${btns.map(b=>`<div class="scr-btn ${b[2]?'primary':''}"><div class="sbc">${b[0]}</div><div class="sbt">${b[1]}</div></div>`).join('')}
       ${QROPTS.resena?`<div class="clubvip">
@@ -2363,7 +2484,7 @@ function dashboard(){
   const ult=FACTURAS.slice(0,8);
   const mesas=MESAS.filter(m=>m.piso==='Piso 1');
   return `
-  <div class="page-head"><h1>👋 Hola, Sebastián</h1><div class="sub">Resumen de El Fogón · Sede Centro. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
+  <div class="page-head"><h1>👋 Hola, Sebastián</h1><div class="sub">Resumen de Dulce Café · Sede Centro. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
   <div class="kpi-grid">${kpis.map(k=>`<div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}</div>
   <div class="section-title">⚡ Accesos directos</div>
   <div class="qa-grid">${qa.map(q=>`<div class="qa" onclick="openTab('${q[0]}')"><div class="qi" style="background:${q[3]};color:${q[4]}">${q[1]}</div><div class="qn">${q[2]}</div></div>`).join('')}</div>
@@ -2389,7 +2510,7 @@ function verFactura(num){
   const f=FACTURAS.find(x=>x.num===num);if(!f)return;
   const rows=f.items.map(it=>`<div class="tk-row"><span>${it.qty}  ${it.n}${it.cort?' (cortesía)':''}</span><span>${it.cort?'0':COP(it.unit*it.qty)}</span></div>`).join('');
   const ticket=`<div class="ticket">
-    <div class="tk-c tk-big">EL FOGÓN</div><div class="tk-c">FACTURA ${f.num}</div><div class="tk-hr"></div>
+    <div class="tk-c tk-big">DULCE CAFÉ</div><div class="tk-c">FACTURA ${f.num}</div><div class="tk-hr"></div>
     <div>${f.origen}</div><div>${new Date(f.ts).toLocaleString('es-CO')}</div>
     <div>Mesero: ${f.mesero||'—'}${f.cliente?' · Cliente: '+f.cliente:''}</div><div class="tk-hr"></div>
     ${rows}<div class="tk-hr"></div>
@@ -2462,7 +2583,7 @@ function toggleTopMenu(which){
     nm.classList.add('on');
   }
   if(openA){
-    am.innerHTML=`<div class="acct-top"><div class="aav">S</div><div><b style="font-family:'Outfit',sans-serif">Sebastián</b><div style="font-size:11.5px;color:var(--txt2)">Administrador · El Fogón</div></div></div>
+    am.innerHTML=`<div class="acct-top"><div class="aav">S</div><div><b style="font-family:'Outfit',sans-serif">Sebastián</b><div style="font-size:11.5px;color:var(--txt2)">Administrador · Dulce Café</div></div></div>
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
