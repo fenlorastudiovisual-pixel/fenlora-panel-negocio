@@ -770,6 +770,7 @@ function openTab(k){
 function closeTab(k){
   const i=openTabs.indexOf(k);
   if(i<0||k==='panel')return;
+  if(window._fullTarget===k && typeof closeFull==='function') closeFull();
   openTabs.splice(i,1);
   const p=document.querySelector(`.tabpanel[data-k="${k}"]`);if(p)p.remove();
   delete scrollPos[k];
