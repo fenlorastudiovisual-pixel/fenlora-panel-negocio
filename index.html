@@ -613,6 +613,23 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 body.light{--bg:#EEF1F7;--surface:#FFFFFF;--card:#FFFFFF;--card2:#F1F4FA;--border:rgba(20,30,50,.10);--border2:rgba(20,30,50,.18);--txt:#151C2B;--txt2:#5B6678;--txt3:#98A2B3;--primary-dim:rgba(0,179,129,.14);--primary-dim2:rgba(0,179,129,.07)}
 body.light .sidebar,body.light .hdr{background:#FFFFFF}
 body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50,.06)}
+/* mejoras: cantidad con teclado, descuento por plato, leyenda, íconos tablet */
+.qv-in{width:38px;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--txt);font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;padding:4px 2px;outline:none}
+.qv-in:focus{border-color:var(--primary)}
+.disc-tag{font-size:9px;background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+.cl-imp-old{text-decoration:line-through;color:var(--txt3);font-size:10px;font-weight:400;margin-right:3px}
+.accb.b5{color:var(--amber)}.accb.b5:hover{background:var(--amber-dim);border-color:var(--amber)}
+.accb.b5.on{background:var(--amber);color:#3a2a06;border-color:var(--amber)}
+.cl-opts{cursor:pointer}
+.mesa-legend{display:flex;gap:12px;font-size:11px;color:var(--txt2);flex-wrap:wrap}
+.mesa-legend span{white-space:nowrap}
+.mesas-head{flex-wrap:wrap;gap:10px}
+@media(max-width:1200px){
+  .accb{width:34px;height:34px;font-size:15px}
+  .qb{width:34px;height:34px;font-size:18px}
+  .qv-in{width:44px;height:34px;font-size:15px}
+  .cl-acc{gap:7px}
+}
 </style>
 </head>
 <body>
@@ -657,6 +674,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="moveModal"></div>
 <div class="modal-bg" id="qrModal"></div>
 <div class="modal-bg" id="mesasModal"></div>
+<div class="modal-bg" id="lineModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -1029,6 +1047,7 @@ function renderComContent(){
   const ct=document.getElementById('comTypes'); if(ct) ct.querySelectorAll('.comtype').forEach((el,i)=>{const b=el.querySelector('.ct-badge'); if(b&&COMTYPES[i])b.textContent=comCount(COMTYPES[i][0]);});
   if(comType==='mesas'){
     let html=`<div class="mesas-head"><b>🗺️ Mapa de mesas</b>
+      <div class="mesa-legend"><span>🟢 Libre</span><span>🟠 Ocupada</span><span>🔴 Por cobrar</span></div>
       <button class="btn ghost" style="width:auto;padding:9px 14px" onclick="toggleUnir()">${unirMode?'✕ Cancelar':'🔗 Unir mesas'}</button></div>`;
     AMBIENTES.forEach(amb=>{
       const ms=MESAS.filter(m=>m.piso===amb.n);
@@ -1055,7 +1074,7 @@ function renderComContent(){
     let html=`<div class="mesas-head"><b>${ico} Pedidos ${label}</b><button class="btn primary" style="width:auto;padding:9px 16px" onclick="newOrder('${comType}')">➕ Nueva orden</button></div>`;
     if(active.length){
       html+=`<div class="order-grid">`+active.map(k=>{
-        const mt=ORDMETA[k]||{};const tot=ORD[k].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);const nit=ORD[k].reduce((s,l)=>s+l.qty,0);
+        const mt=ORDMETA[k]||{};const tot=netTotal(ORD[k]);const nit=ORD[k].reduce((s,l)=>s+l.qty,0);
         const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',parcial:'➕ Por enviar',cocina:'🍳 En cocina',listo:'✅ Listo'}[koc]||'';
         return `<div class="order-card" onclick="reopenOrder('${k}')">
           <div class="oc-top"><span class="oc-ico">${mt.ico||ico}</span><b>${mt.title||k}</b></div>
@@ -1243,7 +1262,7 @@ function searchEnter(target,e){
 function pick(target,id){const p=PRODUCTS.find(x=>x.id===id);if(p.opts){openOpts(target,p);}else{addLine(target,p,[]);}}
 function addLine(target,p,sel){
   const extra=sel.reduce((s,o)=>s+o.p,0);
-  ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,llevar:false,area:p.area||'COCINA',notes:[[]]});
+  ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,llevar:false,desc:0,area:p.area||'COCINA',notes:[[]]});
   renderComanda(target);syncMesa(target);toastT('Se agregó '+p.n+' a la comanda');
 }
 function changeQty(target,lid,d){
@@ -1272,31 +1291,75 @@ function setPos(target,lid,v){
 function noteStr(l){
   return l.notes.map((arr,i)=>arr.length?((l.qty>1?('U'+(i+1)+': '):'')+arr.join(', ')):'').filter(Boolean).join('   ·   ');
 }
+function lineNet(l){return l.cort?0:Math.max(0,l.unit*l.qty-(l.desc||0));}
+function netTotal(lines){return (lines||[]).reduce((s,l)=>s+lineNet(l),0);}
+let pendingEditLid=null;
+function setQty(target,lid,v){
+  const l=ORD[target].find(x=>x.lid===lid);if(!l||l.sent)return;
+  let q=parseInt((v+'').replace(/\D/g,''))||1;if(q<1)q=1;if(q>999)q=999;
+  l.qty=q;
+  if(Array.isArray(l.notes)){while(l.notes.length<q)l.notes.push([]);if(l.notes.length>q)l.notes=l.notes.slice(0,q);}
+  renderComanda(target);syncMesa(target);
+}
+function openLineDisc(target,lid){
+  const l=ORD[target].find(x=>x.lid===lid);if(!l)return;
+  if(l.cort){toastT('Este plato es cortesía (ya va gratis)');return;}
+  const gross=l.unit*l.qty;
+  const m=document.getElementById('lineModal');
+  m.innerHTML=`<div class="modal" style="width:380px"><div class="modal-h"><b>🏷️ Descuento · ${l.n}</b><div class="mx" onclick="closeLineDisc()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Precio del plato: <b>${COP(gross)}</b>. Ingresa el descuento en pesos.</div>
+      <input class="disc-in" id="lineDiscIn" inputmode="numeric" placeholder="0" value="${l.desc||''}">
+      <div style="display:flex;gap:7px;margin-top:10px">
+        ${[10,20,50].map(p=>`<button class="btn ghost" style="flex:1;padding:8px" onclick="document.getElementById('lineDiscIn').value=${Math.round(gross*p/100)}">${p}%</button>`).join('')}
+      </div>
+    </div>
+    <div class="modal-f"><div style="display:flex;gap:9px">
+      ${l.desc?`<button class="btn ghost" style="flex:0 0 auto;padding:12px 15px;color:var(--red)" onclick="confirmLineDisc('${target}',${lid},0)">Quitar</button>`:''}
+      <button class="btn primary" style="flex:1" onclick="confirmLineDisc('${target}',${lid},document.getElementById('lineDiscIn').value)">Aplicar descuento</button>
+    </div></div></div>`;
+  m.classList.add('on');
+}
+function confirmLineDisc(target,lid,v){
+  const l=ORD[target].find(x=>x.lid===lid);if(!l)return;
+  let d=parseInt((v+'').replace(/\D/g,''))||0;const gross=l.unit*l.qty;if(d>gross)d=gross;if(d<0)d=0;
+  l.desc=d;closeLineDisc();renderComanda(target);syncMesa(target);toastT(d?'Descuento aplicado: '+COP(d):'Descuento quitado');
+}
+function closeLineDisc(){document.getElementById('lineModal').classList.remove('on');}
+function openEditOpts(target,lid){
+  const l=ORD[target].find(x=>x.lid===lid);if(!l)return;
+  const p=PRODUCTS.find(x=>x.id===l.id);
+  if(!p||!p.opts||!p.opts.length){toastT('Este plato no tiene opciones para editar');return;}
+  openOpts(target,p,lid);
+}
 function comandaBody(target){
   const lines=ORD[target]||[];
   if(!lines.length) return `<div class="empty"><div class="ee">🧾</div>Toca un producto para agregarlo a la comanda.</div>`;
   return lines.map((l,idx)=>{
     const o=l.opts.map(x=>x.n+(x.p?` (+${COP(x.p)})`:'')).join(' · ');
     const ns=noteStr(l);
-    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
+    const gross=l.unit*l.qty;const desc=l.desc||0;const net=l.cort?0:Math.max(0,gross-desc);
+    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(desc&&!l.cort?` <span class="disc-tag">🏷️ −${COP(desc)}</span>`:'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
     const acc=`<div class="cl-acc">
       <button class="accb b1" title="Notas / observación por unidad" onclick="openNotes('${target}',${l.lid})">🗒️</button>
       <button class="accb b2" title="Quitar / anular" onclick="delLine('${target}',${l.lid})">🗑️</button>
       <button class="accb b3 ${l.cort?'on':''}" title="Cortesía (no se cobra)" onclick="toggleCort('${target}',${l.lid})">🎁</button>
-      <button class="accb b4 ${l.llevar?'on':''}" title="Para llevar (empacar)" onclick="toggleLlevar('${target}',${l.lid})">🥡</button></div>`;
-    const qty=l.sent?`<span class="cl-static-q">Cant: ${l.qty}</span>`:`<div class="qstep"><div class="qb" onclick="changeQty('${target}',${l.lid},-1)">−</div><span class="qv">${l.qty}</span><div class="qb" onclick="changeQty('${target}',${l.lid},1)">+</div></div>`;
+      <button class="accb b4 ${l.llevar?'on':''}" title="Para llevar (empacar)" onclick="toggleLlevar('${target}',${l.lid})">🥡</button>
+      <button class="accb b5 ${desc?'on':''}" title="Descuento de este plato" onclick="openLineDisc('${target}',${l.lid})">🏷️</button></div>`;
+    const qty=l.sent?`<span class="cl-static-q">Cant: ${l.qty}</span>`:`<div class="qstep"><div class="qb" onclick="changeQty('${target}',${l.lid},-1)">−</div><input class="qv-in" inputmode="numeric" value="${l.qty}" onchange="setQty('${target}',${l.lid},this.value)" onclick="this.select()"><div class="qb" onclick="changeQty('${target}',${l.lid},1)">+</div></div>`;
     const price=l.sent?`<div class="cl-pricebox" style="opacity:.6">$ <span class="cl-price-in">${l.unit.toLocaleString('es-CO')}</span></div>`:`<div class="cl-pricebox">$ <input class="cl-price-in" value="${l.unit.toLocaleString('es-CO')}" onchange="changePrice('${target}',${l.lid},this.value)"></div>`;
     const posSel=`<div class="cl-pos">Pos <select class="cl-pos-sel" onchange="setPos('${target}',${l.lid},this.value)">${lines.map((_,i)=>`<option value="${i+1}" ${i===idx?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
     const hold=l.sent?'':`<span class="cl-hold" onclick="toggleHold('${target}',${l.lid})">${l.held?'▶ enviar':'⏸ retener'}</span>`;
+    const impHTML=(desc&&!l.cort)?`<div class="cl-imp"><span class="cl-imp-old">${COP(gross)}</span> ${COP(net)}</div>`:`<div class="cl-imp">${COP(l.cort?0:gross)}</div>`;
     return `<div class="cl${l.sent?' sent':''}${l.held?' held':''}${l.cort?' cort':''}">
       <div class="cl-head">${acc}
         <div class="cl-info">
           <div class="cl-name">${l.n}${tags}</div>
-          ${o?`<div class="cl-opts">${o}</div>`:''}
+          ${o?`<div class="cl-opts" onclick="openEditOpts('${target}',${l.lid})">${o} <span class="edit-note">editar</span></div>`:''}
           ${ns?`<div class="cl-notes" onclick="openNotes('${target}',${l.lid})">📝 ${ns} <span class="edit-note">editar</span></div>`:`<div class="cl-addnote" onclick="openNotes('${target}',${l.lid})">📝 Agregar observación (sin ají, término medio…)</div>`}
           <span class="cl-area">🍳 ${l.area}</span>
         </div></div>
-      <div class="cl-ctrl">${qty}${price}<div class="cl-imp">${COP(l.unit*l.qty)}</div>${posSel}${hold}</div></div>`;
+      <div class="cl-ctrl">${qty}${price}${impHTML}${posSel}${hold}</div></div>`;
   }).join('');
 }
 function comandaFoot(target){
@@ -1308,12 +1371,14 @@ function comandaFoot(target){
       <button class="sbtn fact" disabled><span class="si">💵</span>Facturar y Grabar</button></div>`;
   const subtotal=lines.reduce((s,l)=>s+l.unit*l.qty,0);
   const cortAmt=lines.filter(l=>l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
-  const total=subtotal-cortAmt;
+  const descAmt=lines.filter(l=>!l.cort).reduce((s,l)=>s+(l.desc||0),0);
+  const total=Math.max(0,subtotal-cortAmt-descAmt);
   const pend=lines.filter(l=>!l.sent&&!l.held).length;
   const held=lines.filter(l=>l.held).length;
   return `
     <div class="trow"><span>Subtotal</span><span>${COP(subtotal)}</span></div>
     ${cortAmt?`<div class="trow cortr"><span>Cortesías</span><span>− ${COP(cortAmt)}</span></div>`:''}
+    ${descAmt?`<div class="trow" style="color:var(--amber)"><span>Descuentos</span><span>− ${COP(descAmt)}</span></div>`:''}
     <div class="trow tot"><span>TOTAL</span><span class="tv">${COP(total)}</span></div>
     <div class="save-grid">
       <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
@@ -1361,7 +1426,7 @@ function setObs(target,v){ORDMETA[target].obs=v;}
 function syncMesa(target){
   if(!target.startsWith('mesa_'))return;
   const lines=ORD[target];
-  const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=netTotal(lines);
   target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est=lines.length?'ocup':'libre';m.t='ahora';m.m=total;}});
 }
 
@@ -1383,7 +1448,7 @@ function printComanda(target,mode){
   const isMesa=target.startsWith('mesa_'); const mesaObj=isMesa?getMesa(+target.replace('mesa_','').split('_')[0]):null;
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=netTotal(lines);
   const pre=mode==='precuenta';
   const rows=lines.map(l=>{const ns=noteStr(l);const os=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';
     return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}${l.llevar?' 🥡PARA LLEVAR':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${os?`<div class="tk-note">▸ ${os}</div>`:''}${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
@@ -1463,7 +1528,7 @@ function openPay(target){
 }
 function payTotals(){
   const lines=ORD[payTarget];
-  const subtotal=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const subtotal=netTotal(lines);
   const tipAmt=Math.round(subtotal*pay.tip/100);
   const disc=pay.disc||0;
   const total=Math.max(0,subtotal+tipAmt-disc);
@@ -1524,7 +1589,7 @@ document.getElementById('payModal').addEventListener('click',e=>{if(e.target.id=
 
 /* ── dividir cuenta ── */
 function dividir(target){
-  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=netTotal(ORD[target]);
   if(!total){toastT('La comanda está vacía');return;}
   const m=document.getElementById('splitModal');
   m.innerHTML=`<div class="modal" style="width:440px">
@@ -1539,7 +1604,7 @@ function dividir(target){
   m.classList.add('on');
 }
 function splitEqual(target){
-  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=netTotal(ORD[target]);
   let n=2;
   const draw=()=>{const per=Math.ceil(total/n);document.getElementById('splitBody').innerHTML=`
     <div style="text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">¿Entre cuántas personas?</div>
@@ -1555,7 +1620,7 @@ function splitEqual(target){
 }
 /* ── Cobro dividido: cada parte con su monto y medio → genera una factura por parte ── */
 function splitCheckout(target,mode,n){
-  const total=ORD[target].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const total=netTotal(ORD[target]);
   let parts;
   if(mode==='iguales'){const per=Math.floor(total/n);parts=Array.from({length:n},(_,i)=>({amount:i===n-1?total-per*(n-1):per,medio:'efectivo'}));}
   else{parts=[{amount:0,medio:'efectivo'},{amount:0,medio:'efectivo'}];}
@@ -1697,7 +1762,7 @@ function doMoveComanda(from,to){
   ORD[tk]=ORD[fk]||[];ORDMETA[tk]=ORDMETA[fk]||{};ORDCAT[tk]=ORDCAT[fk]||'Recomendados';
   delete ORD[fk];delete ORDMETA[fk];delete ORDCAT[fk];
   const mf=getMesa(from),mt=getMesa(to);
-  const tot=ORD[tk].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
+  const tot=netTotal(ORD[tk]);
   if(mf){mf.est='libre';mf.t='';mf.m=0;} if(mt){mt.est='ocup';mt.t='ahora';mt.m=tot;}
   closeMesaAct();
   if(openTabs.includes(fk)){closeTab(fk);}
@@ -1732,7 +1797,7 @@ function doMoverPlatos(target){
   const move=ORD[target].filter(l=>ids.includes(l.lid));
   ORD[target]=ORD[target].filter(l=>!ids.includes(l.lid));
   move.forEach(l=>ORD[tk].push(l));
-  const mt=getMesa(to);if(mt){mt.est='ocup';mt.t='ahora';mt.m=ORD[tk].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);}
+  const mt=getMesa(to);if(mt){mt.est='ocup';mt.t='ahora';mt.m=netTotal(ORD[tk]);}
   closeMove();renderComanda(target);syncMesa(target);
   toastT(ids.length+' plato(s) trasladado(s) a Mesa '+pad(to));
 }
@@ -1740,24 +1805,37 @@ function closeMove(){document.getElementById('moveModal').classList.remove('on')
 document.getElementById('moveModal').addEventListener('click',e=>{if(e.target.id==='moveModal')closeMove();});
 
 /* ── options modal (variantes/adicionales) ── */
-function openOpts(target,p){
-  pendingTarget=target;pendingProd=p;pendingSel={};
-  p.opts.forEach((g,gi)=>{pendingSel[gi]=(g.type==='single'&&g.req)?[0]:[];});
+function openOpts(target,p,editLid){
+  pendingTarget=target;pendingProd=p;pendingSel={};pendingEditLid=editLid||null;
+  if(editLid){
+    const l=ORD[target].find(x=>x.lid===editLid);const chosen=(l&&l.opts)?l.opts.map(o=>o.n):[];
+    p.opts.forEach((g,gi)=>{pendingSel[gi]=[];g.items.forEach((it,ii)=>{if(chosen.includes(it.n))pendingSel[gi].push(ii);});if(g.type==='single'&&g.req&&!pendingSel[gi].length)pendingSel[gi]=[0];});
+  }else{
+    p.opts.forEach((g,gi)=>{pendingSel[gi]=(g.type==='single'&&g.req)?[0]:[];});
+  }
   const m=document.getElementById('optModal');
-  m.innerHTML=`<div class="modal"><div class="modal-h"><b>${p.e} ${p.n}</b><div class="mx" onclick="closeOpts()">✕</div></div>
-    <div class="modal-b" id="optBody"></div><div class="modal-f"><button class="btn primary" id="optConfirm" onclick="confirmOpts()">Agregar</button></div></div>`;
+  m.innerHTML=`<div class="modal"><div class="modal-h"><b>${p.e} ${p.n}${editLid?' · editar':''}</b><div class="mx" onclick="closeOpts()">✕</div></div>
+    <div class="modal-b" id="optBody"></div><div class="modal-f"><button class="btn primary" id="optConfirm" onclick="confirmOpts()">${editLid?'Guardar':'Agregar'}</button></div></div>`;
   m.classList.add('on');renderOpts();
 }
 function renderOpts(){const p=pendingProd;
   document.getElementById('optBody').innerHTML=p.opts.map((g,gi)=>`<div class="optgroup"><div class="ogt"><span>${g.t}</span>${g.req?'<span class="req">Obligatorio</span>':g.type==='multi'?'<span style="color:var(--txt3);font-weight:400;text-transform:none">Opcional · varios</span>':''}</div>
     ${g.items.map((it,ii)=>`<div class="opt${pendingSel[gi].includes(ii)?' sel':''}" onclick="toggleOpt(${gi},${ii})"><div style="display:flex;align-items:center;gap:11px"><div class="oc"></div>${it.n}</div>${it.p?`<span class="op">+${COP(it.p)}</span>`:''}</div>`).join('')}</div>`).join('');
-  document.getElementById('optConfirm').textContent='Agregar · '+COP(pendingProd.pr+extraTotal());
+  document.getElementById('optConfirm').textContent=(pendingEditLid?'Guardar · ':'Agregar · ')+COP(pendingProd.pr+extraTotal());
 }
 function toggleOpt(gi,ii){const g=pendingProd.opts[gi];if(g.type==='single'){pendingSel[gi]=[ii];}else{const a=pendingSel[gi],p=a.indexOf(ii);p>-1?a.splice(p,1):a.push(ii);}renderOpts();}
 function extraTotal(){return pendingProd.opts.reduce((s,g,gi)=>s+pendingSel[gi].reduce((a,ii)=>a+g.items[ii].p,0),0);}
-function confirmOpts(){const sel=[];pendingProd.opts.forEach((g,gi)=>pendingSel[gi].forEach(ii=>sel.push({n:g.items[ii].n,p:g.items[ii].p})));addLine(pendingTarget,pendingProd,sel);closeOpts();}
+function confirmOpts(){
+  const sel=[];pendingProd.opts.forEach((g,gi)=>pendingSel[gi].forEach(ii=>sel.push({n:g.items[ii].n,p:g.items[ii].p})));
+  if(pendingEditLid){
+    const l=ORD[pendingTarget].find(x=>x.lid===pendingEditLid);
+    if(l){const extra=sel.reduce((s,o)=>s+o.p,0);l.opts=sel;l.unit=pendingProd.pr+extra;renderComanda(pendingTarget);syncMesa(pendingTarget);toastT('Opciones actualizadas');}
+  }else{ addLine(pendingTarget,pendingProd,sel); }
+  closeOpts();
+}
 function closeOpts(){document.getElementById('optModal').classList.remove('on');}
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
+document.getElementById('lineModal').addEventListener('click',e=>{if(e.target.id==='lineModal')closeLineDisc();});
 
 /* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
 let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:true};
