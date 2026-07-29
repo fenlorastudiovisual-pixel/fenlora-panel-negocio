@@ -739,6 +739,16 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
   .kpi-grid{grid-template-columns:1fr 1fr !important}
 }
 
+
+/* estilo de presentación de la carta */
+.menu-style{display:inline-flex;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:3px}
+.ms-tab{background:none;border:none;color:var(--txt2);font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ms-tab.on{background:var(--primary);color:#052e21}
+.prd-style-hint{font-size:12px;color:var(--txt2);background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;margin-bottom:14px}
+.prd-ph.elegant{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative}
+.prd-ph.elegant .pe-emoji{font-size:46px;line-height:1}
+.prd-ph.elegant .pe-cat{font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
+
 </style>
 </head>
 <body>
@@ -1267,7 +1277,7 @@ function kdsReadyAll(k){kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k)
 function kdsServe(k){kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
 
 /* ═══ PRODUCTOS (catálogo, fuente única del panel y el menú QR) ═══ */
-let productSeq=100, prdCat='Todos', _pf=null;
+let productSeq=100, prdCat='Todos', _pf=null, menuStyle=(function(){try{return localStorage.getItem('fenlora_menustyle')||'fotos'}catch(e){return 'fotos'}})();
 function saveProductos(){try{localStorage.setItem('fenlora_productos',JSON.stringify(PRODUCTS));}catch(e){toastT('No se pudo guardar (almacenamiento lleno)');}}
 function loadProductos(){
   try{const r=localStorage.getItem('fenlora_productos');if(r){const arr=JSON.parse(r);if(Array.isArray(arr)&&arr.length){PRODUCTS.length=0;arr.forEach(p=>PRODUCTS.push(p));}}}catch(e){}
@@ -1284,17 +1294,34 @@ function _resizeImg(file,cb){
   r.readAsDataURL(file);
 }
 function productosView(){
+  const seed = PRODUCTS.length===0 ? `<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="loadDulceCafe()">☕ Cargar menú de ejemplo</button>` : '';
   return `
   <div class="page-head"><h1>🍔 Productos <span class="status-pill activo">Activo</span></h1>
-    <div class="sub">Tu catálogo real. Lo que creas aquí alimenta el panel de comandas (y en Fase 1, el menú QR del cliente). Puedes reemplazar los productos de ejemplo por los tuyos.</div></div>
+    <div class="sub">Tu catálogo real. Lo que creas aquí alimenta el panel de comandas (y en Fase 1, el menú QR del cliente).</div></div>
   <div class="prd-bar">
     <div class="prd-cats" id="prdCats"></div>
-    <div style="display:flex;gap:8px"><button class="btn ghost" style="width:auto;padding:10px 14px" onclick="loadDulceCafe()">☕ Cargar menú Dulce Café</button><button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="menu-style" id="menuStyle"></div>
+      ${seed}<button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button>
+    </div>
   </div>
+  <div class="prd-style-hint" id="prdStyleHint"></div>
   <div id="prdGrid"></div>`;
 }
+function catHue(str){let h=0;for(let i=0;i<(str||'').length;i++)h=(h*31+str.charCodeAt(i))%360;return h;}
+function prdMedia(p){
+  const usePhoto=p.img&&menuStyle==='fotos';
+  if(usePhoto)return `<div class="prd-ph" style="background-image:url(${p.img})"></div>`;
+  const h=catHue(p.cat);
+  return `<div class="prd-ph elegant" style="background:linear-gradient(140deg,hsl(${h},46%,21%),hsl(${h},48%,12%))"><span class="pe-emoji">${p.e||'🍽️'}</span>${p.cat?`<span class="pe-cat" style="color:hsl(${h},65%,74%)">${p.cat}</span>`:''}</div>`;
+}
+function renderMenuStyle(){
+  const el=document.getElementById('menuStyle');if(el){const opts=[['fotos','🖼️ Con fotos'],['elegante','✍️ Carta elegante']];el.innerHTML=opts.map(o=>`<button class="ms-tab ${menuStyle===o[0]?'on':''}" onclick="setMenuStyle('${o[0]}')">${o[1]}</button>`).join('');}
+  const h=document.getElementById('prdStyleHint');if(h)h.innerHTML=menuStyle==='elegante'?'✍️ <b>Carta elegante:</b> sin fotos — tarjetas tipográficas con color por categoría. Ideal si el negocio aún no tiene fotos de todos los productos. (Este mismo estilo se usará en el menú QR.)':'🖼️ <b>Con fotos:</b> muestra la foto de cada producto; los que aún no tienen foto se ven con una tarjeta elegante por categoría.';
+}
+function setMenuStyle(sv){menuStyle=sv;try{localStorage.setItem('fenlora_menustyle',sv);}catch(e){}renderMenuStyle();renderProductos();}
 function loadDulceCafe(){if(!confirm("Esto reemplaza el catálogo actual por el menú de Dulce Café. ¿Continuar?"))return;PRODUCTS.length=0;DULCE_CAFE.forEach(p=>PRODUCTS.push(JSON.parse(JSON.stringify(p))));saveProductos();renderPrdCats();renderProductos();Object.keys(ORD).forEach(k=>{if(document.getElementById("prods_"+k))renderProds(k);});toastT("☕ Menú Dulce Café cargado");}
-function initProductos(){renderPrdCats();renderProductos();}
+function initProductos(){renderMenuStyle();renderPrdCats();renderProductos();}
 function renderPrdCats(){
   const el=document.getElementById('prdCats');if(!el)return;
   const cats=['Todos',...CATS.filter(c=>c!=='Recomendados')];
@@ -1307,7 +1334,7 @@ function renderProductos(){
   const list=PRODUCTS.filter(p=>prdCat==='Todos'||p.cat===prdCat);
   if(!list.length){g.innerHTML=`<div class="dash-empty" style="margin-top:20px">No hay productos en esta categoría.<br>Toca "Nuevo producto" para crear el primero.</div>`;return;}
   g.innerHTML=`<div class="prd-grid">${list.map(p=>{
-    const img=p.img?`<div class="prd-ph" style="background-image:url(${p.img})"></div>`:`<div class="prd-ph emoji">${p.e||'🍽️'}</div>`;
+    const img=prdMedia(p);
     const flags=[];
     if(p.activo===false)flags.push('<span class="pf off">No disponible</span>');
     if(p.enPanel!==false)flags.push('<span class="pf">Panel</span>');
