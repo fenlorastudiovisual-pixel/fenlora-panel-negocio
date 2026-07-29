@@ -1047,29 +1047,63 @@ const CATS=['Recomendados','Calientes','Frías','Sodas','Frappes','Con licor','P
 const QN_DEFAULT=['SIN SAL','SIN PICANTE','SIN CEBOLLA','BIEN COCIDO','PARA LLEVAR','MUCHO LIMÓN'];
 /* Sugeridor local de observaciones según el plato (sin IA: instantáneo, gratis, offline) */
 function suggestNotes(p){
-  const n=norm(p.n||''),c=p.cat||'';const has=(...ks)=>ks.some(k=>n.includes(k));
-  const savory=['SIN SAL','POCA SAL','SIN CEBOLLA','SIN AJÍ','CON AJÍ','SIN PICANTE','EXTRA PICANTE','SIN CILANTRO','SIN TOMATE','APARTE LAS SALSAS','BIEN CALIENTE','PARA COMPARTIR','EXTRA PORCIÓN','EXTRA QUESO','PARA LLEVAR'];
-  const sweet=['SIN AZÚCAR','POCA AZÚCAR','SIN LECHE','SIN HIELO','POCO HIELO','BIEN FRÍO','SIN CREMA','EXTRA GRANDE','EXTRA DULCE','SIN LACTOSA','TIBIO','CON HIELO APARTE','SIN CANELA','SIN ESPUMA','PARA LLEVAR'];
-  let base,fill=savory;
-  if(has('perro','hot dog','hotdog','choripan','salchipapa')) base=['SIN CEBOLLA','POCA SALSA','SOLO SALSA DE TOMATE','SOLO SALSA DE PIÑA','SIN PAPITAS','EXTRA QUESO','SIN SALSAS','CON TODAS LAS SALSAS','SIN MOSTAZA','EXTRA PAN'];
-  else if(has('hamburgues','burger')) base=['SIN CEBOLLA','SIN TOMATE','TÉRMINO MEDIO','BIEN COCIDA','SIN SALSAS','EXTRA QUESO','SIN PEPINILLOS','SIN LECHUGA','EXTRA CARNE','EXTRA TOCINETA','PAN APARTE'];
-  else if(has('lomo','carne','res','churrasco','bife','punta','asado','costilla','chuleta','parrilla','picada')) base=['TÉRMINO ROJO','TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','EXTRA JUGOSO','SIN GRASA','EXTRA SALSA','SALSA APARTE','SIN SAL','POCA SAL'];
-  else if(has('pollo','pechuga','alitas','ala','gallina')) base=['SIN PIEL','BIEN DORADO','PECHUGA','PIERNA','EXTRA CRUJIENTE','SIN HUESO','A LA PLANCHA','APANADO','POCO CONDIMENTO','EXTRA SALSA'];
-  else if(has('pescado','marisco','ceviche','pulpo','camaron','trucha','mojarra','cazuela')) base=['POCO LIMÓN','MUCHO LIMÓN','SIN CEBOLLA','SIN CILANTRO','A LA PLANCHA','APANADO','BIEN COCIDO','EXTRA LIMÓN','SIN ESPINAS','EXTRA SALSA'];
-  else if(has('ensalada')) base=['ADEREZO APARTE','SIN CEBOLLA','SIN CROUTONES','EXTRA AGUACATE','SIN QUESO','EXTRA POLLO','SIN TOMATE','EXTRA VEGETALES','SIN LECHUGA','LIMÓN APARTE'];
-  else if(has('papa','fritas','yuca','patacon','tostones')) base=['BIEN DORADAS','EXTRA CRUJIENTES','CON QUESO','CON SALSAS','SIN SALSAS','CON HOGAO','CON GUACAMOLE','EXTRA PORCIÓN','POCA SAL','SIN SAL'];
-  else if(has('pasta','spaghetti','lasagna','fetuccini','ravioli','macarron')) base=['AL DENTE','SIN QUESO','EXTRA QUESO','POCA SALSA','EXTRA SALSA','SALSA APARTE','SIN CHAMPIÑONES','EXTRA POLLO','SIN CEBOLLA','PICANTE'];
-  else if(has('pizza')) base=['MASA DELGADA','MASA GRUESA','EXTRA QUESO','POCO QUESO','SIN CEBOLLA','SIN ORÉGANO','BORDE DE QUESO','SIN SALSA','CORTADA EN 8','BIEN HORNEADA'];
-  else if(has('taco','burrito','quesadilla','nacho')) base=['SIN CILANTRO','SIN CEBOLLA','EXTRA GUACAMOLE','SIN CREMA','EXTRA QUESO','SIN FRIJOL','EXTRA CARNE','SALSA APARTE','SIN TOMATE','SIN PICANTE'];
-  else if(has('sopa','caldo','crema','ajiaco','sancocho','mondongo')) base=['BIEN CALIENTE','SIN CILANTRO','APARTE EL ARROZ','SIN VERDURAS','EXTRA CALDO','SIN PAPA','CON AGUACATE','SIN CREMA','EXTRA PRESA','SIN GRASA'];
-  else if(has('arroz')) base=['BIEN SECO','SIN VERDURAS','CON HUEVO','EXTRA POLLO','SIN CEBOLLA','SIN ZANAHORIA','EXTRA PORCIÓN','EXTRA SALSA','BIEN CALIENTE','POCA SAL'];
-  else if(has('empanada','arepa','pastel','bunuelo')) base=['CON AJÍ','SIN AJÍ','BIEN DORADA','CON QUESO','EXTRA QUESO','CON MANTEQUILLA','CON HOGAO','CRUJIENTE','CON GUACAMOLE','BIEN CALIENTE'];
-  else if(has('torta','postre','helado','cheesecake','brownie','flan','malteada','waffle')||c==='Postres'){ base=['SIN AZÚCAR AÑADIDA','PORCIÓN GRANDE','SIN CREMA','EXTRA SALSA','BIEN FRÍO','CON HELADO','EXTRA TOPPING','TIBIO','SIN LECHE','SIN LACTOSA']; fill=sweet; }
-  else if(has('limonada','jugo','gaseosa','soda','cafe','tinto','cerveza','agua','frappe','malteada','cappuccino','latte','capuchino')||c==='Bebidas'){ base=['SIN AZÚCAR','POCA AZÚCAR','SIN HIELO','POCO HIELO','BIEN FRÍO','EXTRA GRANDE','SIN LECHE','LECHE DESLACTOSADA','EXTRA DULCE','DOBLE','SIN ESPUMA','EXTRA FUERTE']; fill=sweet; }
-  else if(c==='Fuertes') base=['TÉRMINO MEDIO','BIEN COCIDO','SIN SAL','SIN PICANTE','EXTRA SALSA','SALSA APARTE','SIN CEBOLLA','EXTRA PORCIÓN','BIEN CALIENTE','POCA SAL'];
-  else if(c==='Entradas') base=['PARA COMPARTIR','SIN AJÍ','CON AJÍ','SIN CEBOLLA','BIEN CALIENTE','EXTRA SALSA','SIN SAL','CRUJIENTE','EXTRA PORCIÓN','APARTE LAS SALSAS'];
-  else if(c==='Acompañam.') base=['SIN SAL','BIEN DORADO','EXTRA PORCIÓN','CON SALSAS','SIN SALSAS','EXTRA QUESO','POCA SAL','BIEN CALIENTE','CRUJIENTE','CON HOGAO'];
-  else base=[];
+  const n=norm(p.n||''), c=(p.cat||''), area=(p.area||'');
+  const has=(...ks)=>ks.some(k=>n.includes(k));
+  const DRINK_CATS=['Calientes','Frías','Sodas','Frappes','Con licor','Bebidas'];
+  const isDrink = area==='BARRA' || DRINK_CATS.includes(c) || has('cafe','tinto','capuc','cappu','latte','mocca','milo','frappe','frappu','frapp','malteada','limonada','jugo','soda','gaseosa','coca','agua','cerveza','michelada','mojito','corona','club colombia','smoothie','aromatica','infusion','chai','cold brew','espresso','expresso','machiato','bombom','carajillo','irlandes','afogato','cerezada','ginger','batido','yogur','aguapanela','frappucino');
+  const isSweet = c==='Postres' || has('postre','helado','torta','brownie','waffle','cheesecake','flan','fresa','fruta','copa de helado','chantilly');
+  const isSavory = area==='COCINA' || ['Pa comer','Entradas','Fuertes','Acompañam.'].includes(c) || has('sanduche','sandwich','arepa','empanada','flauta','burger','hamburgues','perro','carne','pollo','pescado','pizza','pasta','taco','sopa','arroz','papa','ensalada','plato');
+
+  const drinkFill=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN HIELO','POCO HIELO','EXTRA GRANDE','SIN LECHE','LECHE DESLACTOSADA','LECHE VEGETAL','SIN CREMA','EXTRA CREMA','MÁS CARGADO','SIN ESPUMA','BIEN FRÍO','PARA LLEVAR'];
+  const hotFill=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','BIEN CALIENTE','TIBIO','SIN LECHE','LECHE DESLACTOSADA','LECHE VEGETAL','SIN CREMA','EXTRA CARGADO','DOBLE CARGA','MÁS ESPUMA','SIN ESPUMA','CANELA ENCIMA','PARA LLEVAR'];
+  const sweetFill=['SIN AZÚCAR AÑADIDA','EXTRA DULCE','MENOS DULCE','SIN CREMA','EXTRA CREMA','CON HELADO','EXTRA TOPPING','PORCIÓN GRANDE','SIN LACTOSA','SIN LECHE','MÁS CHOCOLATE','TIBIO','BIEN FRÍO','PARA LLEVAR'];
+  const savoryFill=['SIN SAL','POCA SAL','SIN CEBOLLA','SIN AJÍ','CON AJÍ','SIN PICANTE','EXTRA PICANTE','SIN CILANTRO','SIN TOMATE','APARTE LAS SALSAS','BIEN CALIENTE','PARA COMPARTIR','EXTRA PORCIÓN','EXTRA QUESO','PARA LLEVAR'];
+  const neutralFill=['PARA LLEVAR','EXTRA GRANDE','SIN AZÚCAR','POCA AZÚCAR','BIEN CALIENTE','BIEN FRÍO','PARA COMPARTIR','EXTRA PORCIÓN','SIN HIELO','POCO HIELO','SIN CREMA','EXTRA DULCE','MENOS DULCE','SIN SAL','POCA SAL'];
+
+  let base=[], fill;
+  if(isDrink){
+    const hot = c==='Calientes' || (has('tinto','aromatica','infusion','chai','aguapanela','bombom') && !has('frio','frío','helado','cold','frappe','frappu'));
+    fill = hot?hotFill:drinkFill;
+    if(has('limonada')) base=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN HIELO','POCO HIELO','MÁS LIMÓN','MENOS LIMÓN','EN AGUA','EN SODA','EXTRA GRANDE','SIN ENDULZANTE','PARA LLEVAR'];
+    else if(has('frappe','frappu','frapp')) base=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN CREMA','EXTRA CREMA','SIN LECHE','LECHE VEGETAL','MÁS CARGADO','EXTRA GRANDE','CON HELADO','EXTRA TOPPING','PARA LLEVAR'];
+    else if(has('malteada','batido')) base=['SIN AZÚCAR','EXTRA DULCE','SIN CREMA','EXTRA CREMA','SIN LECHE','LECHE VEGETAL','EXTRA GRANDE','MÁS ESPESA','CON HELADO','EXTRA TOPPING','PARA LLEVAR'];
+    else if(has('soda')) base=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN HIELO','POCO HIELO','MÁS GAS','MÁS ÁCIDA','MENOS DULCE','EXTRA GRANDE','PARA LLEVAR'];
+    else if(has('jugo')) base=['EN AGUA','EN LECHE','SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN HIELO','MÁS ESPESO','EXTRA GRANDE','SIN ENDULZANTE','PARA LLEVAR'];
+    else if(has('michelada')) base=['MÁS PICANTE','MENOS PICANTE','MÁS SAL EN EL BORDE','SIN SAL','CON LIMÓN','BIEN FRÍA','MÁS SALSAS','SUAVE','PARA LLEVAR'];
+    else if(has('mojito')) base=['MÁS HIERBABUENA','MÁS LIMÓN','MENOS AZÚCAR','MÁS AZÚCAR','CON SODA','BIEN FRÍO','DOBLE','SUAVE','SIN HIELO'];
+    else if(has('cerveza','corona','club colombia','coronita','aguila','poker','heineken')) base=['BIEN FRÍA','CON LIMÓN','SIN LIMÓN','CON SAL','SIN SAL','EN COPA','EN BOTELLA','HÁGANLA MICHELADA','PARA LLEVAR'];
+    else if(has('aromatica','infusion','chai')||n==='te chai') base=['SIN AZÚCAR','CON PANELA','CON MIEL','CON LIMÓN','BIEN CALIENTE','TIBIO','MÁS CARGADA','SUAVE','PARA LLEVAR'];
+    else if(has('milo','chocolate caliente')) base=['SIN AZÚCAR','EXTRA DULCE','BIEN CALIENTE','FRÍO','SIN LECHE','LECHE VEGETAL','EXTRA MILO','CON CREMA','PARA LLEVAR'];
+    else if(has('cafe','capuc','cappu','latte','mocca','machiato','espresso','expresso','bombom','carajillo','irlandes','americano','tinto','campesino','afogato','cold brew')) base=['SIN AZÚCAR','POCA AZÚCAR','EXTRA DULCE','SIN LECHE','LECHE DESLACTOSADA','LECHE VEGETAL','EXTRA CARGADO','DOBLE CARGA','MÁS ESPUMA','SIN ESPUMA','BIEN CALIENTE','PARA LLEVAR'];
+    else if(has('smoothie','aguapanela')) base=['SIN AZÚCAR','EXTRA DULCE','EXTRA GRANDE','SIN HIELO','MÁS ESPESO','CON QUESO','PARA LLEVAR'];
+    else base=[];
+  }
+  else if(isSweet){
+    fill=sweetFill;
+    if(has('ensalada','fruta','fresa','yogur','granola','banano')) base=['EXTRA FRUTA','SIN CREMA','EXTRA CREMA','CON HELADO','CON GRANOLA','CON MIEL','SIN AZÚCAR','PORCIÓN GRANDE','SIN BANANO','PARA LLEVAR'];
+    else if(has('helado','copa')) base=['1 BOLA','2 BOLAS','EXTRA SALSA','CON CHOCOLATE','CON FRUTA','SIN CREMA','EXTRA TOPPING','PARA LLEVAR'];
+    else base=['SIN AZÚCAR AÑADIDA','EXTRA DULCE','MENOS DULCE','SIN CREMA','EXTRA CREMA','CON HELADO','EXTRA TOPPING','PORCIÓN GRANDE','SIN LACTOSA','MÁS CHOCOLATE','TIBIO','PARA LLEVAR'];
+  }
+  else if(isSavory){
+    fill=savoryFill;
+    if(has('sanduche','sandwich','sándwich')) base=['SIN CEBOLLA','SIN TOMATE','SIN SALSAS','EXTRA QUESO','PAN TOSTADO','SIN MANTEQUILLA','PARTIDO A LA MITAD','EXTRA POLLO','PARA LLEVAR'];
+    else if(has('arepa','empanada','flauta','pastel','bunuelo')) base=['CON AJÍ','SIN AJÍ','CON QUESO','EXTRA QUESO','BIEN DORADA','SIN SAL','CON MANTEQUILLA','CON HOGAO','CRUJIENTE','PARA LLEVAR'];
+    else if(has('hamburgues','burger')) base=['SIN CEBOLLA','SIN TOMATE','TÉRMINO MEDIO','BIEN COCIDA','SIN SALSAS','EXTRA QUESO','SIN PEPINILLOS','EXTRA CARNE','PAN APARTE','PARA LLEVAR'];
+    else if(has('perro','choripan','salchipapa')) base=['SIN CEBOLLA','POCA SALSA','SIN SALSAS','CON TODAS LAS SALSAS','EXTRA QUESO','SIN PAPITAS','SIN MOSTAZA','PARA LLEVAR'];
+    else if(has('lomo','carne','res','churrasco','costilla','chuleta','parrilla','picada','asado')) base=['TÉRMINO ROJO','TÉRMINO MEDIO','TRES CUARTOS','BIEN COCIDO','EXTRA JUGOSO','SIN SAL','POCA SAL','EXTRA SALSA','SALSA APARTE','SIN GRASA'];
+    else if(has('pollo','pechuga','alitas','ala')) base=['SIN PIEL','BIEN DORADO','A LA PLANCHA','APANADO','EXTRA CRUJIENTE','SIN SAL','SIN HUESO','EXTRA SALSA','POCO CONDIMENTO'];
+    else if(has('pescado','marisco','ceviche','camaron','trucha','mojarra')) base=['POCO LIMÓN','MUCHO LIMÓN','SIN CEBOLLA','SIN CILANTRO','A LA PLANCHA','APANADO','BIEN COCIDO','SIN ESPINAS','SIN AJÍ'];
+    else if(has('pizza')) base=['MASA DELGADA','MASA GRUESA','EXTRA QUESO','POCO QUESO','SIN CEBOLLA','SIN ORÉGANO','BORDE DE QUESO','CORTADA EN 8','BIEN HORNEADA','SIN SALSA'];
+    else if(has('pasta','spaghetti','lasagna','fetuccini','ravioli')) base=['AL DENTE','SIN QUESO','EXTRA QUESO','POCA SALSA','EXTRA SALSA','SALSA APARTE','SIN CHAMPIÑONES','EXTRA POLLO','SIN CEBOLLA'];
+    else if(has('taco','burrito','quesadilla','nacho')) base=['SIN CILANTRO','SIN CEBOLLA','EXTRA GUACAMOLE','SIN CREMA','EXTRA QUESO','SIN FRIJOL','EXTRA CARNE','SALSA APARTE','SIN PICANTE'];
+    else if(has('sopa','caldo','crema','ajiaco','sancocho','mondongo')) base=['BIEN CALIENTE','SIN CILANTRO','APARTE EL ARROZ','SIN VERDURAS','EXTRA CALDO','SIN PAPA','CON AGUACATE','EXTRA PRESA','SIN GRASA'];
+    else if(has('arroz')) base=['BIEN SECO','SIN VERDURAS','CON HUEVO','EXTRA POLLO','SIN CEBOLLA','EXTRA PORCIÓN','SIN AJÍ','BIEN CALIENTE','POCA SAL'];
+    else if(has('papa','fritas','yuca','patacon')) base=['BIEN DORADAS','EXTRA CRUJIENTES','CON QUESO','CON SALSAS','SIN SALSAS','CON HOGAO','CON GUACAMOLE','SIN SAL','EXTRA PORCIÓN'];
+    else if(has('ensalada')) base=['ADEREZO APARTE','SIN CEBOLLA','SIN CROUTONES','EXTRA AGUACATE','SIN QUESO','EXTRA POLLO','SIN TOMATE','EXTRA VEGETALES','LIMÓN APARTE'];
+    else base=[];
+  }
+  else { fill=neutralFill; base=[]; }
+
   const out=[];[...base,...fill].forEach(x=>{if(!out.includes(x)&&out.length<15)out.push(x);});
   return out;
 }
