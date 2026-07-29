@@ -631,6 +631,36 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
   .qv-in{width:44px;height:34px;font-size:15px}
   .cl-acc{gap:7px}
 }
+
+/* ── Cocina (KDS) ── */
+.kds-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.kds-areas{display:flex;gap:8px;flex-wrap:wrap}
+.kds-atab{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:9px;cursor:pointer;font-family:inherit}
+.kds-atab.on{background:var(--primary);color:#052e21;border-color:var(--primary)}
+.kds-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt2)}
+.kl-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px}
+.kl-dot.g{background:#39d98a}.kl-dot.a{background:#f5c542}.kl-dot.r{background:#ff5b5b}
+.kds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
+.kds-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;border-top:4px solid var(--card2)}
+.kds-card.age-g{border-top-color:#39d98a}.kds-card.age-a{border-top-color:#f5c542}.kds-card.age-r{border-top-color:#ff5b5b}
+.kds-card.ready{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
+.kds-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.kds-head b{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700}
+.kds-time{font-size:12px;color:var(--txt2);font-weight:700}
+.kds-items{padding:6px 8px;flex:1}
+.kds-item{display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-radius:9px;cursor:pointer}
+.kds-item:hover{background:var(--card2)}
+.kds-item .kds-chk{font-size:16px;line-height:1.2}
+.kds-item .kds-it{flex:1;min-width:0}
+.kds-item .kds-it b{font-size:13.5px;font-weight:600;display:block}
+.kds-item .kds-it span{font-size:11px;color:var(--txt2);display:block;margin-top:2px}
+.kds-item.done .kds-it b{text-decoration:line-through;color:var(--txt3)}
+.kds-foot{padding:11px 12px;border-top:1px solid var(--border)}
+.kds-foot .btn{width:100%}
+.ready-tag{font-size:9px;background:rgba(0,229,160,.92);color:#052e21;padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
+.served-tag{font-size:9px;background:var(--card2);color:var(--txt2);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle;border:1px solid var(--border)}
+.mb.k-served{background:var(--card);color:var(--txt2);border:1px solid var(--border2)}
+
 </style>
 </head>
 <body>
@@ -684,7 +714,7 @@ const S = {
   // OPERACIÓN
   panel:      {g:'Operación', n:'Panel', ico:'📊', st:'activo', fase:'Fase 3'},
   mesas:      {g:'Operación', n:'Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El centro de todos los pedidos: mesas del salón, para llevar, domicilio, Rappi/PedidosYa y online. En "Mesas" tocas una mesa para abrir su comanda.', feat:['Filtros: mesas, llevar, delivery, online','Mapa de mesas con semáforo','Unir mesas para grupos','Tocar mesa → abre su comanda','Cada comanda en su pestaña','Cambiar de mesero']},
-  cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'construccion', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
+  cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'activo', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'construccion', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
   // CATÁLOGO
@@ -763,9 +793,10 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
+  else if(k==='cocina') initKds();
   else if(k==='ambientes') initQrConfig();
   else if(DYN[k]) DYN[k].init();
 }
@@ -986,6 +1017,58 @@ const MESAS=[
 const getMesa=n=>MESAS.find(m=>m.n===n);
 const COMTYPES=[['mesas','🍽️','Mesas',6],['llevar','🥡','Llevar',2],['delivery','🛵','Delivery',1],['dext','🛴','Delivery Externo',0],['online','🌐','Online',3]];
 
+/* ═══ COCINA (KDS) ═══ */
+let kdsArea='all';
+function kdsView(){
+  return `
+  <div class="page-head"><h1>👨‍🍳 Cocina (KDS) <span class="status-pill activo">En vivo</span></h1>
+    <div class="sub">Las comandas enviadas a producción llegan aquí. Marca cada plato (o el pedido completo) como listo y el mesero lo ve al instante en la mesa. Al entregar, sale del tablero.</div></div>
+  <div class="kds-bar">
+    <div class="kds-areas" id="kdsAreas"></div>
+    <div class="kds-legend"><span class="kl-dot g"></span> &lt;5 min <span class="kl-dot a"></span> 5–10 min <span class="kl-dot r"></span> +10 min</div>
+  </div>
+  <div id="kdsBoard"></div>`;
+}
+function initKds(){renderKdsAreas();renderKds();}
+function kdsAreasList(){const set=new Set();Object.keys(ORD).forEach(k=>ORD[k].forEach(l=>{if(l.sent&&!l.served)set.add(l.area);}));return [...set];}
+function renderKdsAreas(){
+  const el=document.getElementById('kdsAreas');if(!el)return;
+  const tabs=[['all','Todas']].concat(kdsAreasList().map(a=>[a,a]));
+  el.innerHTML=tabs.map(t=>`<button class="kds-atab ${kdsArea===t[0]?'on':''}" onclick="kdsSetArea('${t[0]}')">${t[1]}</button>`).join('');
+}
+function kdsSetArea(a){kdsArea=a;renderKdsAreas();renderKds();}
+function kdsItemsOf(k){return ORD[k].filter(l=>l.sent&&!l.served&&(kdsArea==='all'||l.area===kdsArea));}
+function renderKds(){
+  const board=document.getElementById('kdsBoard');if(!board)return;
+  const tickets=[];
+  Object.keys(ORD).forEach(k=>{
+    const items=kdsItemsOf(k);if(!items.length)return;
+    const meta=ORDMETA[k]||{};
+    tickets.push({k,title:(DYN[k]&&DYN[k].title)||meta.title||k,items,sentAt:Math.min(...items.map(l=>l.sentAt||Date.now())),allReady:items.every(l=>l.ready)});
+  });
+  tickets.sort((a,b)=>(a.allReady-b.allReady)||(a.sentAt-b.sentAt));
+  if(!tickets.length){board.innerHTML=`<div class="dash-empty" style="margin-top:20px">No hay comandas en cocina ahora mismo.<br>Cuando un mesero toque “Enviar a Producción”, el pedido aparecerá aquí.</div>`;return;}
+  board.innerHTML=`<div class="kds-grid">${tickets.map(t=>{
+    const mins=Math.floor((Date.now()-t.sentAt)/60000);
+    const age=mins<5?'g':(mins<=10?'a':'r');
+    return `<div class="kds-card ${t.allReady?'ready':''} age-${age}">
+      <div class="kds-head"><b>${t.title}</b><span class="kds-time">⏱ ${mins} min</span></div>
+      <div class="kds-items">${t.items.map(l=>{
+        const opts=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';const ns=noteStr(l);
+        return `<div class="kds-item ${l.ready?'done':''}" onclick="kdsToggleItem('${t.k}',${l.lid})">
+          <div class="kds-chk">${l.ready?'✅':'⬜'}</div>
+          <div class="kds-it"><b>${l.qty}× ${l.n}${l.llevar?' 🥡 llevar':''}</b>${opts?`<span>▸ ${opts}</span>`:''}${ns?`<span>📝 ${ns}</span>`:''}</div>
+        </div>`;}).join('')}</div>
+      <div class="kds-foot">${t.allReady
+        ? `<button class="btn primary" onclick="kdsServe('${t.k}')">🍽️ Entregado a la mesa</button>`
+        : `<button class="btn ghost" onclick="kdsReadyAll('${t.k}')">✅ Marcar todo listo</button>`}</div>
+    </div>`;}).join('')}</div>`;
+}
+function _kdsRefreshAll(k){syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();saveState();if(document.getElementById('comContent'))renderComContent();}
+function kdsToggleItem(k,lid){const l=ORD[k].find(x=>x.lid===lid);if(l){l.ready=!l.ready;_kdsRefreshAll(k);}}
+function kdsReadyAll(k){kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
+function kdsServe(k){kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
+
 function comandasView(){
   return `
   <div class="page-head"><h1>🍽️ Comandas <span class="status-pill activo">Activo</span></h1>
@@ -1002,13 +1085,15 @@ function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelecto
 
 function mesaKitchen(m){
   const key=m.grp||('mesa_'+m.n);const lines=ORD[key];
-  if(lines&&lines.length){
-    const anySent=lines.some(l=>l.sent);
-    const anyUnsent=lines.some(l=>!l.sent&&!l.held);
-    if(anySent&&anyUnsent) return 'parcial';
-    if(anySent&&!anyUnsent) return (m.ped==='listo'?'listo':'cocina');
-    return 'sinpedir';
-  }
+  if(!lines||!lines.length) return m.ped||null;
+  const unsent=lines.filter(l=>!l.sent&&!l.held&&!l.served);
+  const inKitchen=lines.filter(l=>l.sent&&!l.served&&!l.ready);
+  const ready=lines.filter(l=>l.sent&&!l.served&&l.ready);
+  if(unsent.length && (inKitchen.length||ready.length)) return 'parcial';
+  if(unsent.length) return 'sinpedir';
+  if(inKitchen.length) return 'cocina';
+  if(ready.length) return 'listo';
+  if(lines.every(l=>l.served||l.held)) return 'servido';
   return m.ped||null;
 }
 function timeDot(m){
@@ -1025,7 +1110,7 @@ function mesaCard(m){
   const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(mins!=null?('hace '+mins+' min'):(m.t||'ahora')));
   const mesero=ometa.mesero||m.mesero;
   const koc=mesaKitchen(m);
-  const K={sinpedir:['⏳','Sin enviar','k-wait'],parcial:['➕','Por enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo','k-ready']};
+  const K={sinpedir:['⏳','Sin enviar','k-wait'],parcial:['➕','Por enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo p/ servir','k-ready'],servido:['🍽️','Servido','k-served']};
   const com=(ometa.com)||m.com||2;
   const nit=(ORD[key]||[]).reduce((s,l)=>s+l.qty,0);
   const badges=[];
@@ -1076,7 +1161,7 @@ function renderComContent(){
     if(active.length){
       html+=`<div class="order-grid">`+active.map(k=>{
         const mt=ORDMETA[k]||{};const tot=netTotal(ORD[k]);const nit=ORD[k].reduce((s,l)=>s+l.qty,0);
-        const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',parcial:'➕ Por enviar',cocina:'🍳 En cocina',listo:'✅ Listo'}[koc]||'';
+        const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',parcial:'➕ Por enviar',cocina:'🍳 En cocina',listo:'✅ Listo p/ servir',servido:'🍽️ Servido'}[koc]||'';
         return `<div class="order-card" onclick="reopenOrder('${k}')">
           <div class="oc-top"><span class="oc-ico">${mt.ico||ico}</span><b>${mt.title||k}</b></div>
           ${mt.address?`<div class="oc-sub">📍 ${mt.address}</div>`:''}${mt.phone?`<div class="oc-sub">📞 ${mt.phone}</div>`:''}${mt.cliente?`<div class="oc-sub">👤 ${mt.cliente}</div>`:''}
@@ -1340,7 +1425,8 @@ function comandaBody(target){
     const o=l.opts.map(x=>x.n+(x.p?` (+${COP(x.p)})`:'')).join(' · ');
     const ns=noteStr(l);
     const gross=l.unit*l.qty;const desc=l.desc||0;const net=l.cort?0:Math.max(0,gross-desc);
-    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(desc&&!l.cort?` <span class="disc-tag">🏷️ −${COP(desc)}</span>`:'')+(l.sent?' <span class="sent-tag">en cocina</span>':'');
+    const kstate=l.served?' <span class="served-tag">servido</span>':l.ready?' <span class="ready-tag">✅ listo</span>':l.sent?' <span class="sent-tag">en cocina</span>':'';
+    const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(desc&&!l.cort?` <span class="disc-tag">🏷️ −${COP(desc)}</span>`:'')+kstate;
     const acc=`<div class="cl-acc">
       <button class="accb b1" title="Notas / observación por unidad" onclick="openNotes('${target}',${l.lid})">🗒️</button>
       <button class="accb b2" title="Quitar / anular" onclick="delLine('${target}',${l.lid})">🗑️</button>
@@ -1436,8 +1522,10 @@ function grabar(target){toastT('💾 Comanda grabada (sin enviar) · '+DYN[targe
 function enviarProduccion(target){
   const send=ORD[target].filter(l=>!l.sent&&!l.held);
   if(!send.length){toastT('No hay platos nuevos por enviar');return;}
-  send.forEach(l=>l.sent=true);
-  renderComanda(target);syncMesa(target);
+  const now=Date.now();
+  send.forEach(l=>{l.sent=true;l.sentAt=now;l.ready=false;l.served=false;});
+  renderComanda(target);syncMesa(target);saveState();
+  if(document.getElementById('kdsBoard')){renderKdsAreas();renderKds();}
   printCocina(target,send);
 }
 function enviarComanda(target){printComanda(target,'comanda');}
@@ -2185,7 +2273,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.topmenu')&&!e.targ
 _loadTheme();
 setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
 
-try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); setInterval(()=>{ if(!document.hidden&&comType==='mesas'&&document.getElementById('comContent')) renderComContent(); },30000); }catch(e){}
+try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); },30000); }catch(e){}
 
 buildPanel('panel');openTab('panel');
   if(typeof restoreWorkspace==='function') restoreWorkspace();
