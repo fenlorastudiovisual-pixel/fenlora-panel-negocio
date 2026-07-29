@@ -314,8 +314,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .sbtn.prod{background:var(--amber-dim);border-color:rgba(245,166,35,.35);color:var(--amber)}
 .sbtn.fact{background:var(--primary);border-color:var(--primary);color:#052e21}
 .sbtn.fact:hover{box-shadow:0 8px 18px -6px rgba(0,229,160,.5)}
-.sec-row{display:flex;gap:7px;margin-top:8px}
-.sec-row .btn{flex:1;padding:9px;font-size:11.5px}
+.sec-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.sec-row .btn{flex:1 1 45%;padding:9px;font-size:11.5px}
+.sec-row .sec-danger{color:var(--red)}
+.sec-row .sec-danger:hover{border-color:var(--red);background:var(--red-dim)}
 
 /* mesa acciones */
 .mesa-act{position:absolute;top:12px;left:14px;width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.28);border:none;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:0;padding:0}
@@ -551,6 +553,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .accb.b4.on{background:var(--amber);color:#3a2a06;border-color:var(--amber)}
 .llevar-tag{font-size:9px;background:var(--amber-dim);color:var(--amber);padding:1px 7px;border-radius:10px;font-weight:700;vertical-align:middle}
 
+.content{-webkit-overflow-scrolling:touch}
+@media(max-width:1200px){
+  .tp{grid-template-columns:1fr !important;gap:16px}
+  .comanda{position:static !important;max-height:none !important;overflow:visible !important}
+  .comanda-body{max-height:none !important;overflow:visible !important;min-height:auto !important;flex:none !important}
+  .modal{max-height:92vh}
+}
+@media(max-width:640px){
+  .content{padding:16px}
+  .save-grid{grid-template-columns:1fr 1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr !important}
+}
 </style>
 </head>
 <body>
@@ -918,9 +932,11 @@ function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelecto
 function mesaKitchen(m){
   const key=m.grp||('mesa_'+m.n);const lines=ORD[key];
   if(lines&&lines.length){
-    const pend=lines.some(l=>!l.sent);
-    if(!pend && m.ped==='listo') return 'listo';
-    return pend?'sinpedir':'cocina';
+    const anySent=lines.some(l=>l.sent);
+    const anyUnsent=lines.some(l=>!l.sent&&!l.held);
+    if(anySent&&anyUnsent) return 'parcial';
+    if(anySent&&!anyUnsent) return (m.ped==='listo'?'listo':'cocina');
+    return 'sinpedir';
   }
   return m.ped||null;
 }
@@ -938,12 +954,14 @@ function mesaCard(m){
   const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(mins!=null?('hace '+mins+' min'):(m.t||'ahora')));
   const mesero=ometa.mesero||m.mesero;
   const koc=mesaKitchen(m);
-  const K={sinpedir:['⏳','Sin enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo','k-ready']};
+  const K={sinpedir:['⏳','Sin enviar','k-wait'],parcial:['➕','Por enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo','k-ready']};
   const com=(ometa.com)||m.com||2;
+  const nit=(ORD[key]||[]).reduce((s,l)=>s+l.qty,0);
   const badges=[];
   if(!libre){
     if(m.alerta) badges.push(`<span class="mb alert ${m.alerta}">${m.alerta==='mesero'?'🔔 Llamó':'🧾 Pidió cuenta'}</span>`);
     badges.push(`<span class="mb com">👥 ${com}</span>`);
+    if(nit) badges.push(`<span class="mb">🍽️ ${nit}</span>`);
     if(koc&&K[koc]) badges.push(`<span class="mb ${K[koc][2]}">${K[koc][0]} ${K[koc][1]}</span>`);
   }
   return `<div class="mesa ${m.est}${unirSel.includes(m.n)?' sel':''}" onclick="clickMesa(${m.n},'${m.est}')">
@@ -986,7 +1004,7 @@ function renderComContent(){
     if(active.length){
       html+=`<div class="order-grid">`+active.map(k=>{
         const mt=ORDMETA[k]||{};const tot=ORD[k].filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);const nit=ORD[k].reduce((s,l)=>s+l.qty,0);
-        const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',cocina:'🍳 En cocina',listo:'✅ Listo'}[koc]||'';
+        const koc=mesaKitchen({grp:k});const kl={sinpedir:'⏳ Sin enviar',parcial:'➕ Por enviar',cocina:'🍳 En cocina',listo:'✅ Listo'}[koc]||'';
         return `<div class="order-card" onclick="reopenOrder('${k}')">
           <div class="oc-top"><span class="oc-ico">${mt.ico||ico}</span><b>${mt.title||k}</b></div>
           ${mt.address?`<div class="oc-sub">📍 ${mt.address}</div>`:''}${mt.phone?`<div class="oc-sub">📞 ${mt.phone}</div>`:''}${mt.cliente?`<div class="oc-sub">👤 ${mt.cliente}</div>`:''}
@@ -1073,8 +1091,8 @@ function startDelivery(){
 
 /* order taking per target */
 function openOrder(target,title,ico,meta){
-  if(!ORD[target]){
-    ORD[target]=[];ORDCAT[target]='Recomendados';
+  if(!ORD[target]||!ORD[target].length){
+    ORD[target]=ORD[target]||[];ORDCAT[target]='Recomendados';
     ORDMETA[target]=Object.assign({com:4,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',openedAt:Date.now(),title,ico},meta||{});
   }
   const mt=ORDMETA[target]; if(mt){ if(!mt.title)mt.title=title; if(!mt.ico)mt.ico=ico; if(!mt.openedAt)mt.openedAt=Date.now(); }
@@ -1134,8 +1152,8 @@ function initOrder(target){
 }
 function renderFields(target){
   const el=document.getElementById('cfld_'+target);if(!el)return;const meta=ORDMETA[target]||{};
-  el.innerHTML=`<div class="cf-in"><span class="lb">👤</span><input placeholder="Comensal / cliente (opcional)" value="${(meta.cliente||'').replace(/"/g,'&quot;')}" onchange="setCliente('${target}',this.value)"></div>
-    <div class="cf-in"><span class="lb">📝</span><input placeholder="Observación general" value="${(meta.obs||'').replace(/"/g,'&quot;')}" onchange="setObs('${target}',this.value)"></div>`;
+  el.innerHTML=`<div class="cf-in"><span class="lb">👤</span><input placeholder="Nombre del cliente (opcional)" value="${(meta.cliente||'').replace(/"/g,'&quot;')}" onchange="setCliente('${target}',this.value)"></div>
+    <div class="cf-in"><span class="lb">📝</span><input placeholder="Nota para toda la comanda (ej: alérgico al maní)" value="${(meta.obs||'').replace(/"/g,'&quot;')}" onchange="setObs('${target}',this.value)"></div>`;
 }
 function setView(target,mode){viewMode=mode;
   const g=document.getElementById('vg_'+target),l=document.getElementById('vl_'+target);
@@ -1258,6 +1276,7 @@ function renderComanda(target){
       <button class="btn ghost" onclick="dividir('${target}')">✂️ Dividir</button>
       <button class="btn ghost" onclick="printComanda('${target}','precuenta')">🧮 Precuenta</button>
       <button class="btn ghost" onclick="moverPlatos('${target}')">↔ Mover platos</button>
+      <button class="btn ghost sec-danger" onclick="cancelarComanda('${target}')">🚫 Anular</button>
     </div>`;
 }
 function setAlmacen(target,v){ORDMETA[target].almacen=v;}
@@ -1292,8 +1311,8 @@ function printComanda(target,mode){
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const total=lines.filter(l=>!l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   const pre=mode==='precuenta';
-  const rows=lines.map(l=>{const ns=noteStr(l);
-    return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}${l.llevar?' 🥡PARA LLEVAR':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+  const rows=lines.map(l=>{const ns=noteStr(l);const os=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';
+    return `<div class="tk-row"><span>${l.qty}  ${l.n}${l.cort?' (CORTESÍA)':''}${l.llevar?' 🥡PARA LLEVAR':''}</span><span>${l.cort?'0':COP(l.unit*l.qty)}</span></div>${os?`<div class="tk-note">▸ ${os}</div>`:''}${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
   const splitLine=(pre&&meta.split)?`<div class="tk-hr"></div><div class="tk-row tk-b"><span>Dividida en ${meta.split.n}</span><span>${COP(meta.split.per)} c/u</span></div>`:'';
   const ticket=`<div class="ticket">
     <div class="tk-c tk-big">${DYN[target].title.toUpperCase()}${mesaObj?' · '+mesaObj.piso.toUpperCase():''}</div>
@@ -1337,8 +1356,8 @@ function printCocina(target,items){
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const areas=[...new Set(items.map(l=>l.area))];
   const tickets=areas.map(area=>{
-    const rows=items.filter(l=>l.area===area).map(l=>{const ns=noteStr(l);
-      return `<div class="tk-row tk-b"><span>${l.qty}  ${l.n}${l.llevar?'  🥡 PARA LLEVAR':''}</span></div>${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
+    const rows=items.filter(l=>l.area===area).map(l=>{const ns=noteStr(l);const os=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';
+      return `<div class="tk-row tk-b"><span>${l.qty}  ${l.n}${l.llevar?'  🥡 PARA LLEVAR':''}</span></div>${os?`<div class="tk-note">▸ ${os}</div>`:''}${ns?`<div class="tk-note">${ns}</div>`:''}`;}).join('');
     return `<div class="ticket">
       <div class="tk-c tk-b">Impresora ${area}</div>
       <div class="tk-c">${meta.num||''}</div>
@@ -1563,6 +1582,17 @@ function closeNotes(){document.getElementById('notesModal').classList.remove('on
 document.getElementById('notesModal').addEventListener('click',e=>{if(e.target.id==='notesModal')closeNotes();});
 
 /* ── acciones por mesa ── */
+function cancelarComanda(target){
+  if(!ORD[target]||!ORD[target].length){toastT('No hay comanda para anular');return;}
+  const mot=prompt('Motivo de anulación de la comanda (ej: la mesa se retiró, pedido por error):');
+  if(!mot)return;
+  toastT('🚫 Comanda anulada: '+((DYN[target]&&DYN[target].title)||'')+' — '+mot);
+  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
+  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
+  try{closeMesaAct();}catch(e){}
+  closeTab(target);saveState();
+  if(document.getElementById('comContent'))renderComContent();
+}
 function openMesaAct(n){
   mesaActN=n;const mm=getMesa(n);const key=(mm&&mm.grp)||('mesa_'+n);const label=(mm&&mm.grpLabel)||('Mesa '+pad(n));const ico=(mm&&mm.grp)?'🔗':'🍽️';const has=ORD[key]&&ORD[key].length;
   const m=document.getElementById('mesaActModal');
@@ -1573,6 +1603,7 @@ function openMesaAct(n){
       <div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
       <div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>
       ${(mm&&mm.grp)?'':`<div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>`}
+      ${has?`<div class="act-item danger" onclick="closeMesaAct();cancelarComanda('${key}')"><span class="ai">🚫</span>Cancelar / anular comanda</div>`:''}
     </div></div></div>`;
   m.classList.add('on');
 }
