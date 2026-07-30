@@ -1619,7 +1619,7 @@ function consolidadoSection(){
   if(!CIERRES.length)return '';
   const hoy=Date.now(), sem=hoy-6*86400000;
   return `<div class="section-title" style="margin-top:26px">📊 Consolidado para contabilidad</div>
-    <div class="sub" style="margin:-4px 0 12px 0">Elige un rango (ej. la semana) para ver y descargar el resumen de todos los turnos — útil para el contador.</div>
+    <div class="sub" style="margin:-4px 0 12px 0">Elige un rango (ej. la semana) para revisar el <b>cuadre de efectivo</b> de todos los turnos (esperado vs. contado, faltantes/sobrantes). El análisis de ventas está en Reportes.</div>
     <div class="consol-bar">
       <label>Desde <input type="date" class="pf-in" id="conDesde" value="${_isoDate(sem)}"></label>
       <label>Hasta <input type="date" class="pf-in" id="conHasta" value="${_isoDate(hoy)}"></label>
@@ -1669,19 +1669,25 @@ function verConsolidado(){
   if(!list.length){out.innerHTML='<div class="dash-empty">No hay cierres en ese rango de fechas.</div>';window._conList=[];return;}
   window._conList=list;
   const sum=k=>list.reduce((s,c)=>s+(c[k]||0),0);
-  const medios=[...new Set(list.flatMap(c=>Object.keys(c.porMedio||{})))];const dif=sum('diferencia');
+  const dif=sum('diferencia');const difColor=dif===0?'var(--primary)':(dif>0?'var(--blue)':'var(--red)');
   out.innerHTML=`
    <div class="caja-cards" style="margin-top:10px">
      <div class="caja-card"><div class="cc-t">Cierres</div><div class="cc-v">${list.length}</div></div>
-     <div class="caja-card"><div class="cc-t">Ventas totales</div><div class="cc-v">${COP(sum('ventasTotal'))}</div></div>
-     <div class="caja-card"><div class="cc-t">Propinas</div><div class="cc-v">${COP(sum('propinas'))}</div></div>
-     <div class="caja-card"><div class="cc-t">Diferencia acumulada</div><div class="cc-v" style="color:${dif===0?'var(--primary)':(dif>0?'var(--blue)':'var(--red)')}">${COP(dif)}</div></div>
+     <div class="caja-card"><div class="cc-t">Efectivo esperado</div><div class="cc-v">${COP(sum('efectivoEsperado'))}</div></div>
+     <div class="caja-card"><div class="cc-t">Efectivo contado</div><div class="cc-v">${COP(sum('efectivoContado'))}</div></div>
+     <div class="caja-card"><div class="cc-t">${dif>=0?'Sobrante':'Faltante'} acumulado</div><div class="cc-v" style="color:${difColor}">${COP(Math.abs(dif))}</div></div>
    </div>
-   <div class="section-title" style="margin-top:16px">💳 Por medio de pago (en el rango)</div>
-   <div class="medio-list">${medios.map(m=>`<div class="medio-row"><span>${m}</span><b>${COP(list.reduce((s,c)=>s+((c.porMedio||{})[m]||0),0))}</b></div>`).join('')}
-     <div class="medio-row"><span>Ingresos manuales</span><b>${COP(sum('ingresos'))}</b></div>
-     <div class="medio-row"><span>Egresos / gastos</span><b>${COP(sum('egresos'))}</b></div>
-     <div class="medio-row tot"><span>Facturas</span><b>${sum('nFacturas')}</b></div></div>
+   <div class="section-title" style="margin-top:16px">🧮 Cuadre de efectivo del periodo</div>
+   <div class="medio-list">
+     <div class="medio-row"><span>Base inicial (suma de turnos)</span><b>${COP(sum('base'))}</b></div>
+     <div class="medio-row"><span>+ Ventas en efectivo</span><b>${COP(sum('efectivoVentas'))}</b></div>
+     <div class="medio-row"><span>+ Ingresos manuales</span><b>${COP(sum('ingresos'))}</b></div>
+     <div class="medio-row"><span>− Egresos / gastos</span><b>− ${COP(sum('egresos'))}</b></div>
+     <div class="medio-row"><span>Efectivo esperado</span><b>${COP(sum('efectivoEsperado'))}</b></div>
+     <div class="medio-row"><span>Efectivo contado</span><b>${COP(sum('efectivoContado'))}</b></div>
+     <div class="medio-row tot"><span>${dif===0?'Diferencia (cuadrado)':(dif>0?'Sobrante':'Faltante')}</span><b style="color:${difColor}">${dif===0?COP(0):COP(Math.abs(dif))}</b></div>
+   </div>
+   <div class="sub" style="margin-top:10px">Ventas totales (${COP(sum('ventasTotal'))}) y propinas (${COP(sum('propinas'))}) del periodo las ves en detalle en <b>Reportes</b>.</div>
    <button class="btn primary" style="width:auto;padding:11px 18px;margin-top:14px" onclick="descargarConsolidadoCSV()">📥 Descargar consolidado (CSV)</button>`;
 }
 function descargarConsolidadoCSV(){const list=window._conList||_conRange();if(!list.length){toastT('No hay cierres en el rango');return;}_download('consolidado_caja.csv',consolidadoCSV(list));toastT('📥 Consolidado descargado');}
