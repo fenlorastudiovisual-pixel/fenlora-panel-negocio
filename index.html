@@ -667,14 +667,14 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .prd-cats{display:flex;gap:8px;flex-wrap:wrap}
 .prd-ctab{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:9px;cursor:pointer;font-family:inherit}
 .prd-ctab.on{background:var(--primary);color:#052e21;border-color:var(--primary)}
-.prd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-items:start}
+.prd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-items:stretch}
 .prd-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .prd-ph{height:130px;background-size:cover;background-position:center;background-color:var(--card2)}
 .prd-ph.emoji{display:flex;align-items:center;justify-content:center;font-size:52px}
-.prd-body{padding:12px 13px 6px}
+.prd-body{padding:12px 13px 6px;flex:1;display:flex;flex-direction:column}
 .prd-nm{font-family:'Outfit',sans-serif;font-weight:700;font-size:15px}
 .prd-meta{font-size:11.5px;color:var(--txt2);margin-top:3px}
-.prd-flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.prd-flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-content:flex-start}
 .pf{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:9px;background:var(--card2);color:var(--txt2)}
 .pf.qr{background:var(--blue-dim);color:var(--blue)}.pf.rec{background:var(--amber-dim);color:var(--amber)}
 .pf.off{background:var(--red-dim);color:var(--red)}.pf.opt{background:var(--primary-dim);color:var(--primary)}
@@ -803,6 +803,23 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .rep-val{width:130px;text-align:right;font-size:12px;font-weight:700;flex-shrink:0}
 @media(max-width:560px){.rep-lbl{width:88px}.rep-val{width:100px;font-size:11px}}
 
+
+.imp-help{font-size:12.5px;color:var(--txt2);line-height:1.6;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.imp-summary{font-size:13px;margin:6px 0 10px}
+.imp-table{border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.imp-th,.imp-tr{display:grid;grid-template-columns:2fr 1fr 1.2fr 1fr;gap:8px;padding:8px 12px;font-size:12px}
+.imp-th{background:var(--card2);font-weight:700;color:var(--txt2)}
+.imp-tr{border-top:1px solid var(--border)}
+.imp-tr.bad{opacity:.5;background:var(--red-dim)}
+.imp-tr span,.imp-th span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-more{padding:8px 12px;font-size:12px;color:var(--txt2);border-top:1px solid var(--border)}
+.imp-mode{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px}
+.imp-mode label{display:flex;align-items:center;gap:7px;cursor:pointer}
+
+
+.prd-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.prd-toolbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto}
+
 </style>
 </head>
 <body>
@@ -853,6 +870,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="prodModal"></div>
 <div class="modal-bg" id="kdsModal"></div>
 <div class="modal-bg" id="cajaModal"></div>
+<div class="modal-bg" id="impModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -1389,14 +1407,12 @@ function productosView(){
   return `
   <div class="page-head"><h1>🍔 Productos <span class="status-pill activo">Activo</span></h1>
     <div class="sub">Tu catálogo real. Lo que creas aquí alimenta el panel de comandas (y en Fase 1, el menú QR del cliente).</div></div>
-  <div class="prd-bar">
-    <div class="prd-cats" id="prdCats"></div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div class="menu-style" id="menuStyle"></div>
-      ${seed}<button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button>
-    </div>
+  <div class="prd-toolbar">
+    <div class="menu-style" id="menuStyle"></div>
+    <div class="prd-toolbar-actions">${seed}<button class="btn ghost" style="width:auto;padding:10px 15px" onclick="openImport()">📄 Importar Excel/CSV</button><button class="btn primary" style="width:auto;padding:10px 18px" onclick="openProdForm()">➕ Nuevo producto</button></div>
   </div>
   <div class="prd-style-hint" id="prdStyleHint"></div>
+  <div class="prd-cats" id="prdCats"></div>
   <div id="prdGrid"></div>`;
 }
 function catHue(str){let h=0;for(let i=0;i<(str||'').length;i++)h=(h*31+str.charCodeAt(i))%360;return h;}
@@ -1408,7 +1424,7 @@ function prdMedia(p){
 }
 function renderMenuStyle(){
   const el=document.getElementById('menuStyle');if(el){const opts=[['fotos','🖼️ Con fotos'],['elegante','✍️ Carta elegante']];el.innerHTML=opts.map(o=>`<button class="ms-tab ${menuStyle===o[0]?'on':''}" onclick="setMenuStyle('${o[0]}')">${o[1]}</button>`).join('');}
-  const h=document.getElementById('prdStyleHint');if(h)h.innerHTML=menuStyle==='elegante'?'✍️ <b>Carta elegante:</b> sin fotos — tarjetas tipográficas con color por categoría. Ideal si el negocio aún no tiene fotos de todos los productos. (Este mismo estilo se usará en el menú QR.)':'🖼️ <b>Con fotos:</b> muestra la foto de cada producto; los que aún no tienen foto se ven con una tarjeta elegante por categoría.';
+  const h=document.getElementById('prdStyleHint');if(h)h.innerHTML='👁️ Vista previa de cómo se verá el <b>menú digital del cliente (QR)</b> — '+(menuStyle==='elegante'?'<b>Carta elegante</b>: sin fotos, tarjetas por categoría (ideal si no tienes fotos de todo).':'<b>Con fotos</b>: foto por producto; los que no tengan, tarjeta elegante por categoría.')+' No cambia lo que ven los meseros en Comandas.';
 }
 function setMenuStyle(sv){menuStyle=sv;try{localStorage.setItem('fenlora_menustyle',sv);}catch(e){}renderMenuStyle();renderProductos();}
 function loadDulceCafe(){if(!confirm("Esto reemplaza el catálogo actual por el menú de Dulce Café. ¿Continuar?"))return;PRODUCTS.length=0;DULCE_CAFE.forEach(p=>PRODUCTS.push(JSON.parse(JSON.stringify(p))));saveProductos();renderPrdCats();renderProductos();Object.keys(ORD).forEach(k=>{if(document.getElementById("prods_"+k))renderProds(k);});toastT("☕ Menú Dulce Café cargado");}
@@ -1856,7 +1872,99 @@ function descargarReporteCSV(){
   _download('reporte_ventas.csv','\ufeff'+L.map(row=>csvRow(row)).join('\r\n'));toastT('📥 Reporte descargado');
 }
 
+/* ═══ IMPORTADOR DE PRODUCTOS (Excel / CSV) ═══ */
+function openImport(){
+  const m=document.getElementById('impModal');
+  m.innerHTML=`<div class="modal" style="width:620px;max-width:96vw"><div class="modal-h"><b>📄 Importar productos (Excel / CSV)</b><div class="mx" onclick="closeImport()">✕</div></div>
+    <div class="modal-b">
+      <div class="imp-help">Sube un archivo <b>Excel (.xlsx)</b> o <b>CSV</b> con tus productos. Encabezados esperados: <b>Nombre, Precio, Categoria, Area, Emoji, Descripcion, Disponible, Recomendado</b>. Solo <b>Nombre</b> y <b>Precio</b> son obligatorios; lo demás toma valores por defecto.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+        <button class="btn ghost" style="width:auto;padding:9px 15px" onclick="descargarPlantilla()">📥 Descargar plantilla</button>
+        <label class="btn primary" style="width:auto;padding:9px 15px;cursor:pointer;display:inline-block">📂 Elegir archivo<input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="impFile(this)"></label>
+      </div>
+      <div id="impPreview"></div>
+    </div></div>`;
+  m.classList.add('on');
+}
+function closeImport(){window._impProducts=null;const m=document.getElementById('impModal');if(m)m.classList.remove('on');}
+function descargarPlantilla(){
+  const t=['Nombre;Precio;Categoria;Area;Emoji;Descripcion;Disponible;Recomendado',
+    'Café Americano;3000;Calientes;BARRA;☕;Tinto de la casa;Si;Si',
+    'Sanduche de pollo;14000;Pa comer;COCINA;🥪;Con papas y ensalada;Si;No',
+    'Limonada de coco;8000;Frias;BARRA;🥥;;Si;No'].join('\r\n');
+  _download('plantilla_productos.csv','\ufeff'+t);toastT('📥 Plantilla descargada');
+}
+function loadSheetJS(cb){
+  if(window.XLSX){cb();return;}
+  const sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  sc.onload=()=>cb();
+  sc.onerror=()=>toastT('No se pudo cargar el lector de Excel. Prueba con CSV o revisa tu internet.');
+  document.head.appendChild(sc);
+}
+function parseCSV(text){
+  text=(text||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const first=text.split('\n')[0]||'';
+  const delim=(first.split(';').length>first.split(',').length)?';':',';
+  const rows=[];let i=0,field='',row=[],inQ=false;
+  while(i<text.length){const c=text[i];
+    if(inQ){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else inQ=false;}else field+=c;}
+    else{if(c==='"')inQ=true;else if(c===delim){row.push(field);field='';}else if(c==='\n'){row.push(field);rows.push(row);row=[];field='';}else field+=c;}
+    i++;}
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  const headers=(rows.shift()||[]).map(h=>String(h).trim());
+  return rows.filter(r=>r.some(c=>String(c).trim()!=='')).map(r=>{const o={};headers.forEach((h,idx)=>o[h]=r[idx]!==undefined?r[idx]:'');return o;});
+}
+function impFile(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const name=(f.name||'').toLowerCase();
+  if(name.endsWith('.csv')||f.type==='text/csv'){
+    const r=new FileReader();r.onload=e=>{try{impPreview(parseCSV(e.target.result));}catch(err){toastT('No se pudo leer el CSV');}};r.readAsText(f,'UTF-8');
+  }else{
+    loadSheetJS(()=>{const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const sh=wb.Sheets[wb.SheetNames[0]];impPreview(XLSX.utils.sheet_to_json(sh,{defval:''}));}catch(err){toastT('No se pudo leer el Excel');}};r.readAsArrayBuffer(f);});
+  }
+}
+function _impNorm(rows){
+  const nrm=s=>(s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const col=(row,...names)=>{for(const n of names){for(const k of Object.keys(row)){if(nrm(k)===nrm(n))return row[k];}}return '';};
+  const boolv=(v,def)=>{v=(v||'').toString().trim();if(!v)return def;return /^(si|s|sí|yes|y|true|1|x)$/i.test(v);};
+  return rows.map(r=>{
+    const n=(col(r,'nombre','producto','name')||'').toString().trim();
+    const pr=parseInt((col(r,'precio','valor','price')||'').toString().replace(/[^\d]/g,''))||0;
+    return {n,pr,cat:((col(r,'categoria','cat')||'Otros').toString().trim())||'Otros',area:((col(r,'area')||'COCINA').toString().trim().toUpperCase())||'COCINA',e:((col(r,'emoji','icono')||'🍽️').toString().trim())||'🍽️',desc:(col(r,'descripcion')||'').toString().trim(),activo:boolv(col(r,'disponible','activo'),true),enPanel:true,enQR:boolv(col(r,'menu qr','qr','menuqr'),true),rec:boolv(col(r,'recomendado','destacado'),false),_valid:!!(n&&pr>0)};
+  });
+}
+function impPreview(rows){
+  const prods=_impNorm(rows);window._impProducts=prods;
+  const el=document.getElementById('impPreview');if(!el)return;
+  if(!prods.length){el.innerHTML='<div class="dash-empty">El archivo no tiene filas de datos. Revisa que tenga encabezados y al menos una fila.</div>';return;}
+  const valid=prods.filter(p=>p._valid),invalid=prods.length-valid.length;
+  el.innerHTML=`
+    <div class="imp-summary">Detectados <b>${prods.length}</b> · válidos <b style="color:var(--primary)">${valid.length}</b>${invalid?` · <b style="color:var(--red)">${invalid}</b> sin nombre o precio (se omiten)`:''}</div>
+    <div class="imp-table"><div class="imp-th"><span>Producto</span><span>Precio</span><span>Categoría</span><span>Área</span></div>
+    ${prods.slice(0,60).map(p=>`<div class="imp-tr ${p._valid?'':'bad'}"><span>${p.n||'&lt;sin nombre&gt;'}</span><span>${p.pr?COP(p.pr):'—'}</span><span>${p.cat}</span><span>${p.area}</span></div>`).join('')}
+    ${prods.length>60?`<div class="imp-more">…y ${prods.length-60} más</div>`:''}</div>
+    <div class="imp-mode">
+      <label><input type="radio" name="impMode" value="add" checked> Agregar al catálogo actual</label>
+      <label><input type="radio" name="impMode" value="replace"> Reemplazar todo el catálogo</label>
+    </div>
+    <button class="btn primary" style="width:100%;margin-top:8px" ${valid.length?'':'disabled'} onclick="impConfirm()">Importar ${valid.length} producto(s)</button>`;
+}
+function impConfirm(){
+  const prods=(window._impProducts||[]).filter(p=>p._valid);if(!prods.length)return;
+  const mode=(document.querySelector('input[name=impMode]:checked')||{}).value||'add';
+  if(mode==='replace'&&!confirm('Esto reemplazará TODO el catálogo actual. ¿Continuar?'))return;
+  if(mode==='replace')PRODUCTS.length=0;
+  prods.forEach(p=>PRODUCTS.push({id:'p'+(productSeq++),n:p.n,pr:p.pr,cat:p.cat,area:p.area,e:p.e,desc:p.desc,activo:p.activo,enPanel:p.enPanel,enQR:p.enQR,rec:p.rec}));
+  saveProductos();closeImport();
+  if(typeof renderPrdCats==='function')renderPrdCats();
+  if(typeof renderProductos==='function')renderProductos();
+  Object.keys(ORD).forEach(k=>{if(document.getElementById('prods_'+k))renderProds(k);});
+  toastT('✅ '+prods.length+' producto(s) importado(s)');
+}
+
 function comandasView(){
+
 
 
 
@@ -2733,6 +2841,7 @@ function fmtMoney(el){const raw=(el.value||'').replace(/\D/g,'');el.value=raw?pa
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-money')){const raw=(t.value||'').replace(/\D/g,'');t.value=raw?parseInt(raw).toLocaleString('es-CO'):'';}});
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
 document.getElementById('lineModal').addEventListener('click',e=>{if(e.target.id==='lineModal')closeLineDisc();});
+document.getElementById('impModal').addEventListener('click',e=>{if(e.target.id==='impModal')closeImport();});
 
 /* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
 let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:true};
