@@ -1934,33 +1934,41 @@ function _impNorm(rows){
     return {n,pr,cat:((col(r,'categoria','cat')||'Otros').toString().trim())||'Otros',area:((col(r,'area')||'COCINA').toString().trim().toUpperCase())||'COCINA',e:((col(r,'emoji','icono')||'🍽️').toString().trim())||'🍽️',desc:(col(r,'descripcion')||'').toString().trim(),activo:boolv(col(r,'disponible','activo'),true),enPanel:true,enQR:boolv(col(r,'menu qr','qr','menuqr'),true),rec:boolv(col(r,'recomendado','destacado'),false),_valid:!!(n&&pr>0)};
   });
 }
+function _prodNameKey(n){return (n||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+function _findProdByName(n){const k=_prodNameKey(n);return PRODUCTS.find(p=>_prodNameKey(p.n)===k);}
 function impPreview(rows){
   const prods=_impNorm(rows);window._impProducts=prods;
   const el=document.getElementById('impPreview');if(!el)return;
   if(!prods.length){el.innerHTML='<div class="dash-empty">El archivo no tiene filas de datos. Revisa que tenga encabezados y al menos una fila.</div>';return;}
   const valid=prods.filter(p=>p._valid),invalid=prods.length-valid.length;
+  const actualiza=valid.filter(p=>_findProdByName(p.n)).length, nuevos=valid.length-actualiza;
   el.innerHTML=`
-    <div class="imp-summary">Detectados <b>${prods.length}</b> · válidos <b style="color:var(--primary)">${valid.length}</b>${invalid?` · <b style="color:var(--red)">${invalid}</b> sin nombre o precio (se omiten)`:''}</div>
+    <div class="imp-summary">Detectados <b>${prods.length}</b> · <b style="color:var(--primary)">${nuevos}</b> nuevos · <b style="color:var(--blue)">${actualiza}</b> se actualizan${invalid?` · <b style="color:var(--red)">${invalid}</b> sin nombre o precio (se omiten)`:''}</div>
     <div class="imp-table"><div class="imp-th"><span>Producto</span><span>Precio</span><span>Categoría</span><span>Área</span></div>
     ${prods.slice(0,60).map(p=>`<div class="imp-tr ${p._valid?'':'bad'}"><span>${p.n||'&lt;sin nombre&gt;'}</span><span>${p.pr?COP(p.pr):'—'}</span><span>${p.cat}</span><span>${p.area}</span></div>`).join('')}
     ${prods.length>60?`<div class="imp-more">…y ${prods.length-60} más</div>`:''}</div>
     <div class="imp-mode">
-      <label><input type="radio" name="impMode" value="add" checked> Agregar al catálogo actual</label>
+      <label><input type="radio" name="impMode" value="add" checked> Agregar y actualizar (si el nombre ya existe, actualiza sin duplicar y conserva su foto/opciones)</label>
       <label><input type="radio" name="impMode" value="replace"> Reemplazar todo el catálogo</label>
     </div>
-    <button class="btn primary" style="width:100%;margin-top:8px" ${valid.length?'':'disabled'} onclick="impConfirm()">Importar ${valid.length} producto(s)</button>`;
+    <button class="btn primary" style="width:100%;margin-top:8px" ${valid.length?'':'disabled'} onclick="impConfirm()">${nuevos+actualiza?`Importar (${nuevos} nuevos, ${actualiza} actualizar)`:'Importar'}</button>`;
 }
 function impConfirm(){
   const prods=(window._impProducts||[]).filter(p=>p._valid);if(!prods.length)return;
   const mode=(document.querySelector('input[name=impMode]:checked')||{}).value||'add';
-  if(mode==='replace'&&!confirm('Esto reemplazará TODO el catálogo actual. ¿Continuar?'))return;
+  if(mode==='replace'&&!confirm('Esto reemplazará TODO el catálogo actual (incluidas fotos y opciones). ¿Continuar?'))return;
   if(mode==='replace')PRODUCTS.length=0;
-  prods.forEach(p=>PRODUCTS.push({id:'p'+(productSeq++),n:p.n,pr:p.pr,cat:p.cat,area:p.area,e:p.e,desc:p.desc,activo:p.activo,enPanel:p.enPanel,enQR:p.enQR,rec:p.rec}));
+  let nuevos=0,act=0;
+  prods.forEach(p=>{
+    const ex=(mode==='add')?_findProdByName(p.n):null;
+    if(ex){ ex.n=p.n;ex.pr=p.pr;ex.cat=p.cat;ex.area=p.area;ex.e=p.e;ex.desc=p.desc;ex.activo=p.activo;ex.enPanel=p.enPanel;ex.enQR=p.enQR;ex.rec=p.rec; act++; }
+    else { PRODUCTS.push({id:'p'+(productSeq++),n:p.n,pr:p.pr,cat:p.cat,area:p.area,e:p.e,desc:p.desc,activo:p.activo,enPanel:p.enPanel,enQR:p.enQR,rec:p.rec}); nuevos++; }
+  });
   saveProductos();closeImport();
   if(typeof renderPrdCats==='function')renderPrdCats();
   if(typeof renderProductos==='function')renderProductos();
   Object.keys(ORD).forEach(k=>{if(document.getElementById('prods_'+k))renderProds(k);});
-  toastT('✅ '+prods.length+' producto(s) importado(s)');
+  toastT(`✅ ${nuevos} nuevo(s)${act?` · ${act} actualizado(s)`:''}`);
 }
 
 function comandasView(){
