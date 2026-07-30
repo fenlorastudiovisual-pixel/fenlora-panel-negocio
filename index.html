@@ -792,6 +792,17 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .fe-fields{margin-top:12px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:11px}
 .fe-note{font-size:11px;color:var(--txt2);margin-top:4px;line-height:1.5}
 
+
+.rep-2col{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+@media(max-width:1100px){.rep-2col{grid-template-columns:1fr}}
+.rep-bars{display:flex;flex-direction:column;gap:9px}
+.rep-brow{display:flex;align-items:center;gap:12px}
+.rep-lbl{width:120px;font-size:12px;color:var(--txt);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-track{flex:1;height:16px;background:var(--card2);border-radius:8px;overflow:hidden}
+.rep-fill{height:100%;background:linear-gradient(90deg,var(--primary),hsl(158,70%,45%));border-radius:8px;min-width:3px}
+.rep-val{width:130px;text-align:right;font-size:12px;font-weight:700;flex-shrink:0}
+@media(max-width:560px){.rep-lbl{width:88px}.rep-val{width:100px;font-size:11px}}
+
 </style>
 </head>
 <body>
@@ -876,7 +887,7 @@ const S = {
   roles:      {g:'Equipo', n:'Roles y Permisos', ico:'🔐', st:'pronto', fase:'Fase 2', desc:'Define qué puede ver y hacer cada rol: quién factura, quién anula, quién ve reportes o cambia precios.', feat:['Roles configurables','Permisos por módulo','Quién puede anular o dar cortesías','Bloqueo de precios y montos','Registro de auditoría']},
   nomina:     {g:'Equipo', n:'Asistencias y Nómina', ico:'🕐', st:'pronto', fase:'Futuro', desc:'Control de asistencia del personal y apoyo para la nómina — quién entró, salió y cuánto trabajó.', feat:['Marcación de entrada/salida','Reporte de asistencias','Horas trabajadas','Base para planilla']},
   // ANÁLISIS
-  reportes:   {g:'Análisis', n:'Reportes', ico:'📈', st:'construccion', fase:'Fase 6', desc:'Todos los reportes del negocio: ventas por día/mes, productos más vendidos, ventas por mesero, movimientos de caja y más.', feat:['Ventas por periodo','Productos más vendidos','Ventas por mesero y por mesa','Movimientos de caja','Ticket promedio y horas pico','Exportar a Excel']},
+  reportes:   {g:'Análisis', n:'Reportes', ico:'📈', st:'activo', fase:'Fase 6', desc:'Todos los reportes del negocio: ventas por día/mes, productos más vendidos, ventas por mesero, movimientos de caja y más.', feat:['Ventas por periodo','Productos más vendidos','Ventas por mesero y por mesa','Movimientos de caja','Ticket promedio y horas pico','Exportar a Excel']},
   // CONFIGURACIÓN
   local:      {g:'Configuración', n:'Local y Sucursales', ico:'🏬', st:'construccion', fase:'Fase 1', desc:'Datos del negocio, logo, y gestión de varias sedes si tienes más de un local.', feat:['Datos y logo del negocio','Varias sedes/sucursales','Precios por sede','Horarios de atención']},
   ambientes:  {g:'Configuración', n:'Mesas, QR y NFC', ico:'🪑', st:'activo', fase:'Fase 1', desc:'Configura pisos, zonas y mesas con su capacidad. Cada mesa genera su código QR y su enlace NFC para que el cliente abra la carta acercando el celular o escaneando.', feat:['Pisos y ambientes (terraza, salón…)','Mesas con capacidad','Generar mesas en masa','QR por mesa','Enlace NFC por mesa (tocar con el celular)','Descargar/imprimir QR y stickers NFC']},
@@ -929,11 +940,12 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
   else if(k==='caja') initCaja();
+  else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
   else if(DYN[k]) DYN[k].init();
@@ -1749,7 +1761,97 @@ function verCierre(i){
 function closeCajaModal(){const m=document.getElementById('cajaModal');if(m)m.classList.remove('on');}
 function rerenderCaja(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='caja');if(tp)tp.innerHTML=cajaView();}
 
+/* ═══ REPORTES ═══ */
+function repClasifOrigen(o){o=o||'';if(/^Mesa/i.test(o))return 'Mesas';if(/domicil/i.test(o))return 'Domicilio';if(/llevar/i.test(o))return 'Para llevar';if(/online/i.test(o))return 'Online';return 'Otros';}
+function reportesView(){
+  const hoy=Date.now(), sem=hoy-6*86400000;
+  return `
+  <div class="page-head"><h1>📈 Reportes <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Analiza tus ventas por periodo: totales, productos más vendidos, medios de pago, horas pico y origen. Descárgalo cuando quieras.</div></div>
+  <div class="consol-bar">
+    <label>Desde <input type="date" class="pf-in" id="repDesde" value="${_isoDate(sem)}"></label>
+    <label>Hasta <input type="date" class="pf-in" id="repHasta" value="${_isoDate(hoy)}"></label>
+    <button class="btn ghost" style="width:auto;padding:9px 16px" onclick="verReportes()">Ver reporte</button>
+    <button class="btn ghost" style="width:auto;padding:9px 13px" onclick="repRango('hoy')">Hoy</button>
+    <button class="btn ghost" style="width:auto;padding:9px 13px" onclick="repRango('semana')">7 días</button>
+    <button class="btn ghost" style="width:auto;padding:9px 13px" onclick="repRango('mes')">30 días</button>
+  </div>
+  <div id="repOut"></div>`;
+}
+function initReportes(){verReportes();}
+function repRango(tipo){
+  const hoy=Date.now();let from=hoy;
+  if(tipo==='semana')from=hoy-6*86400000;else if(tipo==='mes')from=hoy-29*86400000;
+  const de=document.getElementById('repDesde'),ha=document.getElementById('repHasta');
+  if(de)de.value=_isoDate(from);if(ha)ha.value=_isoDate(hoy);verReportes();
+}
+function _repRange(){
+  const de=document.getElementById('repDesde'),ha=document.getElementById('repHasta');
+  const from=(de&&de.value)?new Date(de.value+'T00:00:00').getTime():0;
+  const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
+  return FACTURAS.filter(f=>f.ts>=from&&f.ts<=to);
+}
+function repData(list){
+  const ventas=list.reduce((s,f)=>s+f.total,0);
+  const propinas=list.reduce((s,f)=>s+(f.propina||0),0);
+  const nItems=list.reduce((s,f)=>s+(f.nItems||0),0);
+  const ticket=list.length?Math.round(ventas/list.length):0;
+  const porDia={};list.forEach(f=>{const k=_isoDate(f.ts);porDia[k]=(porDia[k]||0)+f.total;});
+  const prod={};list.forEach(f=>(f.items||[]).forEach(it=>{if(it.cort)return;if(!prod[it.n])prod[it.n]={qty:0,rev:0};prod[it.n].qty+=it.qty;prod[it.n].rev+=it.unit*it.qty;}));
+  const topProd=Object.entries(prod).map(([n,v])=>({n,qty:v.qty,rev:v.rev})).sort((a,b)=>b.qty-a.qty);
+  const medios={};list.forEach(f=>{const k=f.medioLabel||f.medio;medios[k]=(medios[k]||0)+f.total;});
+  const horas={};for(let h=0;h<24;h++)horas[h]=0;list.forEach(f=>{horas[new Date(f.ts).getHours()]+=f.total;});
+  const origen={};list.forEach(f=>{const k=repClasifOrigen(f.origen);origen[k]=(origen[k]||0)+f.total;});
+  const fe=list.filter(f=>f.dian).length;const pos=list.length-fe;
+  return {ventas,propinas,nItems,ticket,n:list.length,porDia,topProd,medios,horas,origen,fe,pos};
+}
+function _bars(obj,fmt){
+  const entries=Object.entries(obj);const max=Math.max(1,...entries.map(e=>e[1]));
+  if(!entries.length)return '<div class="dash-empty">Sin datos.</div>';
+  return `<div class="rep-bars">${entries.map(([k,v])=>`<div class="rep-brow"><div class="rep-lbl">${k}</div><div class="rep-track"><div class="rep-fill" style="width:${Math.max(2,Math.round(v/max*100))}%"></div></div><div class="rep-val">${fmt?fmt(v):COP(v)}</div></div>`).join('')}</div>`;
+}
+function verReportes(){
+  const list=_repRange();const out=document.getElementById('repOut');if(!out)return;
+  if(!list.length){out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hay ventas en ese rango de fechas.</div>';window._repList=[];return;}
+  window._repList=list;const r=repData(list);
+  const cards=[['Ventas',COP(r.ventas),'💰'],['Facturas',r.n,'🧾'],['Ticket promedio',COP(r.ticket),'🎫'],['Productos vendidos',r.nItems,'🍽️'],['Propinas',COP(r.propinas),'🙌']];
+  const diaObj={};Object.keys(r.porDia).sort().forEach(k=>{const dt=new Date(k+'T12:00:00');diaObj[dt.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short'})]=r.porDia[k];});
+  const horaObj={};for(let h=0;h<24;h++){if(r.horas[h]>0)horaObj[(h<10?'0':'')+h+':00']=r.horas[h];}
+  const maxQ=r.topProd.length?r.topProd[0].qty:1;
+  out.innerHTML=`
+  <div class="caja-cards" style="margin-top:6px">${cards.map(c=>`<div class="caja-card"><div class="cc-ic">${c[2]}</div><div class="cc-t">${c[0]}</div><div class="cc-v">${c[1]}</div></div>`).join('')}</div>
+  <div class="rep-2col" style="margin-top:20px">
+    <div>
+      <div class="section-title">📅 Ventas por día</div>${_bars(diaObj)}
+      <div class="section-title" style="margin-top:22px">🕐 Ventas por hora (horas pico)</div>${_bars(horaObj)}
+      <div class="section-title" style="margin-top:22px">💳 Medios de pago</div>${_bars(r.medios)}
+    </div>
+    <div>
+      <div class="section-title">🏆 Productos más vendidos</div>
+      <div class="rep-bars">${r.topProd.slice(0,12).map(p=>`<div class="rep-brow"><div class="rep-lbl">${p.n}</div><div class="rep-track"><div class="rep-fill" style="width:${Math.max(2,Math.round(p.qty/maxQ*100))}%"></div></div><div class="rep-val">${p.qty} · ${COP(p.rev)}</div></div>`).join('')}</div>
+      <div class="section-title" style="margin-top:22px">📍 Ventas por origen</div>${_bars(r.origen)}
+      <div class="section-title" style="margin-top:22px">🧾 Tipo de documento</div>
+      <div class="medio-list"><div class="medio-row"><span>Comprobante (POS)</span><b>${r.pos}</b></div><div class="medio-row"><span>Factura electrónica</span><b>${r.fe}</b></div></div>
+    </div>
+  </div>
+  <button class="btn primary" style="width:auto;padding:11px 18px;margin-top:20px" onclick="descargarReporteCSV()">📥 Descargar reporte (CSV)</button>`;
+}
+function descargarReporteCSV(){
+  const list=window._repList||_repRange();if(!list.length){toastT('No hay ventas en el rango');return;}
+  const r=repData(list);const L=[];
+  L.push(['Reporte de ventas - Dulce Cafe']);L.push([]);
+  L.push(['Ventas',r.ventas]);L.push(['Facturas',r.n]);L.push(['Ticket promedio',r.ticket]);L.push(['Productos vendidos',r.nItems]);L.push(['Propinas',r.propinas]);L.push([]);
+  L.push(['Ventas por dia']);Object.keys(r.porDia).sort().forEach(k=>L.push([k,r.porDia[k]]));L.push([]);
+  L.push(['Productos mas vendidos']);L.push(['Producto','Cantidad','Ingresos']);r.topProd.forEach(p=>L.push([p.n,p.qty,p.rev]));L.push([]);
+  L.push(['Medios de pago']);Object.entries(r.medios).forEach(([k,v])=>L.push([k,v]));L.push([]);
+  L.push(['Ventas por hora']);for(let h=0;h<24;h++)if(r.horas[h]>0)L.push([(h<10?'0':'')+h+':00',r.horas[h]]);L.push([]);
+  L.push(['Ventas por origen']);Object.entries(r.origen).forEach(([k,v])=>L.push([k,v]));L.push([]);
+  L.push(['Tipo de documento']);L.push(['Comprobante POS',r.pos]);L.push(['Factura electronica',r.fe]);
+  _download('reporte_ventas.csv','\ufeff'+L.map(row=>csvRow(row)).join('\r\n'));toastT('📥 Reporte descargado');
+}
+
 function comandasView(){
+
 
 
   return `
