@@ -787,6 +787,11 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .consol-bar label{font-size:12px;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:7px}
 .consol-bar .pf-in{width:auto;padding:8px 10px}
 
+
+.fe-toggle{display:flex;align-items:center;gap:9px;margin-top:14px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:11px;font-size:13px;font-weight:600;cursor:pointer}
+.fe-fields{margin-top:12px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:11px}
+.fe-note{font-size:11px;color:var(--txt2);margin-top:4px;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -2291,7 +2296,7 @@ function printCocina(target,items){
 /* ── cobro / facturación ── */
 function openPay(target){
   const lines=ORD[target]; if(!lines.length){toastT('La comanda está vacía');return;}
-  payTarget=target; pay={m:null,tip:0,disc:0};
+  payTarget=target; pay={m:null,tip:0,disc:0,fe:false,feData:{tipo:'CC',num:'',nombre:'',email:''}};
   renderPay();
   document.getElementById('payModal').classList.add('on');
 }
@@ -2322,16 +2327,28 @@ function renderPay(){
         ${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}
         <div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>
       </div>
+      <label class="fe-toggle"><input type="checkbox" ${pay.fe?'checked':''} onchange="payToggleFE(this.checked)"> 📄 El cliente solicita factura electrónica (DIAN)</label>
+      ${pay.fe?`<div class="fe-fields">
+        <div class="pf-row2">
+          <div class="pf-f"><label>Tipo de documento</label><select class="pf-in" onchange="pay.feData.tipo=this.value">${['CC','NIT','CE','Pasaporte'].map(o=>`<option ${pay.feData.tipo===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          <div class="pf-f"><label>Número</label><input class="pf-in" value="${(pay.feData.num||'').replace(/"/g,'&quot;')}" oninput="pay.feData.num=this.value" placeholder="CC / NIT"></div>
+        </div>
+        <div class="pf-f"><label>Nombre o razón social</label><input class="pf-in" value="${(pay.feData.nombre||'').replace(/"/g,'&quot;')}" oninput="pay.feData.nombre=this.value" placeholder="Nombre del cliente"></div>
+        <div class="pf-f"><label>Correo electrónico</label><input class="pf-in" value="${(pay.feData.email||'').replace(/"/g,'&quot;')}" oninput="pay.feData.email=this.value" placeholder="correo@ejemplo.com"></div>
+        <div class="fe-note">La transmisión real a la DIAN se hará con el proveedor autorizado en Fase 1. Por ahora se registra el cobro marcado como factura electrónica con los datos del cliente.</div>
+      </div>`:''}
     </div>
-    <div class="modal-f"><button class="btn primary" id="payConfirm" ${pay.m?'':'disabled'} onclick="confirmPay()">🧾 Generar Comprobante DIAN</button></div></div>`;
+    <div class="modal-f"><button class="btn primary" id="payConfirm" ${pay.m?'':'disabled'} onclick="confirmPay()">${pay.fe?'📄 Cobrar y generar factura electrónica':'🧾 Cobrar y generar comprobante'}</button></div></div>`;
 }
 function payMethod(m){pay.m=m;renderPay();}
+function payToggleFE(v){pay.fe=v;renderPay();}
 function setTip(p){pay.tip=p;renderPay();}
 function setDisc(v){pay.disc=parseInt((v+'').replace(/\D/g,''))||0;const t=payTotals();
   const el=document.querySelector('#payModal .pay-sum');if(el){el.innerHTML=`<div class="trow"><span>Subtotal</span><span>${COP(t.subtotal)}</span></div>${t.tipAmt?`<div class="trow"><span>Propina (${pay.tip}%)</span><span>+ ${COP(t.tipAmt)}</span></div>`:''}${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}<div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>`;}
 }
 function confirmPay(){
   if(!pay.m){toastT('Elige un medio de pago');return;}
+  if(pay.fe && (!(pay.feData.num||'').trim() || !(pay.feData.nombre||'').trim())){toastT('Para factura electrónica ingresa el documento y el nombre del cliente');return;}
   const t=payTotals();const target=payTarget;const label=(PAGOS.find(p=>p[0]===pay.m)||[])[2];
   const lines=ORD[target]||[];const meta=ORDMETA[target]||{};
   const factura={
@@ -2339,15 +2356,16 @@ function confirmPay(){
     ts: Date.now(),
     origen: (DYN[target]&&DYN[target].title)||target,
     mesero: meta.mesero||'',
-    cliente: meta.cliente||'',
+    cliente: pay.fe?(pay.feData.nombre||''):(meta.cliente||''),
     items: lines.map(l=>({n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})),
     nItems: lines.reduce((s,l)=>s+l.qty,0),
     subtotal: t.subtotal, propina: t.tipAmt, descuento: t.disc, total: t.total,
-    medio: pay.m, medioLabel: label, split: meta.split||null
+    medio: pay.m, medioLabel: label, split: meta.split||null,
+    tipo: pay.fe?'electronica':'pos', dian: !!pay.fe, clienteFE: pay.fe?{...pay.feData}:null
   };
   addFactura(factura);
   closePay();
-  toastT(`🧾 Factura ${factura.num} generada · ${COP(t.total)} en ${label}`);
+  toastT(`${pay.fe?'📄 Factura electrónica':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} en ${label}`);
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];
   closeTab(target);
