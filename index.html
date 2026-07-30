@@ -1097,7 +1097,7 @@ function moduleView(k){
 }
 
 /* ─── COMANDAS · Capa 1 (funciones estilo ApiWorking, tema oscuro) ─── */
-const COP=n=>'$'+Math.round(n).toLocaleString('es-CO');
+const COP=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CO');
 const pad=n=>String(n).padStart(2,'0');
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const CATS=['Recomendados','Calientes','Frías','Sodas','Frappes','Con licor','Postres','Pa comer','Combos','Otros','Filtrados'];
