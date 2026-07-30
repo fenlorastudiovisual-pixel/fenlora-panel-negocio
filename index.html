@@ -780,6 +780,13 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .cierre-dif.plus{background:var(--blue-dim);color:var(--blue)}
 .cierre-dif.minus{background:var(--red-dim);color:var(--red)}
 
+
+.cierre-dl{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--txt);cursor:pointer;font-size:15px;flex-shrink:0}
+.cierre-dl:hover{border-color:var(--primary)}
+.consol-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.consol-bar label{font-size:12px;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:7px}
+.consol-bar .pf-in{width:auto;padding:8px 10px}
+
 </style>
 </head>
 <body>
@@ -1442,7 +1449,7 @@ function renderProdForm(){
       </div>
       <div class="pf-f"><label>Nombre del producto</label><input class="pf-in" value="${(p.n||'').replace(/"/g,'&quot;')}" oninput="_pf.n=this.value"></div>
       <div class="pf-row2">
-        <div class="pf-f"><label>Precio (COP)</label><input class="pf-in" inputmode="numeric" value="${p.pr||''}" oninput="_pf.pr=parseInt(this.value.replace(/\D/g,''))||0"></div>
+        <div class="pf-f"><label>Precio (COP)</label><input class="pf-in" data-money inputmode="numeric" value="${p.pr?p.pr.toLocaleString('es-CO'):''}" oninput="_pf.pr=parseInt(this.value.replace(/\D/g,''))||0"></div>
         <div class="pf-f"><label>Categoría</label><input class="pf-in" list="pfCats" value="${(p.cat||'').replace(/"/g,'&quot;')}" oninput="_pf.cat=this.value"><datalist id="pfCats">${cats.map(c=>`<option value="${c}">`).join('')}</datalist></div>
       </div>
       <div class="pf-row2">
@@ -1473,7 +1480,7 @@ function renderPfOpts(){
     </div>
     ${(g.items||[]).map((it,ii)=>`<div class="pf-item">
       <input class="pf-in sm" placeholder="Opción (ej: Extra papas)" value="${(it.n||'').replace(/"/g,'&quot;')}" oninput="_pf.opts[${gi}].items[${ii}].n=this.value">
-      <input class="pf-in sm price" inputmode="numeric" placeholder="+precio" value="${it.p||''}" oninput="_pf.opts[${gi}].items[${ii}].p=parseInt(this.value.replace(/\D/g,''))||0">
+      <input class="pf-in sm price" data-money inputmode="numeric" placeholder="+precio" value="${it.p?it.p.toLocaleString('es-CO'):''}" oninput="_pf.opts[${gi}].items[${ii}].p=parseInt(this.value.replace(/\D/g,''))||0">
       <button class="pf-del" onclick="pfDelItem(${gi},${ii})">✕</button></div>`).join('')}
     <button class="btn ghost" style="width:auto;padding:6px 12px;font-size:12px;margin-top:6px" onclick="pfAddItem(${gi})">+ Opción</button>
   </div>`).join('')||`<div style="font-size:12px;color:var(--txt2);padding:4px 0">Sin opciones. Agrega un grupo si el producto tiene variantes (término, tamaño) o adicionales (extras con precio).</div>`;
@@ -1535,7 +1542,7 @@ function cajaView(){
         <b style="font-family:'Outfit';font-size:17px">La caja está cerrada</b>
         <div style="font-size:13px;color:var(--txt2);margin:4px 0 12px">Ingresa la base inicial (el efectivo con el que arrancas) para abrir el turno.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <div class="pf-in" style="display:flex;align-items:center;gap:6px;width:auto"><span style="color:var(--txt3)">$</span><input id="cajaBase" inputmode="numeric" placeholder="Base inicial (ej: 100000)" style="background:none;border:none;outline:none;color:var(--txt);font-family:inherit;font-size:14px;width:200px"></div>
+          <div class="pf-in" style="display:flex;align-items:center;gap:6px;width:auto"><span style="color:var(--txt3)">$</span><input id="cajaBase" data-money inputmode="numeric" placeholder="Base inicial (ej: 100.000)" style="background:none;border:none;outline:none;color:var(--txt);font-family:inherit;font-size:14px;width:200px"></div>
           <button class="btn primary" style="width:auto;padding:11px 20px" onclick="abrirCaja()">🔓 Abrir caja</button>
         </div>
       </div>
@@ -1580,14 +1587,88 @@ function cajaView(){
   ${cierresHistorial()}`;
 }
 function cierresHistorial(){
-  if(!CIERRES.length)return '';
+  if(!CIERRES.length)return consolidadoSection();
   return `<div class="section-title" style="margin-top:24px">📚 Cierres anteriores</div>
-    <div class="cierre-list">${CIERRES.slice(0,10).map((c,i)=>`<div class="cierre-row" onclick="verCierre(${i})">
+    <div class="cierre-list">${CIERRES.slice(0,20).map((c,i)=>`<div class="cierre-row" onclick="verCierre(${i})">
       <div class="fr-ic">🧾</div>
       <div class="fr-mid"><b>${fhora(c.cerradaEn)}</b><span>${c.nFacturas} facturas · ventas ${COP(c.ventasTotal)}</span></div>
       <div class="cierre-dif ${c.diferencia===0?'ok':(c.diferencia>0?'plus':'minus')}">${c.diferencia===0?'Cuadrada':(c.diferencia>0?'Sobra '+COP(c.diferencia):'Falta '+COP(-c.diferencia))}</div>
-    </div>`).join('')}</div>`;
+      <button class="cierre-dl" title="Descargar este cierre (CSV)" onclick="event.stopPropagation();descargarCierreCSV(${i})">📥</button>
+    </div>`).join('')}</div>${consolidadoSection()}`;
 }
+function _fdate(ts){const d=new Date(ts);return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
+function _isoDate(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function consolidadoSection(){
+  if(!CIERRES.length)return '';
+  const hoy=Date.now(), sem=hoy-6*86400000;
+  return `<div class="section-title" style="margin-top:26px">📊 Consolidado para contabilidad</div>
+    <div class="sub" style="margin:-4px 0 12px 0">Elige un rango (ej. la semana) para ver y descargar el resumen de todos los turnos — útil para el contador.</div>
+    <div class="consol-bar">
+      <label>Desde <input type="date" class="pf-in" id="conDesde" value="${_isoDate(sem)}"></label>
+      <label>Hasta <input type="date" class="pf-in" id="conHasta" value="${_isoDate(hoy)}"></label>
+      <button class="btn ghost" style="width:auto;padding:9px 16px" onclick="verConsolidado()">Ver consolidado</button>
+    </div>
+    <div id="consolidadoOut"></div>`;
+}
+function csvRow(arr){return (arr||[]).map(v=>{v=(v==null?'':String(v));return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(';');}
+function _download(name,content,mime){try{const blob=new Blob([content],{type:(mime||'text/csv')+';charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},120);}catch(e){toastT('Este navegador no permitió la descarga');}}
+function cierreCSV(c){
+  const medios=Object.keys(c.porMedio||{});const L=[];
+  L.push(['Cierre de caja - Dulce Cafe']);
+  L.push(['Cajero',c.cajero||'']);
+  L.push(['Apertura',fhora(c.abiertaEn)]);
+  L.push(['Cierre',fhora(c.cerradaEn)]);
+  L.push([]);
+  L.push(['Base inicial',c.base]);
+  L.push(['Ventas del turno',c.ventasTotal]);
+  medios.forEach(k=>L.push(['  '+k,c.porMedio[k]]));
+  L.push(['Propinas',c.propinas]);
+  L.push(['Ingresos manuales',c.ingresos]);
+  L.push(['Egresos / gastos',c.egresos]);
+  L.push(['Efectivo esperado',c.efectivoEsperado]);
+  L.push(['Efectivo contado',c.efectivoContado]);
+  L.push(['Diferencia',c.diferencia]);
+  L.push(['Facturas',c.nFacturas]);
+  if(c.movimientos&&c.movimientos.length){L.push([]);L.push(['Movimientos de caja']);L.push(['Tipo','Concepto','Monto','Fecha']);c.movimientos.forEach(m=>L.push([m.tipo,m.concepto,m.monto,fhora(m.ts)]));}
+  return '\ufeff'+L.map(r=>csvRow(r)).join('\r\n');
+}
+function descargarCierreCSV(i){const c=CIERRES[i];if(!c)return;_download('cierre_'+_fdate(c.cerradaEn)+'.csv',cierreCSV(c));toastT('📥 Cierre descargado');}
+function consolidadoCSV(list){
+  const medios=[...new Set(list.flatMap(c=>Object.keys(c.porMedio||{})))];
+  const head=['Apertura','Cierre','Cajero','Base','Ventas',...medios,'Propinas','Ingresos','Egresos','Efectivo esperado','Efectivo contado','Diferencia','Facturas'];
+  const rows=[head];const sum=k=>list.reduce((s,c)=>s+(c[k]||0),0);
+  list.forEach(c=>rows.push([fhora(c.abiertaEn),fhora(c.cerradaEn),c.cajero||'',c.base,c.ventasTotal,...medios.map(m=>(c.porMedio||{})[m]||0),c.propinas,c.ingresos,c.egresos,c.efectivoEsperado,c.efectivoContado,c.diferencia,c.nFacturas]));
+  rows.push(['TOTALES','','',sum('base'),sum('ventasTotal'),...medios.map(m=>list.reduce((s,c)=>s+((c.porMedio||{})[m]||0),0)),sum('propinas'),sum('ingresos'),sum('egresos'),sum('efectivoEsperado'),sum('efectivoContado'),sum('diferencia'),sum('nFacturas')]);
+  return '\ufeff'+rows.map(r=>csvRow(r)).join('\r\n');
+}
+function _conRange(){
+  const de=document.getElementById('conDesde'),ha=document.getElementById('conHasta');
+  const from=(de&&de.value)?new Date(de.value+'T00:00:00').getTime():0;
+  const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
+  return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
+}
+function verConsolidado(){
+  const list=_conRange();const out=document.getElementById('consolidadoOut');if(!out)return;
+  if(!list.length){out.innerHTML='<div class="dash-empty">No hay cierres en ese rango de fechas.</div>';window._conList=[];return;}
+  window._conList=list;
+  const sum=k=>list.reduce((s,c)=>s+(c[k]||0),0);
+  const medios=[...new Set(list.flatMap(c=>Object.keys(c.porMedio||{})))];const dif=sum('diferencia');
+  out.innerHTML=`
+   <div class="caja-cards" style="margin-top:10px">
+     <div class="caja-card"><div class="cc-t">Cierres</div><div class="cc-v">${list.length}</div></div>
+     <div class="caja-card"><div class="cc-t">Ventas totales</div><div class="cc-v">${COP(sum('ventasTotal'))}</div></div>
+     <div class="caja-card"><div class="cc-t">Propinas</div><div class="cc-v">${COP(sum('propinas'))}</div></div>
+     <div class="caja-card"><div class="cc-t">Diferencia acumulada</div><div class="cc-v" style="color:${dif===0?'var(--primary)':(dif>0?'var(--blue)':'var(--red)')}">${COP(dif)}</div></div>
+   </div>
+   <div class="section-title" style="margin-top:16px">💳 Por medio de pago (en el rango)</div>
+   <div class="medio-list">${medios.map(m=>`<div class="medio-row"><span>${m}</span><b>${COP(list.reduce((s,c)=>s+((c.porMedio||{})[m]||0),0))}</b></div>`).join('')}
+     <div class="medio-row"><span>Ingresos manuales</span><b>${COP(sum('ingresos'))}</b></div>
+     <div class="medio-row"><span>Egresos / gastos</span><b>${COP(sum('egresos'))}</b></div>
+     <div class="medio-row tot"><span>Facturas</span><b>${sum('nFacturas')}</b></div></div>
+   <button class="btn primary" style="width:auto;padding:11px 18px;margin-top:14px" onclick="descargarConsolidadoCSV()">📥 Descargar consolidado (CSV)</button>`;
+}
+function descargarConsolidadoCSV(){const list=window._conList||_conRange();if(!list.length){toastT('No hay cierres en el rango');return;}_download('consolidado_caja.csv',consolidadoCSV(list));toastT('📥 Consolidado descargado');}
+
 function initCaja(){/* render vía buildPanel innerHTML */}
 function abrirCaja(){
   const v=parseInt((document.getElementById('cajaBase').value||'').replace(/\D/g,''))||0;
@@ -1599,7 +1680,7 @@ function openMov(tipo){
   m.innerHTML=`<div class="modal" style="width:400px"><div class="modal-h"><b>${tipo==='ingreso'?'➕ Registrar ingreso':'➖ Registrar egreso / gasto'}</b><div class="mx" onclick="closeCajaModal()">✕</div></div>
     <div class="modal-b">
       <div class="pf-f"><label>Concepto</label><input class="pf-in" id="movConcepto" placeholder="${tipo==='ingreso'?'Ej: préstamo a caja':'Ej: compra de servilletas'}"></div>
-      <div class="pf-f"><label>Monto (COP)</label><input class="pf-in" id="movMonto" inputmode="numeric" placeholder="0"></div>
+      <div class="pf-f"><label>Monto (COP)</label><input class="pf-in" id="movMonto" data-money inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="modal-f"><button class="btn primary" onclick="addMov('${tipo}')">Registrar</button></div></div>`;
   m.classList.add('on');
@@ -1620,7 +1701,7 @@ function openArqueo(){
         <div class="medio-row"><span>Ventas del turno</span><b>${COP(r.ventas)}</b></div>
         <div class="medio-row"><span>Efectivo esperado en caja</span><b>${COP(r.efectivoEsperado)}</b></div>
       </div>
-      <div class="pf-f"><label>💵 Efectivo contado (lo que hay físicamente en caja)</label><input class="pf-in" id="arqueoContado" inputmode="numeric" placeholder="0" oninput="arqueoDif()"></div>
+      <div class="pf-f"><label>💵 Efectivo contado (lo que hay físicamente en caja)</label><input class="pf-in" id="arqueoContado" data-money inputmode="numeric" placeholder="0" oninput="arqueoDif()"></div>
       <div id="arqueoResult" class="arqueo-res">Ingresa el efectivo contado para ver el cuadre.</div>
     </div>
     <div class="modal-f"><button class="btn primary" onclick="cerrarCaja()">🔒 Confirmar cierre</button></div></div>`;
@@ -1657,7 +1738,7 @@ function verCierre(i){
       <div class="medio-row"><span>Efectivo contado</span><b>${COP(c.efectivoContado)}</b></div>
       <div class="medio-row tot"><span>Diferencia</span><b class="${c.diferencia===0?'':(c.diferencia>0?'':'')}" style="color:${c.diferencia===0?'var(--primary)':(c.diferencia>0?'var(--blue)':'var(--red)')}">${c.diferencia===0?'Cuadrada':(c.diferencia>0?'Sobra '+COP(c.diferencia):'Falta '+COP(-c.diferencia))}</b></div>
     </div></div>
-    <div class="modal-f"><button class="btn ghost" onclick="closeCajaModal()">Cerrar</button></div></div>`;
+    <div class="modal-f"><div style="display:flex;gap:9px"><button class="btn ghost" style="flex:0 0 auto;padding:12px 15px" onclick="closeCajaModal()">Cerrar</button><button class="btn primary" style="flex:1" onclick="descargarCierreCSV(${i})">📥 Descargar (CSV)</button></div></div></div>`;
   m.classList.add('on');
 }
 function closeCajaModal(){const m=document.getElementById('cajaModal');if(m)m.classList.remove('on');}
@@ -1994,9 +2075,9 @@ function openLineDisc(target,lid){
   m.innerHTML=`<div class="modal" style="width:380px"><div class="modal-h"><b>🏷️ Descuento · ${l.n}</b><div class="mx" onclick="closeLineDisc()">✕</div></div>
     <div class="modal-b">
       <div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Precio del plato: <b>${COP(gross)}</b>. Ingresa el descuento en pesos.</div>
-      <input class="disc-in" id="lineDiscIn" inputmode="numeric" placeholder="0" value="${l.desc||''}">
+      <input class="disc-in" id="lineDiscIn" data-money inputmode="numeric" placeholder="0" value="${l.desc?l.desc.toLocaleString('es-CO'):''}">
       <div style="display:flex;gap:7px;margin-top:10px">
-        ${[10,20,50].map(p=>`<button class="btn ghost" style="flex:1;padding:8px" onclick="document.getElementById('lineDiscIn').value=${Math.round(gross*p/100)}">${p}%</button>`).join('')}
+        ${[10,20,50].map(p=>`<button class="btn ghost" style="flex:1;padding:8px" onclick="document.getElementById('lineDiscIn').value=(${Math.round(gross*p/100)}).toLocaleString('es-CO')">${p}%</button>`).join('')}
       </div>
     </div>
     <div class="modal-f"><div style="display:flex;gap:9px">
@@ -2033,7 +2114,7 @@ function comandaBody(target){
       <button class="accb b4 ${l.llevar?'on':''}" title="Para llevar (empacar)" onclick="toggleLlevar('${target}',${l.lid})">🥡</button>
       <button class="accb b5 ${desc?'on':''}" title="Descuento de este plato" onclick="openLineDisc('${target}',${l.lid})">🏷️</button></div>`;
     const qty=l.sent?`<span class="cl-static-q">Cant: ${l.qty}</span>`:`<div class="qstep"><div class="qb" onclick="changeQty('${target}',${l.lid},-1)">−</div><input class="qv-in" inputmode="numeric" value="${l.qty}" onchange="setQty('${target}',${l.lid},this.value)" onclick="this.select()"><div class="qb" onclick="changeQty('${target}',${l.lid},1)">+</div></div>`;
-    const price=l.sent?`<div class="cl-pricebox" style="opacity:.6">$ <span class="cl-price-in">${l.unit.toLocaleString('es-CO')}</span></div>`:`<div class="cl-pricebox">$ <input class="cl-price-in" value="${l.unit.toLocaleString('es-CO')}" onchange="changePrice('${target}',${l.lid},this.value)"></div>`;
+    const price=l.sent?`<div class="cl-pricebox" style="opacity:.6">$ <span class="cl-price-in">${l.unit.toLocaleString('es-CO')}</span></div>`:`<div class="cl-pricebox">$ <input class="cl-price-in" data-money value="${l.unit.toLocaleString('es-CO')}" onchange="changePrice('${target}',${l.lid},this.value)"></div>`;
     const posSel=`<div class="cl-pos">Pos <select class="cl-pos-sel" onchange="setPos('${target}',${l.lid},this.value)">${lines.map((_,i)=>`<option value="${i+1}" ${i===idx?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
     const hold=l.sent?'':`<span class="cl-hold" onclick="toggleHold('${target}',${l.lid})">${l.held?'▶ enviar':'⏸ retener'}</span>`;
     const impHTML=(desc&&!l.cort)?`<div class="cl-imp"><span class="cl-imp-old">${COP(gross)}</span> ${COP(net)}</div>`:`<div class="cl-imp">${COP(l.cort?0:gross)}</div>`;
@@ -2234,7 +2315,7 @@ function renderPay(){
       <div class="pay-sec">Propina</div>
       <div class="tip-row">${TIPS.map(pc=>`<div class="tip-b ${pay.tip===pc?'on':''}" onclick="setTip(${pc})">${pc===0?'Sin propina':pc+'%'}</div>`).join('')}</div>
       <div class="pay-sec">Descuento (COP)</div>
-      <input class="disc-in" inputmode="numeric" placeholder="0" value="${pay.disc||''}" oninput="setDisc(this.value)">
+      <input class="disc-in" data-money inputmode="numeric" placeholder="0" value="${pay.disc?pay.disc.toLocaleString('es-CO'):''}" oninput="setDisc(this.value)">
       <div class="pay-sum">
         <div class="trow"><span>Subtotal</span><span>${COP(t.subtotal)}</span></div>
         ${t.tipAmt?`<div class="trow"><span>Propina (${pay.tip}%)</span><span>+ ${COP(t.tipAmt)}</span></div>`:''}
@@ -2320,7 +2401,7 @@ function renderSplitCheckout(){
   const cub=parts.reduce((s,p)=>s+(p.amount||0),0);const falta=total-cub;
   const rows=parts.map((p,i)=>`<div class="sc-row">
       <div class="sc-i">${i+1}</div>
-      <input class="sc-amt" inputmode="numeric" value="${p.amount||''}" placeholder="Monto" oninput="scAmt(${i},this.value)">
+      <input class="sc-amt" data-money inputmode="numeric" value="${p.amount?p.amount.toLocaleString('es-CO'):''}" placeholder="Monto" oninput="scAmt(${i},this.value)">
       <select class="sc-med" onchange="scMed(${i},this.value)">${PAGOS.map(pg=>`<option value="${pg[0]}" ${p.medio===pg[0]?'selected':''}>${pg[2]}</option>`).join('')}</select>
       ${parts.length>2?`<button class="sc-x" onclick="scDel(${i})">✕</button>`:''}
     </div>`).join('');
@@ -2522,6 +2603,8 @@ function confirmOpts(){
   closeOpts();
 }
 function closeOpts(){document.getElementById('optModal').classList.remove('on');}
+function fmtMoney(el){const raw=(el.value||'').replace(/\D/g,'');el.value=raw?parseInt(raw).toLocaleString('es-CO'):'';}
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-money')){const raw=(t.value||'').replace(/\D/g,'');t.value=raw?parseInt(raw).toLocaleString('es-CO'):'';}});
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
 document.getElementById('lineModal').addEventListener('click',e=>{if(e.target.id==='lineModal')closeLineDisc();});
 
@@ -2720,7 +2803,7 @@ document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==
 let FACTURAS=[];
 function loadFacturas(){ try{const r=localStorage.getItem('fenlora_facturas');FACTURAS=r?JSON.parse(r):[];}catch(e){FACTURAS=[];} }
 function saveFacturas(){ try{localStorage.setItem('fenlora_facturas',JSON.stringify(FACTURAS));}catch(e){} }
-function addFactura(f){ FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); }
+function addFactura(f){ FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); }
 function _sameDay(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth()&&a.getDate()===r.getDate();}
 function _sameMonth(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth();}
 function refreshDashboard(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='panel');if(tp)tp.innerHTML=dashboard();}
