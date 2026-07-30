@@ -820,6 +820,19 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .prd-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .prd-toolbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto}
 
+
+.cat-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:8px}
+.cat-fixed{background:var(--card2);border:1px dashed var(--border);border-radius:11px;padding:11px 13px;margin-bottom:8px;font-weight:700;font-size:13.5px}
+.cat-note{font-weight:400;font-size:11px;color:var(--txt2);margin-left:6px}
+.cat-nm{flex:1;font-weight:600;font-size:14px}
+.cat-cnt{font-size:11px;color:var(--txt2);margin-right:6px}
+.cat-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--txt);cursor:pointer;font-size:13px;flex-shrink:0}
+.cat-btn:hover:not(:disabled){border-color:var(--primary)}
+.cat-btn:disabled{opacity:.3;cursor:default}
+.cat-btn.del{color:var(--red)}
+.cat-add{display:flex;gap:8px;margin-top:12px}
+.cat-add .pf-in{flex:1}
+
 </style>
 </head>
 <body>
@@ -871,6 +884,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="kdsModal"></div>
 <div class="modal-bg" id="cajaModal"></div>
 <div class="modal-bg" id="impModal"></div>
+<div class="modal-bg" id="catModal"></div>
 <div class="fullview" id="fullView"></div>
 
 <script>
@@ -885,7 +899,7 @@ const S = {
   // CATÁLOGO
   productos:  {g:'Catálogo', n:'Productos', ico:'🍔', st:'activo', fase:'Fase 3', desc:'Tu catálogo: crear productos con foto, precio, categoría, área de producción, y definir sus adicionales, variantes y combos.', feat:['Producto con foto y descripción','Variantes (tamaños, presentaciones)','Adicionales y toppings con precio','Combos con selector de opciones','Precio por sede','Importar productos desde Excel']},
   carta:      {g:'Catálogo', n:'Carta / Menú QR', ico:'📱', st:'activo', fase:'Fase 4', desc:'El editor de tu carta digital QR — la que ve el cliente al escanear en la mesa. Aquí decides qué se muestra, el diseño y las fotos.', feat:['Editor visual de la carta','Fotos grandes por plato','Recomendados y "más pedido"','Promos y combos del día','Juegos de espera (diferenciador)','Captura de Club VIP por WhatsApp']},
-  categorias: {g:'Catálogo', n:'Categorías y Áreas', ico:'🗂️', st:'pronto', fase:'Fase 3', desc:'Organiza el menú en categorías (entradas, fuertes, bebidas…) y define las áreas de producción (cocina, barra, horno) para enrutar cada comanda.', feat:['Categorías ordenables','Áreas de producción','Enrutamiento de comandas por área','Orden de aparición en la carta']},
+  categorias: {g:'Catálogo', n:'Categorías y Áreas', ico:'🗂️', st:'activo', fase:'Fase 3', desc:'Organiza el menú en categorías (entradas, fuertes, bebidas…) y define las áreas de producción (cocina, barra, horno) para enrutar cada comanda.', feat:['Categorías ordenables','Áreas de producción','Enrutamiento de comandas por área','Orden de aparición en la carta']},
   juegos:     {g:'Catálogo', n:'Juegos de Espera', ico:'🎮', st:'construccion', fase:'Fase 4', desc:'Los minijuegos que el cliente juega en su celular mientras espera el pedido (Serpiente, Bloques, Pinball). Aquí el negocio los activa, elige cuáles y ve el tablero de puntajes para premiar.', feat:['Activar/desactivar juegos','Elegir qué juegos se muestran','Tablero de puntajes (leaderboard)','Premios por puntaje (ej. postre gratis)','Juego destacado de la semana','Es un diferenciador vs otros POS']},
   // INVENTARIO
   stock:      {g:'Inventario', n:'Stock y Kardex', ico:'📦', st:'construccion', fase:'Fase 3', desc:'Control de existencias con Kardex (entradas y salidas) y alertas de stock bajo. El stock baja solo cuando se venden productos con receta.', feat:['Kardex de entradas y salidas','Descuento automático por receta','Alertas de stock mínimo','Reporte de mermas','Consumo interno y cortesías','Trabaja con o sin internet']},
@@ -958,11 +972,12 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
   else if(k==='caja') initCaja();
+  else if(k==='categorias') initCategorias();
   else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
@@ -1119,6 +1134,7 @@ const COP=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CO');
 const pad=n=>String(n).padStart(2,'0');
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const CATS=['Recomendados','Calientes','Frías','Sodas','Frappes','Con licor','Postres','Pa comer','Combos','Otros','Filtrados'];
+const AREAS=['COCINA','BARRA','HORNO','PARRILLA','POSTRES'];
 const QN_DEFAULT=['SIN SAL','SIN PICANTE','SIN CEBOLLA','BIEN COCIDO','PARA LLEVAR','MUCHO LIMÓN'];
 /* Sugeridor local de observaciones según el plato (sin IA: instantáneo, gratis, offline) */
 function suggestNotes(p){
@@ -1466,7 +1482,7 @@ function openProdForm(id){
   renderProdForm();
 }
 function renderProdForm(){
-  const p=_pf;const areas=['COCINA','BARRA','HORNO','PARRILLA','POSTRES'];const cats=CATS.filter(c=>c!=='Recomendados');
+  const p=_pf;const areas=AREAS;const cats=CATS.filter(c=>c!=='Recomendados');
   const tgl=(k,label)=>`<label class="pf-tgl"><input type="checkbox" ${p[k]?'checked':''} onchange="_pf.${k}=this.checked"> ${label}</label>`;
   const m=document.getElementById('prodModal');
   m.innerHTML=`<div class="modal" style="width:580px;max-width:96vw">
@@ -1971,7 +1987,107 @@ function impConfirm(){
   toastT(`✅ ${nuevos} nuevo(s)${act?` · ${act} actualizado(s)`:''}`);
 }
 
+/* ═══ CATEGORÍAS Y ÁREAS ═══ */
+function saveCats(){try{localStorage.setItem('fenlora_cats',JSON.stringify(CATS));}catch(e){}}
+function loadCats(){try{const r=localStorage.getItem('fenlora_cats');if(r){const a=JSON.parse(r);if(Array.isArray(a)&&a.length){CATS.length=0;if(a[0]!=='Recomendados')CATS.push('Recomendados');a.forEach(c=>{if(!CATS.includes(c))CATS.push(c);});}}}catch(e){}}
+function saveAreas(){try{localStorage.setItem('fenlora_areas',JSON.stringify(AREAS));}catch(e){}}
+function loadAreas(){try{const r=localStorage.getItem('fenlora_areas');if(r){const a=JSON.parse(r);if(Array.isArray(a)&&a.length){AREAS.length=0;a.forEach(x=>AREAS.push(x));}}}catch(e){}}
+function _catCount(c){return PRODUCTS.filter(p=>p.cat===c).length;}
+function _areaCount(a){return PRODUCTS.filter(p=>(p.area||'COCINA')===a).length;}
+function refreshCatConsumers(){
+  Object.keys(ORD).forEach(k=>{const ch=document.getElementById('chips_'+k);if(ch)ch.innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[k]?' active':''}" onclick="setCat('${k}','${c}')">${c}</div>`).join('');});
+  if(document.getElementById('prdGrid')){if(typeof renderPrdCats==='function')renderPrdCats();if(typeof renderProductos==='function')renderProductos();}
+}
+function categoriasView(){
+  return `
+  <div class="page-head"><h1>🗂️ Categorías y Áreas <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Organiza tu menú en categorías y define las áreas de producción (cocina, barra…) que enrutan cada plato en la pantalla de Cocina.</div></div>
+  <div class="rep-2col">
+    <div>
+      <div class="section-title">📂 Categorías del menú</div>
+      <div class="sub" style="margin:-4px 0 12px">El orden define cómo aparecen en la comanda y (Fase 1) en el menú QR.</div>
+      <div id="catList"></div>
+      <div class="cat-add"><input class="pf-in" id="catNew" placeholder="Nueva categoría (ej: Desayunos)" onkeydown="if(event.key==='Enter')addCat()"><button class="btn primary" style="width:auto;padding:10px 16px" onclick="addCat()">+ Agregar</button></div>
+    </div>
+    <div>
+      <div class="section-title">🍳 Áreas de producción</div>
+      <div class="sub" style="margin:-4px 0 12px">Cada plato se envía al área que le corresponde en Cocina (KDS).</div>
+      <div id="areaList"></div>
+      <div class="cat-add"><input class="pf-in" id="areaNew" placeholder="Nueva área (ej: PIZZERÍA)" onkeydown="if(event.key==='Enter')addArea()"><button class="btn primary" style="width:auto;padding:10px 16px" onclick="addArea()">+ Agregar</button></div>
+    </div>
+  </div>`;
+}
+function initCategorias(){renderCatList();renderAreaList();}
+function renderCatList(){
+  const el=document.getElementById('catList');if(!el)return;
+  const cats=CATS.filter(c=>c!=='Recomendados');
+  el.innerHTML=`<div class="cat-fixed">⭐ Recomendados <span class="cat-note">automático — los productos marcados como recomendados</span></div>`+
+    cats.map((c,i)=>`<div class="cat-row"><span class="cat-nm">${c}</span><span class="cat-cnt">${_catCount(c)} prod.</span>
+      <button class="cat-btn" ${i===0?'disabled':''} onclick="moveCat(${i},-1)">↑</button>
+      <button class="cat-btn" ${i===cats.length-1?'disabled':''} onclick="moveCat(${i},1)">↓</button>
+      <button class="cat-btn" onclick="openCatEdit('cat',${i})">✏️</button>
+      <button class="cat-btn del" onclick="delCat(${i})">🗑️</button></div>`).join('');
+}
+function renderAreaList(){
+  const el=document.getElementById('areaList');if(!el)return;
+  el.innerHTML=AREAS.map((a,i)=>`<div class="cat-row"><span class="cat-nm">${a}</span><span class="cat-cnt">${_areaCount(a)} prod.</span>
+    <button class="cat-btn" ${i===0?'disabled':''} onclick="moveArea(${i},-1)">↑</button>
+    <button class="cat-btn" ${i===AREAS.length-1?'disabled':''} onclick="moveArea(${i},1)">↓</button>
+    <button class="cat-btn" onclick="openCatEdit('area',${i})">✏️</button>
+    <button class="cat-btn del" onclick="delArea(${i})">🗑️</button></div>`).join('');
+}
+function _catBase(){return CATS[0]==='Recomendados'?1:0;}
+function addCat(){
+  const inp=document.getElementById('catNew');const v=(inp.value||'').trim();if(!v)return;
+  if(CATS.some(c=>_prodNameKey(c)===_prodNameKey(v))){toastT('Esa categoría ya existe');return;}
+  CATS.push(v);saveCats();inp.value='';renderCatList();refreshCatConsumers();toastT('Categoría agregada');
+}
+function moveCat(i,dir){const a=_catBase()+i,b=a+dir;if(b<_catBase()||b>=CATS.length)return;const t=CATS[a];CATS[a]=CATS[b];CATS[b]=t;saveCats();renderCatList();refreshCatConsumers();}
+function delCat(i){
+  const idx=_catBase()+i;const c=CATS[idx];const count=_catCount(c);
+  if(!confirm(`¿Eliminar la categoría "${c}"?`+(count?` ${count} producto(s) pasarán a "Otros".`:'')))return;
+  if(count){if(!CATS.some(x=>_prodNameKey(x)==='otros'))CATS.push('Otros');PRODUCTS.forEach(p=>{if(p.cat===c)p.cat='Otros';});saveProductos();}
+  CATS.splice(idx,1);saveCats();renderCatList();refreshCatConsumers();toastT('Categoría eliminada');
+}
+function addArea(){
+  const inp=document.getElementById('areaNew');const v=(inp.value||'').trim().toUpperCase();if(!v)return;
+  if(AREAS.includes(v)){toastT('Esa área ya existe');return;}
+  AREAS.push(v);saveAreas();inp.value='';renderAreaList();toastT('Área agregada');
+}
+function moveArea(i,dir){const b=i+dir;if(b<0||b>=AREAS.length)return;const t=AREAS[i];AREAS[i]=AREAS[b];AREAS[b]=t;saveAreas();renderAreaList();}
+function delArea(i){
+  if(AREAS.length<=1){toastT('Debe quedar al menos un área');return;}
+  const a=AREAS[i];const count=_areaCount(a);const fallback=AREAS.find((x,xi)=>xi!==i)||'COCINA';
+  if(!confirm(`¿Eliminar el área "${a}"?`+(count?` ${count} producto(s) pasarán a "${fallback}".`:'')))return;
+  if(count){PRODUCTS.forEach(p=>{if((p.area||'COCINA')===a)p.area=fallback;});saveProductos();}
+  AREAS.splice(i,1);saveAreas();renderAreaList();toastT('Área eliminada');
+}
+function openCatEdit(kind,i){
+  const cur=kind==='cat'?CATS.filter(c=>c!=='Recomendados')[i]:AREAS[i];
+  const m=document.getElementById('catModal');
+  m.innerHTML=`<div class="modal" style="width:380px"><div class="modal-h"><b>✏️ Renombrar ${kind==='cat'?'categoría':'área'}</b><div class="mx" onclick="closeCatModal()">✕</div></div>
+    <div class="modal-b"><div class="pf-f"><label>Nuevo nombre</label><input class="pf-in" id="catEditIn" value="${(cur||'').replace(/"/g,'&quot;')}" onkeydown="if(event.key==='Enter')saveCatEdit('${kind}',${i})"></div>
+    <div class="sub" style="margin-top:4px">Los productos con este ${kind==='cat'?'categoría':'área'} se actualizan automáticamente.</div></div>
+    <div class="modal-f"><button class="btn primary" onclick="saveCatEdit('${kind}',${i})">Guardar</button></div></div>`;
+  m.classList.add('on');
+}
+function saveCatEdit(kind,i){
+  const raw=(document.getElementById('catEditIn').value||'').trim();if(!raw){toastT('Escribe un nombre');return;}
+  if(kind==='cat'){
+    const idx=_catBase()+i;const old=CATS[idx];const v=raw;
+    if(CATS.some((c,ci)=>ci!==idx&&_prodNameKey(c)===_prodNameKey(v))){toastT('Ya existe esa categoría');return;}
+    CATS[idx]=v;PRODUCTS.forEach(p=>{if(p.cat===old)p.cat=v;});saveCats();saveProductos();renderCatList();
+  }else{
+    const v=raw.toUpperCase();const old=AREAS[i];
+    if(AREAS.some((a,ai)=>ai!==i&&a===v)){toastT('Ya existe esa área');return;}
+    AREAS[i]=v;PRODUCTS.forEach(p=>{if((p.area||'COCINA')===old)p.area=v;});saveAreas();saveProductos();renderAreaList();
+  }
+  closeCatModal();refreshCatConsumers();toastT('Renombrado');
+}
+function closeCatModal(){const m=document.getElementById('catModal');if(m)m.classList.remove('on');}
+
 function comandasView(){
+
 
 
 
@@ -2850,6 +2966,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.hasAttribute&&t.h
 document.getElementById('optModal').addEventListener('click',e=>{if(e.target.id==='optModal')closeOpts();});
 document.getElementById('lineModal').addEventListener('click',e=>{if(e.target.id==='lineModal')closeLineDisc();});
 document.getElementById('impModal').addEventListener('click',e=>{if(e.target.id==='impModal')closeImport();});
+document.getElementById('catModal').addEventListener('click',e=>{if(e.target.id==='catModal')closeCatModal();});
 
 /* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
 let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:true};
@@ -3155,6 +3272,8 @@ function restoreWorkspace(){
 }
 loadFacturas();
 loadProductos();
+loadCats();
+loadAreas();
 loadCaja();
 loadState();
 
