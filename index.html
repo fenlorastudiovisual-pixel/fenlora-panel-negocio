@@ -833,9 +833,24 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 .cat-add{display:flex;gap:8px;margin-top:12px}
 .cat-add .pf-in{flex:1}
 
+
+#authScreen{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+body.authed #authScreen{display:none}
+body:not(.authed) .app{display:none}
+.auth-card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px 30px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.auth-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:20px;letter-spacing:.5px;text-align:center}
+.auth-sub{text-align:center;color:var(--txt2);font-size:13px;margin:4px 0 22px}
+.auth-f{margin-bottom:14px;display:flex;flex-direction:column}
+.auth-f label{font-size:12px;color:var(--txt2);font-weight:700;margin-bottom:6px}
+.auth-err{color:var(--red);font-size:12.5px;margin:4px 0 8px;display:none;line-height:1.5}
+.auth-alt{text-align:center;font-size:12.5px;color:var(--txt2);margin-top:16px}
+.auth-alt span{color:var(--primary);cursor:pointer;font-weight:700}
+.auth-off{font-size:13px;color:var(--txt2);text-align:center;line-height:1.6}
+
 </style>
 </head>
 <body>
+<div id="authScreen"></div>
 <div class="app">
   <div class="nav-backdrop" onclick="closeNav()"></div>
   <!-- SIDEBAR -->
@@ -887,6 +902,7 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 <div class="modal-bg" id="catModal"></div>
 <div class="fullview" id="fullView"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 /* ─── ESTRUCTURA DEL PANEL (data-driven) ─── */
 const S = {
@@ -3306,11 +3322,12 @@ function toggleTopMenu(which){
     nm.classList.add('on');
   }
   if(openA){
-    am.innerHTML=`<div class="acct-top"><div class="aav">S</div><div><b style="font-family:'Outfit',sans-serif">Sebastián</b><div style="font-size:11.5px;color:var(--txt2)">Administrador · Dulce Café</div></div></div>
+    const _em=(window._authUser&&window._authUser.email)||'Usuario';
+    am.innerHTML=`<div class="acct-top"><div class="aav">${_em[0].toUpperCase()}</div><div><b style="font-family:'Outfit',sans-serif">${_em.split('@')[0]}</b><div style="font-size:11.5px;color:var(--txt2)">${_em}</div></div></div>
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
-      <div class="tm-act danger" onclick="toastT('Sesión cerrada (demo)');closeTopMenus()">🚪 Cerrar sesión</div>`;
+      <div class="tm-act danger" onclick="cerrarSesion();closeTopMenus()">🚪 Cerrar sesión</div>`;
     am.classList.add('on');
   }
 }
@@ -3321,8 +3338,86 @@ setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
 
 try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); },30000); }catch(e){}
 
-buildPanel('panel');openTab('panel');
-  if(typeof restoreWorkspace==='function') restoreWorkspace();
+function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); }
+
+/* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
+const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeXFxZmFzZmV4dWtud3JjZmljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NjM0OTcsImV4cCI6MjA5NDAzOTQ5N30.Ef5Rwyt3VY0K2Lg0Zle5-qi1X8VXEaxNsHGP8QzqjDg';
+let sb=null; try{ sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}}); }catch(e){ console.warn('Supabase no cargó',e); }
+window.NEGOCIO_ID=null; let authMode='login';
+function _authMsg(e){const m=(e&&e.message)||String(e);if(/Invalid login/i.test(m))return'Correo o contraseña incorrectos.';if(/already registered/i.test(m))return'Ese correo ya tiene cuenta. Inicia sesión.';if(/at least 6/i.test(m))return'La contraseña debe tener al menos 6 caracteres.';if(/Email not confirmed/i.test(m))return'Debes confirmar tu correo antes de entrar.';return m;}
+function authErr(t){const el=document.getElementById('authErr');if(el){el.textContent=t||'';el.style.display=t?'block':'none';}}
+function authBusy(b){const btn=document.getElementById('authBtn');if(btn){btn.disabled=b;btn.textContent=b?'Un momento…':(authMode==='register'?'Crear cuenta':(authMode==='onboarding'?'Crear negocio':'Ingresar'));}}
+function showAuth(mode){authMode=mode||'login';document.body.classList.remove('authed');renderAuth();}
+function hideAuth(){document.body.classList.add('authed');}
+function authToggle(){authMode=authMode==='login'?'register':'login';renderAuth();}
+function renderAuth(){
+  const s=document.getElementById('authScreen');if(!s)return;
+  if(authMode==='offline'){
+    s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">No se pudo conectar</div>
+      <div class="auth-off">No hay conexión con el servidor. Revisa tu internet y recarga la página.</div>
+      <button class="btn primary" style="width:100%;margin-top:14px" onclick="location.reload()">Reintentar</button></div>`;return;
+  }
+  if(authMode==='onboarding'){
+    s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">Crea tu negocio</div>
+      <div class="auth-f"><label>Nombre del negocio</label><input class="pf-in" id="obNombre" placeholder="Ej: Dulce Café"></div>
+      <div class="auth-f"><label>Nombre de la sede</label><input class="pf-in" id="obSede" placeholder="Ej: Sede Centro" value="Principal"></div>
+      <div id="authErr" class="auth-err"></div>
+      <button class="btn primary" id="authBtn" style="width:100%;margin-top:6px" onclick="crearNegocioSubmit()">Crear negocio</button>
+      <div class="auth-alt"><span onclick="cerrarSesion()">Cerrar sesión</span></div></div>`;
+    setTimeout(()=>{const e=document.getElementById('obNombre');if(e)e.focus();},50);return;
+  }
+  const reg=authMode==='register';
+  s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${reg?'Crea tu cuenta':'Panel del Negocio'}</div>
+    <div class="auth-f"><label>Correo</label><input class="pf-in" id="authEmail" type="email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')document.getElementById('authPass').focus()"></div>
+    <div class="auth-f"><label>Contraseña</label><input class="pf-in" id="authPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+    <div id="authErr" class="auth-err"></div>
+    <button class="btn primary" id="authBtn" style="width:100%;margin-top:6px" onclick="authSubmit()">${reg?'Crear cuenta':'Ingresar'}</button>
+    <div class="auth-alt">${reg?'¿Ya tienes cuenta? ':'¿Primera vez? '}<span onclick="authToggle()">${reg?'Inicia sesión':'Crea tu cuenta'}</span></div></div>`;
+  setTimeout(()=>{const e=document.getElementById('authEmail');if(e)e.focus();},50);
+}
+async function authSubmit(){
+  if(!sb)return;const email=(document.getElementById('authEmail').value||'').trim();const pass=document.getElementById('authPass').value||'';
+  if(!email||!pass){authErr('Ingresa correo y contraseña');return;}
+  authErr('');authBusy(true);
+  try{
+    if(authMode==='register'){
+      const {data,error}=await sb.auth.signUp({email,password:pass});if(error)throw error;
+      if(data.session){await afterLogin(data.user);}
+      else{authBusy(false);authMode='login';renderAuth();authErr('Cuenta creada. Confirma tu correo y luego inicia sesión.');}
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email,password:pass});if(error)throw error;
+      await afterLogin(data.user);
+    }
+  }catch(e){authBusy(false);authErr(_authMsg(e));}
+}
+async function afterLogin(user){
+  window._authUser=user;let negId=null;
+  try{const {data:mem,error}=await sb.from('miembros').select('negocio_id,rol').limit(1);if(!error&&mem&&mem.length)negId=mem[0].negocio_id;}
+  catch(e){negId=localStorage.getItem('fenlora_negocio');}
+  if(!negId)negId=localStorage.getItem('fenlora_negocio');
+  if(!negId){authBusy(false);showAuth('onboarding');return;}
+  window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
+  hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
+}
+async function crearNegocioSubmit(){
+  if(!sb)return;const nombre=(document.getElementById('obNombre').value||'').trim();const sede=(document.getElementById('obSede').value||'').trim()||'Principal';
+  if(!nombre){authErr('Escribe el nombre del negocio');return;}
+  authErr('');authBusy(true);
+  try{const {data,error}=await sb.rpc('crear_negocio',{p_nombre:nombre,p_sede:sede});if(error)throw error;
+    window.NEGOCIO_ID=data;try{localStorage.setItem('fenlora_negocio',data);}catch(e){}
+    hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
+  }catch(e){authBusy(false);authErr('No se pudo crear el negocio: '+(_authMsg(e)));}
+}
+async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{localStorage.removeItem('fenlora_negocio');}catch(e){}window.NEGOCIO_ID=null;window.__booted=false;showAuth('login');}
+async function initAuth(){
+  if(!sb){showAuth('offline');return;}
+  try{const {data:{session}}=await sb.auth.getSession();
+    if(session&&session.user){await afterLogin(session.user);}else{showAuth('login');}
+  }catch(e){showAuth('login');}
+}
+initAuth();
+
 </script>
 </body>
 </html>
