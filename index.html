@@ -1419,7 +1419,7 @@ function kdsServe(k){kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);t
 
 /* ═══ PRODUCTOS (catálogo, fuente única del panel y el menú QR) ═══ */
 let productSeq=100, prdCat='Todos', _pf=null, menuStyle=(function(){try{return localStorage.getItem('fenlora_menustyle')||'fotos'}catch(e){return 'fotos'}})();
-function saveProductos(){try{localStorage.setItem('fenlora_productos',JSON.stringify(PRODUCTS));}catch(e){toastT('No se pudo guardar (almacenamiento lleno)');}}
+function saveProductos(){try{localStorage.setItem('fenlora_productos',JSON.stringify(PRODUCTS));}catch(e){toastT('No se pudo guardar (almacenamiento lleno)');} if(typeof syncCatalog==='function'&&!_pulling)syncCatalog();}
 function loadProductos(){
   try{const r=localStorage.getItem('fenlora_productos');if(r){const arr=JSON.parse(r);if(Array.isArray(arr)&&arr.length){PRODUCTS.length=0;arr.forEach(p=>PRODUCTS.push(p));}}}catch(e){}
   let mx=100;PRODUCTS.forEach(p=>{const m=/^p(\d+)$/.exec(p.id||'');if(m)mx=Math.max(mx,+m[1]);});productSeq=mx+1;
@@ -2004,9 +2004,9 @@ function impConfirm(){
 }
 
 /* ═══ CATEGORÍAS Y ÁREAS ═══ */
-function saveCats(){try{localStorage.setItem('fenlora_cats',JSON.stringify(CATS));}catch(e){}}
+function saveCats(){try{localStorage.setItem('fenlora_cats',JSON.stringify(CATS));}catch(e){} if(typeof syncCatalog==='function'&&!_pulling)syncCatalog();}
 function loadCats(){try{const r=localStorage.getItem('fenlora_cats');if(r){const a=JSON.parse(r);if(Array.isArray(a)&&a.length){CATS.length=0;if(a[0]!=='Recomendados')CATS.push('Recomendados');a.forEach(c=>{if(!CATS.includes(c))CATS.push(c);});}}}catch(e){}}
-function saveAreas(){try{localStorage.setItem('fenlora_areas',JSON.stringify(AREAS));}catch(e){}}
+function saveAreas(){try{localStorage.setItem('fenlora_areas',JSON.stringify(AREAS));}catch(e){} if(typeof syncCatalog==='function'&&!_pulling)syncCatalog();}
 function loadAreas(){try{const r=localStorage.getItem('fenlora_areas');if(r){const a=JSON.parse(r);if(Array.isArray(a)&&a.length){AREAS.length=0;a.forEach(x=>AREAS.push(x));}}}catch(e){}}
 function _catCount(c){return PRODUCTS.filter(p=>p.cat===c).length;}
 function _areaCount(a){return PRODUCTS.filter(p=>(p.area||'COCINA')===a).length;}
@@ -3338,7 +3338,85 @@ setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
 
 try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState();}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); },30000); }catch(e){}
 
-function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); }
+/* ═══════════ SINCRONIZACIÓN DEL CATÁLOGO (offline-first) ═══════════ */
+function newId(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);}); }
+function _isUuid(s){ return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s||''); }
+function _cloudReady(){ return !!(sb && window.NEGOCIO_ID); }
+let _pulling=false, _catDirty=false, _syncT=null;
+
+function _prodRow(p){ return {id:p.id, negocio_id:NEGOCIO_ID, nombre:p.n||'', precio:p.pr||0, categoria:p.cat||'Otros', area:p.area||'COCINA', emoji:p.e||'🍽️', descripcion:p.desc||null, img_url:p.img||null, activo:p.activo!==false, en_panel:p.enPanel!==false, en_qr:p.enQR!==false, recomendado:!!p.rec, opciones:p.opts||[], notas:p.qn||[]}; }
+function _rowProd(r){ return {id:r.id, n:r.nombre, pr:r.precio, cat:r.categoria, area:r.area, e:r.emoji, desc:r.descripcion||'', img:r.img_url||'', activo:r.activo, enPanel:r.en_panel, enQR:r.en_qr, rec:r.recomendado, opts:r.opciones||[], qn:r.notas||[]}; }
+
+// asegura que todo producto tenga UUID (migra ids viejos d1/p12 y arregla líneas abiertas)
+function _ensureUuids(){
+  const map={};
+  PRODUCTS.forEach(p=>{ if(!_isUuid(p.id)){ const nu=newId(); if(p.id)map[p.id]=nu; p.id=nu; } });
+  if(Object.keys(map).length){ Object.keys(ORD).forEach(k=>ORD[k].forEach(l=>{ if(map[l.id])l.id=map[l.id]; })); if(typeof saveState==='function')saveState(); }
+  return Object.keys(map).length>0;
+}
+
+async function pullCatalog(){
+  if(!_cloudReady())return;
+  try{
+    const [pr,ca,ar]=await Promise.all([
+      sb.from('productos').select('*'),
+      sb.from('categorias').select('*').order('orden'),
+      sb.from('areas').select('*').order('orden')
+    ]);
+    if(pr.error||ca.error||ar.error) throw (pr.error||ca.error||ar.error);
+    const hasCloud=(pr.data&&pr.data.length)||(ca.data&&ca.data.length)||(ar.data&&ar.data.length);
+    if(!hasCloud){ await seedCloud(); return; }   // nube vacía → subir lo local
+    _pulling=true;
+    if(pr.data&&pr.data.length){ PRODUCTS.length=0; pr.data.forEach(r=>PRODUCTS.push(_rowProd(r))); saveProductos(); }
+    if(ca.data&&ca.data.length){ CATS.length=0; CATS.push('Recomendados'); ca.data.forEach(c=>{ if(!CATS.includes(c.nombre))CATS.push(c.nombre); }); saveCats(); }
+    if(ar.data&&ar.data.length){ AREAS.length=0; ar.data.forEach(a=>AREAS.push(a.nombre)); saveAreas(); }
+    _pulling=false;
+    if(typeof renderPrdCats==='function'&&document.querySelector('.tabpanel[data-k="productos"]')){renderPrdCats();renderProductos();}
+    if(typeof refreshCatConsumers==='function')refreshCatConsumers();
+  }catch(e){ _pulling=false; console.warn('pullCatalog (sigue offline con caché local):',e.message||e); }
+}
+
+async function seedCloud(){
+  if(!_cloudReady())return;
+  try{
+    _ensureUuids(); _pulling=true; saveProductos(); _pulling=false;
+    if(PRODUCTS.length) await sb.from('productos').upsert(PRODUCTS.map(_prodRow));
+    await _pushCatsAreas();
+    _catDirty=false;
+  }catch(e){ _pulling=false; _catDirty=true; console.warn('seedCloud:',e.message||e); }
+}
+
+async function _pushCatsAreas(){
+  const cats=CATS.filter(c=>c!=='Recomendados').map((n,i)=>({negocio_id:NEGOCIO_ID,nombre:n,orden:i}));
+  const areas=AREAS.map((n,i)=>({negocio_id:NEGOCIO_ID,nombre:n,orden:i}));
+  await sb.from('categorias').delete().eq('negocio_id',NEGOCIO_ID);
+  if(cats.length) await sb.from('categorias').insert(cats);
+  await sb.from('areas').delete().eq('negocio_id',NEGOCIO_ID);
+  if(areas.length) await sb.from('areas').insert(areas);
+}
+
+function syncCatalog(){   // rebota (debounce) y espeja local → nube
+  if(_pulling)return;
+  if(!_cloudReady()){ _catDirty=true; return; }
+  clearTimeout(_syncT);
+  _syncT=setTimeout(async()=>{
+    try{
+      _ensureUuids();
+      const {data:cloudRows,error}=await sb.from('productos').select('id'); if(error)throw error;
+      const localIds=new Set(PRODUCTS.map(p=>p.id));
+      const del=(cloudRows||[]).filter(r=>!localIds.has(r.id)).map(r=>r.id);
+      if(del.length) await sb.from('productos').delete().in('id',del);
+      if(PRODUCTS.length) await sb.from('productos').upsert(PRODUCTS.map(_prodRow));
+      await _pushCatsAreas();
+      _catDirty=false;
+    }catch(e){ _catDirty=true; console.warn('syncCatalog (se reintentará al reconectar):',e.message||e); }
+  },1200);
+}
+
+// reintentar al recuperar conexión
+if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_catDirty&&_cloudReady()) syncCatalog(); }); }
+
+function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
@@ -3392,11 +3470,26 @@ async function authSubmit(){
   }catch(e){authBusy(false);authErr(_authMsg(e));}
 }
 async function afterLogin(user){
-  window._authUser=user;let negId=null;
-  try{const {data:mem,error}=await sb.from('miembros').select('negocio_id,rol').limit(1);if(!error&&mem&&mem.length)negId=mem[0].negocio_id;}
-  catch(e){negId=localStorage.getItem('fenlora_negocio');}
-  if(!negId)negId=localStorage.getItem('fenlora_negocio');
-  if(!negId){authBusy(false);showAuth('onboarding');return;}
+  window._authUser=user;let negId=null;let verificado=false;
+  // Consultar la membresía con reintentos (por si la conexión tarda)
+  for(let i=0;i<3 && !negId;i++){
+    try{
+      const {data:mem,error}=await sb.from('miembros').select('negocio_id,rol').limit(1);
+      if(error) throw error;
+      verificado=true;
+      if(mem && mem.length){ negId=mem[0].negocio_id; break; }
+      break; // consulta OK y vacía → usuario realmente sin negocio
+    }catch(e){ await new Promise(r=>setTimeout(r,700)); }
+  }
+  // Respaldo: caché local de este dispositivo
+  if(!negId){ const cache=localStorage.getItem('fenlora_negocio'); if(cache) negId=cache; }
+  if(!negId){
+    if(verificado){ authBusy(false); showAuth('onboarding'); return; }   // confirmado nuevo → crear
+    // No se pudo verificar (sin internet): NO crear negocio nuevo, avisar
+    authBusy(false); showAuth('login');
+    authErr('No pudimos verificar tu negocio (revisa tu conexión). Intenta ingresar de nuevo.');
+    return;
+  }
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
   hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
 }
