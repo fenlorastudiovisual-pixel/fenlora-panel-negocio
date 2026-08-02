@@ -1712,8 +1712,13 @@ function _conRange(){
   const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
-function verConsolidado(){
-  const list=_conRange();const out=document.getElementById('consolidadoOut');if(!out)return;
+async function verConsolidado(){
+  const out=document.getElementById('consolidadoOut');if(!out)return;
+  const de=document.getElementById('conDesde'),ha=document.getElementById('conHasta');
+  const from=(de&&de.value)?new Date(de.value+'T00:00:00').getTime():0;
+  const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
+  out.innerHTML='<div class="dash-empty">Cargando cierres…</div>';
+  const list=await _fetchCierres(from,to);
   if(!list.length){out.innerHTML='<div class="dash-empty">No hay cierres en ese rango de fechas.</div>';window._conList=[];return;}
   window._conList=list;
   const sum=k=>list.reduce((s,c)=>s+(c[k]||0),0);
@@ -1793,7 +1798,9 @@ function cerrarCaja(){
     ventasTotal:r.ventas,porMedio:r.porMedio,efectivoVentas:r.efectivoVentas,propinas:r.propinas,
     ingresos:r.ingresos,egresos:r.egresos,efectivoEsperado:r.efectivoEsperado,efectivoContado:contado,
     diferencia:contado-r.efectivoEsperado,nFacturas:r.nFacturas,movimientos:CAJA.movimientos};
+  cierre.id=(typeof newId==='function'?newId():'c'+Date.now());cierre._sync=false;
   CIERRES.unshift(cierre);CAJA=null;saveCierres();saveCaja();closeCajaModal();rerenderCaja();
+  if(typeof pushCierre==='function')pushCierre(cierre).then(ok=>{if(ok){cierre._sync=true;saveCierres();}});
   toastT('🔒 Caja cerrada · '+(cierre.diferencia===0?'cuadrada':(cierre.diferencia>0?'sobra '+COP(cierre.diferencia):'falta '+COP(-cierre.diferencia))));
 }
 function verCierre(i){
@@ -1864,8 +1871,13 @@ function _bars(obj,fmt){
   if(!entries.length)return '<div class="dash-empty">Sin datos.</div>';
   return `<div class="rep-bars">${entries.map(([k,v])=>`<div class="rep-brow"><div class="rep-lbl">${k}</div><div class="rep-track"><div class="rep-fill" style="width:${Math.max(2,Math.round(v/max*100))}%"></div></div><div class="rep-val">${fmt?fmt(v):COP(v)}</div></div>`).join('')}</div>`;
 }
-function verReportes(){
-  const list=_repRange();const out=document.getElementById('repOut');if(!out)return;
+async function verReportes(){
+  const out=document.getElementById('repOut');if(!out)return;
+  const de=document.getElementById('repDesde'),ha=document.getElementById('repHasta');
+  const from=(de&&de.value)?new Date(de.value+'T00:00:00').getTime():0;
+  const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
+  out.innerHTML='<div class="dash-empty" style="margin-top:16px">Cargando ventas…</div>';
+  const list=await _fetchFacturas(from,to);
   if(!list.length){out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hay ventas en ese rango de fechas.</div>';window._repList=[];return;}
   window._repList=list;const r=repData(list);
   const cards=[['Ventas',COP(r.ventas),'💰'],['Facturas',r.n,'🧾'],['Ticket promedio',COP(r.ticket),'🎫'],['Productos vendidos',r.nItems,'🍽️'],['Propinas',COP(r.propinas),'🙌']];
@@ -3181,7 +3193,7 @@ document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==
 let FACTURAS=[];
 function loadFacturas(){ try{const r=localStorage.getItem('fenlora_facturas');FACTURAS=r?JSON.parse(r):[];}catch(e){FACTURAS=[];} }
 function saveFacturas(){ try{localStorage.setItem('fenlora_facturas',JSON.stringify(FACTURAS));}catch(e){} }
-function addFactura(f){ FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); }
+function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas();}}); }
 function _sameDay(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth()&&a.getDate()===r.getDate();}
 function _sameMonth(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth();}
 function refreshDashboard(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='panel');if(tp)tp.innerHTML=dashboard();}
@@ -3494,7 +3506,39 @@ function subscribeComandas(){
   }catch(e){ console.warn('subscribeComandas:',e.message||e); }
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty)pushComandasSoon(); subscribeComandas(); } }); }
-function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); }
+/* ═══════════ VENTAS EN LA NUBE (facturas + cierres + reportes) ═══════════ */
+function _facturaRow(f){ return {id:f.id, negocio_id:NEGOCIO_ID, numero:f.num, ts:new Date(f.ts).toISOString(), origen:f.origen||'', mesero:f.mesero||'', cliente:f.cliente||'', items:f.items||[], n_items:f.nItems||0, subtotal:f.subtotal||0, propina:f.propina||0, descuento:f.descuento||0, total:f.total||0, medio:f.medio||'', medio_label:f.medioLabel||'', tipo:f.tipo||'pos', dian:!!f.dian, cliente_fe:f.clienteFE||null, split:f.split||null}; }
+function _rowFactura(r){ return {id:r.id, num:r.numero, ts:new Date(r.ts).getTime(), origen:r.origen, mesero:r.mesero, cliente:r.cliente, items:r.items||[], nItems:r.n_items, subtotal:r.subtotal, propina:r.propina, descuento:r.descuento, total:r.total, medio:r.medio, medioLabel:r.medio_label, tipo:r.tipo, dian:r.dian, clienteFE:r.cliente_fe, split:r.split}; }
+function _cierreRow(c){ return {id:c.id, negocio_id:NEGOCIO_ID, abierta_en:c.abiertaEn?new Date(c.abiertaEn).toISOString():null, cerrada_en:c.cerradaEn?new Date(c.cerradaEn).toISOString():new Date().toISOString(), base:c.base||0, cajero:c.cajero||'', ventas_total:c.ventasTotal||0, por_medio:c.porMedio||{}, efectivo_ventas:c.efectivoVentas||0, propinas:c.propinas||0, ingresos:c.ingresos||0, egresos:c.egresos||0, efectivo_esperado:c.efectivoEsperado||0, efectivo_contado:c.efectivoContado||0, diferencia:c.diferencia||0, n_facturas:c.nFacturas||0, movimientos:c.movimientos||[]}; }
+function _rowCierre(r){ return {id:r.id, abiertaEn:r.abierta_en?new Date(r.abierta_en).getTime():null, cerradaEn:r.cerrada_en?new Date(r.cerrada_en).getTime():null, base:r.base, cajero:r.cajero, ventasTotal:r.ventas_total, porMedio:r.por_medio||{}, efectivoVentas:r.efectivo_ventas, propinas:r.propinas, ingresos:r.ingresos, egresos:r.egresos, efectivoEsperado:r.efectivo_esperado, efectivoContado:r.efectivo_contado, diferencia:r.diferencia, nFacturas:r.n_facturas, movimientos:r.movimientos||[]}; }
+
+async function pushFactura(f){ if(!_cloudReady())return false; try{ const {error}=await sb.from('facturas').upsert(_facturaRow(f),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ console.warn('pushFactura (se reintenta):',e.message||e); return false; } }
+async function pushCierre(c){ if(!_cloudReady())return false; try{ const {error}=await sb.from('cierres_caja').upsert(_cierreRow(c),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ console.warn('pushCierre (se reintenta):',e.message||e); return false; } }
+async function flushVentas(){
+  if(!_cloudReady())return;
+  let changed=false;
+  for(const f of FACTURAS){ if(!f._sync){ if(await pushFactura(f)){ f._sync=true; changed=true; } } }
+  if(changed)saveFacturas();
+  changed=false;
+  for(const c of CIERRES){ if(!c._sync){ if(await pushCierre(c)){ c._sync=true; changed=true; } } }
+  if(changed)saveCierres();
+}
+async function _fetchFacturas(from,to){
+  if(_cloudReady()){
+    try{ const {data,error}=await sb.from('facturas').select('*').gte('ts',new Date(from).toISOString()).lte('ts',new Date(to).toISOString()); if(error)throw error; return (data||[]).map(_rowFactura); }
+    catch(e){ console.warn('reportes: usando datos locales,',e.message||e); }
+  }
+  return FACTURAS.filter(f=>f.ts>=from&&f.ts<=to);
+}
+async function _fetchCierres(from,to){
+  if(_cloudReady()){
+    try{ const {data,error}=await sb.from('cierres_caja').select('*').gte('cerrada_en',new Date(from).toISOString()).lte('cerrada_en',new Date(to).toISOString()); if(error)throw error; return (data||[]).map(_rowCierre).sort((a,b)=>a.cerradaEn-b.cerradaEn); }
+    catch(e){ console.warn('consolidado: usando datos locales,',e.message||e); }
+  }
+  return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
+}
+if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
+function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
