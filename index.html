@@ -175,6 +175,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .nav{padding:12px 10px;flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
 .nav::-webkit-scrollbar{width:6px}.nav::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
 .nav-section{font-size:10px;color:var(--txt3);letter-spacing:1.2px;text-transform:uppercase;padding:14px 10px 6px;font-weight:700}
+#previewBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--amber,#F59E0B);color:#151515;padding:10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;max-width:92vw}
+#previewBar button{background:#151515;color:#fff;border:none;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:600;font-size:12.5px;white-space:nowrap}
+.tm-sub{padding:8px 13px 4px;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt2);transition:.15s;margin-bottom:1px;font-weight:500;position:relative}
 .nav-item:hover{background:var(--primary-dim2);color:var(--txt)}
 .nav-item.active{background:var(--primary-dim);color:var(--primary)}
@@ -3351,11 +3354,30 @@ function toggleTopMenu(which){
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
+      ${((window._realRol||'admin')==='admin')?`<div class="tm-sub">👁 Vista previa (demo)</div>
+      <div class="tm-act" onclick="verComo('mesero');closeTopMenus()">👁 Ver como Mesero</div>
+      <div class="tm-act" onclick="verComo('cajero');closeTopMenus()">👁 Ver como Cajero</div>`:''}
       <div class="tm-act danger" onclick="cerrarSesion();closeTopMenus()">🚪 Cerrar sesión</div>`;
     am.classList.add('on');
   }
 }
 function closeTopMenus(){const nm=document.getElementById('notifMenu'),am=document.getElementById('acctMenu');if(nm)nm.classList.remove('on');if(am)am.classList.remove('on');}
+/* ─── VISTA PREVIA DE ROLES (para demos, solo admin, no toca la BD) ─── */
+function verComo(rol){
+  window.ROL=rol; window._preview=(rol!==(window._realRol||'admin'));
+  renderNav(); HOME=_homeTab(); window.HOME=HOME;
+  openTabs=[HOME]; document.querySelectorAll('.tabpanel').forEach(p=>p.remove());
+  buildPanel(HOME); switchTab(HOME); _renderPreviewBanner();
+}
+function salirVistaPrevia(){ verComo(window._realRol||'admin'); }
+function _renderPreviewBanner(){
+  let b=document.getElementById('previewBar');
+  if(window._preview){
+    if(!b){ b=document.createElement('div'); b.id='previewBar'; document.body.appendChild(b); }
+    const nombre={mesero:'MESERO',cajero:'CAJERO',cocina:'COCINA',admin:'ADMIN'}[window.ROL]||String(window.ROL).toUpperCase();
+    b.innerHTML=`<span>👁 Estás viendo el panel como lo vería un <b>${nombre}</b></span><button onclick="salirVistaPrevia()">↩ Volver a mi panel</button>`;
+  } else { if(b)b.remove(); }
+}
 document.addEventListener('click',e=>{ if(!e.target.closest('.topmenu')&&!e.target.closest('.hdr-right')) closeTopMenus(); });
 _loadTheme();
 setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
@@ -3609,13 +3631,14 @@ async function afterLogin(user){
       const {data:mem,error}=await sb.from('miembros').select('negocio_id,rol').limit(1);
       if(error) throw error;
       verificado=true;
-      if(mem && mem.length){ negId=mem[0].negocio_id; window.ROL=mem[0].rol||'admin'; try{localStorage.setItem('fenlora_rol',window.ROL);}catch(e){} break; }
+      if(mem && mem.length){ negId=mem[0].negocio_id; window.ROL=mem[0].rol||'admin'; window._realRol=window.ROL; try{localStorage.setItem('fenlora_rol',window.ROL);}catch(e){} break; }
       break; // consulta OK y vacía → usuario realmente sin negocio
     }catch(e){ await new Promise(r=>setTimeout(r,700)); }
   }
   // Respaldo: caché local de este dispositivo
   if(!negId){ const cache=localStorage.getItem('fenlora_negocio'); if(cache) negId=cache; }
   if(!window.ROL){ window.ROL=localStorage.getItem('fenlora_rol')||'admin'; }
+  if(!window._realRol){ window._realRol=window.ROL; }
   if(!negId){
     if(verificado){ authBusy(false); showAuth('onboarding'); return; }   // confirmado nuevo → crear
     // No se pudo verificar (sin internet): NO crear negocio nuevo, avisar
