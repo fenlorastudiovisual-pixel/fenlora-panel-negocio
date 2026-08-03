@@ -950,21 +950,30 @@ const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximam
 
 /* build nav */
 const nav=document.getElementById('nav');
-GROUPS.forEach(g=>{
-  const sec=document.createElement('div');sec.className='nav-section';sec.textContent=g;nav.appendChild(sec);
-  Object.keys(S).filter(k=>S[k].g===g).forEach(k=>{
-    const it=S[k];const d=document.createElement('div');d.className='nav-item'+(k==='panel'?' active':'');d.dataset.k=k;
-    d.innerHTML=`<span class="ico">${it.ico}</span><span class="lbl">${it.n}</span>`+
-      (it.badge?`<span class="nav-badge">${it.badge}</span>`:`<span class="dot ${it.st}"></span>`);
-    d.onclick=()=>{openTab(k);closeNav();};nav.appendChild(d);
+/* ─── ROLES: qué ve cada quién ─── */
+function _canSee(k){ const rol=window.ROL||'admin'; if(rol==='admin')return true; const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']}; return (allow[rol]||[]).includes(k); }
+function _homeTab(){ const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='cajero'?'caja':'panel'; }
+function renderNav(){
+  nav.innerHTML='';
+  GROUPS.forEach(g=>{
+    const keys=Object.keys(S).filter(k=>S[k].g===g&&_canSee(k));
+    if(!keys.length)return;
+    const sec=document.createElement('div');sec.className='nav-section';sec.textContent=g;nav.appendChild(sec);
+    keys.forEach(k=>{
+      const it=S[k];const d=document.createElement('div');d.className='nav-item'+(k===(window.HOME||'panel')?' active':'');d.dataset.k=k;
+      d.innerHTML=`<span class="ico">${it.ico}</span><span class="lbl">${it.n}</span>`+
+        (it.badge?`<span class="nav-badge">${it.badge}</span>`:`<span class="dot ${it.st}"></span>`);
+      d.onclick=()=>{openTab(k);closeNav();};nav.appendChild(d);
+    });
   });
-});
+}
+renderNav();
 
 const content=document.getElementById('content');
 const tabbar=document.getElementById('tabbar');
 const ctxmenu=document.getElementById('ctxmenu');
 const MAX_TABS=8;
-let openTabs=['panel'], active=null;
+let openTabs=['panel'], active=null; let HOME='panel';
 const scrollPos={};
 const tName=k=>k==='panel'?'Panel':(DYN[k]?DYN[k].title:S[k].n);
 const tIco =k=>k==='panel'?'📊':(DYN[k]?DYN[k].ico:S[k].ico);
@@ -982,7 +991,7 @@ function renderTabs(){
       onauxclick="if(event.button===1){event.preventDefault();closeTab('${k}')}"
       oncontextmenu="showCtx(event,'${k}')">
       <span class="ti">${tIco(k)}</span><span class="tl">${tName(k)}</span>
-      ${k==='panel'?'<span class="pin">📌</span>':`<span class="tx" onclick="event.stopPropagation();closeTab('${k}')">✕</span>`}
+      ${k===HOME?'<span class="pin">📌</span>':`<span class="tx" onclick="event.stopPropagation();closeTab('${k}')">✕</span>`}
     </div>`).join('') + (closable>0?`<div class="tab-actions"><button class="closeall" onclick="closeAll()">✕ Cerrar todas</button></div>`:'');
   wireDrag();
 }
@@ -1012,6 +1021,7 @@ function switchTab(k){
   content.scrollTop=scrollPos[k]||0;
 }
 function openTab(k){
+  if(typeof _canSee==='function'&&!_canSee(k)){return;}
   if(!openTabs.includes(k)){
     if(openTabs.length>=MAX_TABS){toastT('Máximo '+MAX_TABS+' pestañas abiertas. Cierra alguna para abrir otra.');return;}
     openTabs.push(k);buildPanel(k);
@@ -1020,7 +1030,7 @@ function openTab(k){
 }
 function closeTab(k){
   const i=openTabs.indexOf(k);
-  if(i<0||k==='panel')return;
+  if(i<0||k===HOME)return;
   if(window._fullTarget===k && typeof closeFull==='function') closeFull();
   openTabs.splice(i,1);
   const p=document.querySelector(`.tabpanel[data-k="${k}"]`);if(p)p.remove();
@@ -3193,7 +3203,7 @@ document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==
 let FACTURAS=[];
 function loadFacturas(){ try{const r=localStorage.getItem('fenlora_facturas');FACTURAS=r?JSON.parse(r):[];}catch(e){FACTURAS=[];} }
 function saveFacturas(){ try{localStorage.setItem('fenlora_facturas',JSON.stringify(FACTURAS));}catch(e){} }
-function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas();}}); }
+function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas(); if(active==='reportes'&&typeof verReportes==='function')verReportes();}}); if(active==='reportes'&&typeof verReportes==='function')setTimeout(()=>verReportes(),300); }
 function _sameDay(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth()&&a.getDate()===r.getDate();}
 function _sameMonth(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth();}
 function refreshDashboard(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='panel');if(tp)tp.innerHTML=dashboard();}
@@ -3512,8 +3522,8 @@ function _rowFactura(r){ return {id:r.id, num:r.numero, ts:new Date(r.ts).getTim
 function _cierreRow(c){ return {id:c.id, negocio_id:NEGOCIO_ID, abierta_en:c.abiertaEn?new Date(c.abiertaEn).toISOString():null, cerrada_en:c.cerradaEn?new Date(c.cerradaEn).toISOString():new Date().toISOString(), base:c.base||0, cajero:c.cajero||'', ventas_total:c.ventasTotal||0, por_medio:c.porMedio||{}, efectivo_ventas:c.efectivoVentas||0, propinas:c.propinas||0, ingresos:c.ingresos||0, egresos:c.egresos||0, efectivo_esperado:c.efectivoEsperado||0, efectivo_contado:c.efectivoContado||0, diferencia:c.diferencia||0, n_facturas:c.nFacturas||0, movimientos:c.movimientos||[]}; }
 function _rowCierre(r){ return {id:r.id, abiertaEn:r.abierta_en?new Date(r.abierta_en).getTime():null, cerradaEn:r.cerrada_en?new Date(r.cerrada_en).getTime():null, base:r.base, cajero:r.cajero, ventasTotal:r.ventas_total, porMedio:r.por_medio||{}, efectivoVentas:r.efectivo_ventas, propinas:r.propinas, ingresos:r.ingresos, egresos:r.egresos, efectivoEsperado:r.efectivo_esperado, efectivoContado:r.efectivo_contado, diferencia:r.diferencia, nFacturas:r.n_facturas, movimientos:r.movimientos||[]}; }
 
-async function pushFactura(f){ if(!_cloudReady())return false; try{ const {error}=await sb.from('facturas').upsert(_facturaRow(f),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ console.warn('pushFactura (se reintenta):',e.message||e); return false; } }
-async function pushCierre(c){ if(!_cloudReady())return false; try{ const {error}=await sb.from('cierres_caja').upsert(_cierreRow(c),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ console.warn('pushCierre (se reintenta):',e.message||e); return false; } }
+async function pushFactura(f){ if(!_cloudReady())return false; try{ const {error}=await sb.from('facturas').upsert(_facturaRow(f),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ window._ventaSyncErr=(e&&e.message)||String(e); if(!window._ventaErrShown){window._ventaErrShown=true; if(typeof toastT==='function')toastT('⚠️ Venta local OK, pero no subió a la nube: '+String(window._ventaSyncErr).slice(0,80));} console.warn('pushFactura:',e); return false; } }
+async function pushCierre(c){ if(!_cloudReady())return false; try{ const {error}=await sb.from('cierres_caja').upsert(_cierreRow(c),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ window._ventaSyncErr=(e&&e.message)||String(e); console.warn('pushCierre:',e); return false; } }
 async function flushVentas(){
   if(!_cloudReady())return;
   let changed=false;
@@ -3538,7 +3548,7 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ buildPanel('panel'); openTab('panel'); if(typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
@@ -3599,12 +3609,13 @@ async function afterLogin(user){
       const {data:mem,error}=await sb.from('miembros').select('negocio_id,rol').limit(1);
       if(error) throw error;
       verificado=true;
-      if(mem && mem.length){ negId=mem[0].negocio_id; break; }
+      if(mem && mem.length){ negId=mem[0].negocio_id; window.ROL=mem[0].rol||'admin'; try{localStorage.setItem('fenlora_rol',window.ROL);}catch(e){} break; }
       break; // consulta OK y vacía → usuario realmente sin negocio
     }catch(e){ await new Promise(r=>setTimeout(r,700)); }
   }
   // Respaldo: caché local de este dispositivo
   if(!negId){ const cache=localStorage.getItem('fenlora_negocio'); if(cache) negId=cache; }
+  if(!window.ROL){ window.ROL=localStorage.getItem('fenlora_rol')||'admin'; }
   if(!negId){
     if(verificado){ authBusy(false); showAuth('onboarding'); return; }   // confirmado nuevo → crear
     // No se pudo verificar (sin internet): NO crear negocio nuevo, avisar
