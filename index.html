@@ -175,8 +175,36 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .nav{padding:12px 10px;flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--card2) transparent}
 .nav::-webkit-scrollbar{width:6px}.nav::-webkit-scrollbar-thumb{background:var(--card2);border-radius:6px}
 .nav-section{font-size:10px;color:var(--txt3);letter-spacing:1.2px;text-transform:uppercase;padding:14px 10px 6px;font-weight:700}
-#previewBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--amber,#F59E0B);color:#151515;padding:10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;max-width:92vw}
+#previewBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100000;background:var(--amber,#F59E0B);color:#151515;padding:10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;max-width:92vw}
 #previewBar button{background:#151515;color:#fff;border:none;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:600;font-size:12.5px;white-space:nowrap}
+.auth-card.wide{max-width:440px}
+.perfil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin:8px 0 4px}
+.perfil-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:.15s}
+.perfil-tile:hover{border-color:var(--primary);transform:translateY(-2px)}
+.perfil-tile.admin{background:var(--primary-dim)}
+.perfil-av{width:48px;height:48px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 8px;font-family:'Outfit',sans-serif}
+.perfil-tile.admin .perfil-av{background:var(--primary);color:#fff}
+.perfil-n{font-weight:600;font-size:13.5px}
+.perfil-r{font-size:11px;color:var(--txt2);margin-top:2px}
+.pin-sub{text-align:center;color:var(--txt2);font-size:13px;margin:-4px 0 14px}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:6px 0 14px}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);transition:.15s}
+.pin-dot.on{background:var(--primary);border-color:var(--primary)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:0 auto}
+.pin-key{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 0;font-size:20px;font-weight:600;cursor:pointer;color:var(--txt);font-family:'Outfit',sans-serif}
+.pin-key:hover{border-color:var(--primary)}
+.pin-key.ghostk{background:transparent;font-size:17px;color:var(--txt2)}
+.emp-add{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.emp-card{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;flex-wrap:wrap}
+.emp-info{display:flex;align-items:center;gap:12px}
+.emp-av{width:40px;height:40px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;font-family:'Outfit',sans-serif}
+.emp-name{font-weight:600;font-size:14.5px}
+.emp-meta{font-size:12px;color:var(--txt2);margin-top:2px}
+.emp-pin-ok{color:var(--green,#22c55e);font-weight:600}
+.emp-pin-no{color:var(--amber,#f59e0b);font-weight:600}
+.emp-acts{display:flex;gap:7px;flex-wrap:wrap}
+.btn.ghost{background:var(--primary-dim2);color:var(--txt);border:1px solid var(--border);width:auto;padding:8px 12px;font-size:12.5px;border-radius:8px;cursor:pointer}
+.btn.ghost.danger{color:var(--red,#ef4444)}
 .tm-sub{padding:8px 13px 4px;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt2);transition:.15s;margin-bottom:1px;font-weight:500;position:relative}
 .nav-item:hover{background:var(--primary-dim2);color:var(--txt)}
@@ -934,7 +962,7 @@ const S = {
   // FACTURACIÓN
   dian:       {g:'Facturación', n:'Comprobantes DIAN', ico:'🧾', st:'pronto', fase:'Fiscal', desc:'Emisión de facturas electrónicas y documentos válidos ante la DIAN, con trazabilidad de cada comprobante.', feat:['Factura electrónica DIAN','Notas de venta','Envío y resúmenes a la DIAN','Anulaciones y notas de crédito','Numeración y resoluciones','Comprobante por WhatsApp']},
   // EQUIPO
-  empleados:  {g:'Equipo', n:'Empleados y Meseros', ico:'👥', st:'construccion', fase:'Fase 2', desc:'Gestiona a tu equipo: meseros, cajeros, cocina. Cada uno entra con su PIN personal aunque compartan una sola pantalla.', feat:['Empleados por rol','PIN personal por mesero','Identificación en pantalla compartida','Datos de contacto','Historial de actividad','Bloqueos y permisos']},
+  empleados:  {g:'Equipo', n:'Empleados y Meseros', ico:'👥', st:'activo', fase:'Fase 2', desc:'Gestiona a tu equipo: meseros, cajeros, cocina. Cada uno entra con su PIN personal aunque compartan una sola pantalla.', feat:['Empleados por rol','PIN personal por mesero','Identificación en pantalla compartida','Datos de contacto','Historial de actividad','Bloqueos y permisos']},
   roles:      {g:'Equipo', n:'Roles y Permisos', ico:'🔐', st:'pronto', fase:'Fase 2', desc:'Define qué puede ver y hacer cada rol: quién factura, quién anula, quién ve reportes o cambia precios.', feat:['Roles configurables','Permisos por módulo','Quién puede anular o dar cortesías','Bloqueo de precios y montos','Registro de auditoría']},
   nomina:     {g:'Equipo', n:'Asistencias y Nómina', ico:'🕐', st:'pronto', fase:'Futuro', desc:'Control de asistencia del personal y apoyo para la nómina — quién entró, salió y cuánto trabajó.', feat:['Marcación de entrada/salida','Reporte de asistencias','Horas trabajadas','Base para planilla']},
   // ANÁLISIS
@@ -1000,12 +1028,13 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
   else if(k==='caja') initCaja();
   else if(k==='categorias') initCategorias();
+  else if(k==='empleados') initEmpleados();
   else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
@@ -3353,10 +3382,12 @@ function toggleTopMenu(which){
     am.innerHTML=`<div class="acct-top"><div class="aav">${_em[0].toUpperCase()}</div><div><b style="font-family:'Outfit',sans-serif">${_em.split('@')[0]}</b><div style="font-size:11.5px;color:var(--txt2)">${_em}</div></div></div>
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
+      <div class="tm-act" onclick="cambiarUsuario()">🔄 Cambiar de usuario</div>
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
-      ${((window._realRol||'admin')==='admin')?`<div class="tm-sub">👁 Vista previa (demo)</div>
+      ${window._preview?`<div class="tm-act" style="color:var(--amber);font-weight:700" onclick="salirVistaPrevia();closeTopMenus()">↩ Volver a mi panel (Admin)</div>`
+        :(((window._realRol||'admin')==='admin')?`<div class="tm-sub">👁 Vista previa (demo)</div>
       <div class="tm-act" onclick="verComo('mesero');closeTopMenus()">👁 Ver como Mesero</div>
-      <div class="tm-act" onclick="verComo('cajero');closeTopMenus()">👁 Ver como Cajero</div>`:''}
+      <div class="tm-act" onclick="verComo('cajero');closeTopMenus()">👁 Ver como Cajero</div>`:'')}
       <div class="tm-act danger" onclick="cerrarSesion();closeTopMenus()">🚪 Cerrar sesión</div>`;
     am.classList.add('on');
   }
@@ -3461,6 +3492,69 @@ function syncCatalog(){   // rebota (debounce) y espeja local → nube
 
 // reintentar al recuperar conexión
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_catDirty&&_cloudReady()) syncCatalog(); }); }
+
+/* ═══════════ EQUIPO / EMPLEADOS ═══════════ */
+let EMPLEADOS=[];
+try{ EMPLEADOS=JSON.parse(localStorage.getItem('fenlora_empleados')||'[]'); }catch(e){ EMPLEADOS=[]; }
+function saveEmpleados(){ try{ localStorage.setItem('fenlora_empleados',JSON.stringify(EMPLEADOS)); }catch(e){} }
+async function pullEmpleados(){
+  if(!_cloudReady())return;
+  try{ const {data,error}=await sb.from('empleados').select('*').order('creado'); if(error)throw error;
+    EMPLEADOS=(data||[]).map(r=>({id:r.id,nombre:r.nombre,rol:r.rol,pin:!!r.pin_hash,hash:r.pin_hash||null,activo:r.activo!==false}));
+    saveEmpleados(); if(document.getElementById('empList'))renderEmpList();
+  }catch(e){ console.warn('pullEmpleados:',e.message||e); }
+}
+async function addEmpleado(){
+  const inp=document.getElementById('empNombre'), sel=document.getElementById('empRol');
+  const nombre=(inp.value||'').trim(); const rol=(sel&&sel.value)||'mesero';
+  if(!nombre){ toastT('Escribe el nombre del empleado'); return; }
+  if(EMPLEADOS.some(e=>e.nombre.toLowerCase()===nombre.toLowerCase())){ toastT('Ya existe un empleado con ese nombre'); return; }
+  const id=newId(); EMPLEADOS.push({id,nombre,rol,pin:false,activo:true}); saveEmpleados(); inp.value=''; renderEmpList();
+  if(_cloudReady()){ try{ const {error}=await sb.from('empleados').insert({id,negocio_id:NEGOCIO_ID,nombre,rol}); if(error)throw error; }catch(e){ toastT('⚠️ No subió a la nube: '+String(e.message||e).slice(0,50)); } }
+  else toastT('Sin internet: guardado local, subirá al reconectar');
+}
+async function resetPinEmpleado(id){
+  const e=EMPLEADOS.find(x=>x.id===id); if(!e)return;
+  if(!confirm('¿Resetear el PIN de '+e.nombre+'? Tendrá que crear uno nuevo la próxima vez que entre.'))return;
+  e.pin=false; saveEmpleados(); renderEmpList();
+  if(_cloudReady()){ try{ await sb.from('empleados').update({pin_hash:null}).eq('id',id); }catch(err){ toastT('No se pudo resetear en la nube'); } }
+}
+async function removeEmpleado(id){
+  const e=EMPLEADOS.find(x=>x.id===id); if(!e)return;
+  if(!confirm('¿Quitar a '+e.nombre+' del equipo? Ya no podrá entrar.'))return;
+  EMPLEADOS=EMPLEADOS.filter(x=>x.id!==id); saveEmpleados(); renderEmpList();
+  if(_cloudReady()){ try{ await sb.from('empleados').delete().eq('id',id); }catch(err){ toastT('No se pudo quitar en la nube'); } }
+}
+function renderEmpList(){
+  const el=document.getElementById('empList'); if(!el)return;
+  const rolLbl={mesero:'🧑‍🍳 Mesero',cajero:'💵 Cajero',cocina:'👨‍🍳 Cocina',admin:'👑 Admin'};
+  const _lista=EMPLEADOS.filter(e=>e.rol!=='admin');
+  if(!_lista.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no has agregado empleados. Agrega al primero arriba 👆</div>'; return; }
+  el.innerHTML=_lista.map(e=>`<div class="emp-card">
+    <div class="emp-info"><div class="emp-av">${(e.nombre[0]||'?').toUpperCase()}</div>
+      <div><div class="emp-name">${e.nombre}</div><div class="emp-meta">${rolLbl[e.rol]||e.rol} · <span class="${e.pin?'emp-pin-ok':'emp-pin-no'}">${e.pin?'PIN definido ✓':'PIN pendiente'}</span></div></div></div>
+    <div class="emp-acts">
+      <button class="btn ghost" onclick="resetPinEmpleado('${e.id}')">🔑 Resetear PIN</button>
+      <button class="btn ghost danger" onclick="removeEmpleado('${e.id}')">🗑 Quitar</button>
+    </div></div>`).join('');
+}
+function empleadosView(){
+  return `
+  <div class="page-head"><h1>👥 Equipo <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Agrega a tu equipo con su nombre y rol. Cada uno entrará al POS eligiendo su nombre y creando su PIN de 4 dígitos la primera vez.</div></div>
+  <div class="emp-add">
+    <input class="pf-in" id="empNombre" placeholder="Nombre del empleado (ej: Juan)" onkeydown="if(event.key==='Enter')addEmpleado()">
+    <select class="pf-in" id="empRol" style="max-width:170px">
+      <option value="mesero">🧑‍🍳 Mesero</option>
+      <option value="cajero">💵 Cajero</option>
+      <option value="cocina">👨‍🍳 Cocina</option>
+    </select>
+    <button class="btn primary" style="width:auto;padding:10px 18px" onclick="addEmpleado()">+ Agregar</button>
+  </div>
+  <div class="section-title" style="margin-top:22px">Tu equipo</div>
+  <div id="empList"></div>`;
+}
+function initEmpleados(){ renderEmpList(); pullEmpleados(); }
 
 /* ═══════════ COMANDAS EN TIEMPO REAL (offline-first) ═══════════ */
 const _deviceId = (function(){ try{ return (localStorage.getItem('fenlora_dev')||(()=>{const d=newId().slice(0,8);localStorage.setItem('fenlora_dev',d);return d;})()); }catch(e){ return newId().slice(0,8); } })();
@@ -3570,7 +3664,7 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
@@ -3585,6 +3679,8 @@ function hideAuth(){document.body.classList.add('authed');}
 function authToggle(){authMode=authMode==='login'?'register':'login';renderAuth();}
 function renderAuth(){
   const s=document.getElementById('authScreen');if(!s)return;
+  if(authMode==='perfil'){ s.innerHTML=_perfilesHTML(); return; }
+  if(authMode==='pin'){ s.innerHTML=_pinHTML(); return; }
   if(authMode==='offline'){
     s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">No se pudo conectar</div>
       <div class="auth-off">No hay conexión con el servidor. Revisa tu internet y recarga la página.</div>
@@ -3623,6 +3719,61 @@ async function authSubmit(){
     }
   }catch(e){authBusy(false);authErr(_authMsg(e));}
 }
+/* ═══════════ SELECTOR DE PERFILES + PIN (entrada de empleados) ═══════════ */
+let _pinPerfil=null,_pinBuf='',_pinFirst='',_pinMode='enter';
+async function _hashPin(id,pin){
+  try{ const data=new TextEncoder().encode(String(id)+'|'+String(pin)+'|fenlora-pin'); const buf=await crypto.subtle.digest('SHA-256',data); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  catch(e){ const str=id+'|'+pin+'|fenlora'; let h=5381; for(let i=0;i<str.length;i++)h=((h*33)^str.charCodeAt(i))>>>0; return 'f'+h.toString(16); }
+}
+function showPerfiles(){ authMode='perfil'; document.body.classList.remove('authed'); renderAuth(); }
+function cambiarUsuario(){ if(typeof closeTopMenus==='function')closeTopMenus(); showPerfiles(); }
+function _perfilesHTML(){
+  const emps=EMPLEADOS.filter(e=>e.rol!=='admin'&&e.activo!==false);
+  const rolLbl={mesero:'Mesero',cajero:'Cajero',cocina:'Cocina'};
+  const tiles=emps.map(e=>`<div class="perfil-tile" onclick="pickPerfil('${e.id}')"><div class="perfil-av">${(e.nombre[0]||'?').toUpperCase()}</div><div class="perfil-n">${e.nombre}</div><div class="perfil-r">${rolLbl[e.rol]||e.rol}</div></div>`).join('');
+  const adminTile=`<div class="perfil-tile admin" onclick="pickAdminPerfil()"><div class="perfil-av">👑</div><div class="perfil-n">Administrador</div><div class="perfil-r">Dueño</div></div>`;
+  return `<div class="auth-card wide"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">¿Quién eres?</div>
+    <div class="perfil-grid">${tiles}${adminTile}</div>
+    <div class="auth-alt"><span onclick="cerrarSesion()">Cerrar sesión del negocio</span></div></div>`;
+}
+function _pinHTML(){
+  const p=_pinPerfil||{};
+  const title=_pinMode==='enter'?('Hola '+(p.nombre||'')):_pinMode==='create1'?('Crea tu PIN, '+(p.nombre||'')):'Confirma tu PIN';
+  const sub=_pinMode==='enter'?'Ingresa tu PIN de 4 dígitos':_pinMode==='create1'?'Elige un PIN de 4 dígitos (no lo olvides)':'Escríbelo otra vez';
+  const dots=[0,1,2,3].map(i=>`<span class="pin-dot ${_pinBuf.length>i?'on':''}"></span>`).join('');
+  const keys=[1,2,3,4,5,6,7,8,9].map(n=>`<button class="pin-key" onclick="pinKey('${n}')">${n}</button>`).join('');
+  return `<div class="auth-card"><div class="auth-logo">🔥 FENLORA</div><div class="auth-sub">${title}</div>
+    <div class="pin-sub">${sub}</div>
+    <div class="pin-dots">${dots}</div>
+    <div id="pinErr" class="auth-err" style="text-align:center"></div>
+    <div class="pin-pad">${keys}<button class="pin-key ghostk" onclick="pinBack()">↩</button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key ghostk" onclick="pinDel()">⌫</button></div></div>`;
+}
+function pickPerfil(id){ const e=EMPLEADOS.find(x=>x.id===id); if(!e)return; _pinPerfil=e;_pinBuf='';_pinFirst='';_pinMode=e.pin?'enter':'create1';authMode='pin';renderAuth(); }
+function pickAdminPerfil(){ let a=EMPLEADOS.find(x=>x.rol==='admin'); if(!a){a={id:newId(),nombre:'Administrador',rol:'admin',pin:false,hash:null,_new:true};} _pinPerfil=a;_pinBuf='';_pinFirst='';_pinMode=a.pin?'enter':'create1';authMode='pin';renderAuth(); }
+function pinKey(n){ if(_pinBuf.length>=4)return; _pinBuf+=String(n); renderAuth(); if(_pinBuf.length===4) setTimeout(_pinComplete,120); }
+function pinDel(){ _pinBuf=_pinBuf.slice(0,-1); renderAuth(); }
+function pinBack(){ _pinBuf='';_pinFirst=''; showPerfiles(); }
+async function _verifyPin(perfil,pin){ const h=await _hashPin(perfil.id,pin); return h===perfil.hash; }
+async function _savePin(perfil,hash){
+  if(perfil._new){ EMPLEADOS.push({id:perfil.id,nombre:perfil.nombre,rol:perfil.rol,pin:true,hash:hash,activo:true}); if(_cloudReady()){try{await sb.from('empleados').insert({id:perfil.id,negocio_id:NEGOCIO_ID,nombre:perfil.nombre,rol:perfil.rol,pin_hash:hash});}catch(e){}} }
+  else { const e=EMPLEADOS.find(x=>x.id===perfil.id); if(e){e.pin=true;e.hash=hash;} if(_cloudReady()){try{await sb.from('empleados').update({pin_hash:hash}).eq('id',perfil.id);}catch(e){}} }
+  saveEmpleados();
+}
+async function _pinComplete(){
+  const p=_pinPerfil; if(!p)return;
+  if(_pinMode==='enter'){
+    const ok=await _verifyPin(p,_pinBuf);
+    if(ok){ entrarComoPerfil({id:p.id,nombre:p.nombre,rol:p.rol}); }
+    else { _pinBuf=''; renderAuth(); const e=document.getElementById('pinErr'); if(e)e.textContent='PIN incorrecto, intenta de nuevo'; }
+  } else if(_pinMode==='create1'){ _pinFirst=_pinBuf;_pinBuf='';_pinMode='create2';renderAuth(); }
+  else { if(_pinBuf===_pinFirst){ const h=await _hashPin(p.id,_pinBuf); await _savePin(p,h); entrarComoPerfil({id:p.id,nombre:p.nombre,rol:p.rol}); }
+    else { _pinBuf='';_pinFirst='';_pinMode='create1';renderAuth(); const e=document.getElementById('pinErr'); if(e)e.textContent='Los PIN no coinciden, empecemos otra vez'; } }
+}
+function entrarComoPerfil(perfil){
+  window._empleado=perfil; window.ROL=perfil.rol; window._realRol=perfil.rol;
+  try{localStorage.setItem('fenlora_perfil',JSON.stringify(perfil));}catch(e){}
+  hideAuth(); window.__booted=true; bootPanel();
+}
 async function afterLogin(user){
   window._authUser=user;let negId=null;let verificado=false;
   // Consultar la membresía con reintentos (por si la conexión tarda)
@@ -3647,6 +3798,9 @@ async function afterLogin(user){
     return;
   }
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
+  if(typeof pullEmpleados==='function'){ try{ await pullEmpleados(); }catch(e){} }
+  if(EMPLEADOS.some(e=>e.activo!==false)){ if(typeof authBusy==='function')authBusy(false); showPerfiles(); return; }
+  window.ROL=window._realRol||'admin'; window._empleado=null;
   hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
 }
 async function crearNegocioSubmit(){
