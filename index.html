@@ -982,7 +982,13 @@ const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximam
 /* build nav */
 const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
-function _canSee(k){ const rol=window.ROL||'admin'; if(rol==='admin')return true; const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']}; return (allow[rol]||[]).includes(k); }
+function _canSee(k){ const rol=window.ROL||'admin'; if(rol==='admin')return true;
+  const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
+  const base=allow[rol]||[];
+  // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
+  const esComanda = /^(mesa_|delivery|llevar|barra_|pickup|dom_)/.test(k) || (typeof DYN!=='undefined'&&DYN&&DYN[k]);
+  if(esComanda) return base.includes('mesas');
+  return base.includes(k); }
 function _homeTab(){ const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='cajero'?'caja':'panel'; }
 function renderNav(){
   nav.innerHTML='';
