@@ -2,7 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E1525">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FENLORA">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <title>FENLORA CLOUD — Panel del Negocio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -3402,6 +3408,7 @@ function toggleTopMenu(which){
     am.innerHTML=`<div class="acct-top"><div class="aav">${_em[0].toUpperCase()}</div><div><b style="font-family:'Outfit',sans-serif">${_em.split('@')[0]}</b><div style="font-size:11.5px;color:var(--txt2)">${_em}</div></div></div>
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
+      <div class="tm-act" onclick="instalarApp()">📲 Instalar app</div>
       <div class="tm-act" onclick="cambiarUsuario()">🔄 Cambiar de usuario</div>
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
       ${window._preview?`<div class="tm-act" style="color:var(--amber);font-weight:700" onclick="salirVistaPrevia();closeTopMenus()">↩ Volver a mi panel (Admin)</div>`
@@ -3918,6 +3925,38 @@ async function crearNegocioSubmit(){
   }catch(e){authBusy(false);authErr('No se pudo crear el negocio: '+(_authMsg(e)));}
 }
 async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{localStorage.removeItem('fenlora_negocio');}catch(e){}window.NEGOCIO_ID=null;window.__booted=false;showAuth('login');}
+/* ─── PWA: app instalable + auto-actualización ─── */
+function _buildManifest(){
+  try{
+    const nombre=(window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'FENLORA CLOUD';
+    const esMeseros=/\/meseros\/?$/.test(location.pathname);
+    const appName=nombre+(esMeseros?' · Meseros':'');
+    const m={ name:appName, short_name:nombre.slice(0,14), description:'Sistema POS · '+nombre,
+      start_url:esMeseros?'./meseros':'./', scope:'./', display:'standalone', orientation:'any',
+      background_color:'#080D1A', theme_color:'#0E1525', lang:'es',
+      icons:[{src:'./icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
+             {src:'./icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}] };
+    const blob=new Blob([JSON.stringify(m)],{type:'application/manifest+json'});
+    const url=URL.createObjectURL(blob);
+    let link=document.getElementById('appManifest');
+    if(!link){ link=document.createElement('link'); link.rel='manifest'; link.id='appManifest'; document.head.appendChild(link); }
+    else if(link.href&&link.href.indexOf('blob:')===0){ try{URL.revokeObjectURL(link.href);}catch(e){} }
+    link.href=url;
+  }catch(e){}
+}
+let _deferredPrompt=null;
+if(typeof window!=='undefined'){
+  window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); _deferredPrompt=e; });
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{ try{reg.update();}catch(e){} }).catch(()=>{}); });
+  }
+}
+async function instalarApp(){
+  if(typeof closeTopMenus==='function')closeTopMenus();
+  if(_deferredPrompt){ _deferredPrompt.prompt(); try{await _deferredPrompt.userChoice;}catch(e){} _deferredPrompt=null; }
+  else { toastT('Para instalar: abre el menú del navegador (⋮) y elige "Instalar app" o "Agregar a pantalla de inicio"'); }
+}
+_buildManifest();
 /* ─── MULTI-TENANT POR DOMINIO (pos = maestro; sub.dominio = negocio) ─── */
 function _tenantFromHost(){
   try{
@@ -3935,7 +3974,7 @@ async function resolveTenant(){
   window._tenantNeg=null;
   if(!window._tenant||!sb) return;
   try{ const {data,error}=await sb.rpc('negocio_por_subdominio',{p_sub:window._tenant}); if(error)throw error;
-    if(data&&data.length){ window._tenantNeg={id:data[0].id,nombre:data[0].nombre,sub:window._tenant}; }
+    if(data&&data.length){ window._tenantNeg={id:data[0].id,nombre:data[0].nombre,sub:window._tenant}; if(typeof _buildManifest==='function')_buildManifest(); }
   }catch(e){ console.warn('resolveTenant:',e.message||e); }
 }
 async function initAuth(){
