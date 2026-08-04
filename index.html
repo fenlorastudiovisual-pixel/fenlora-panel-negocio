@@ -177,6 +177,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .nav-section{font-size:10px;color:var(--txt3);letter-spacing:1.2px;text-transform:uppercase;padding:14px 10px 6px;font-weight:700}
 #previewBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100000;background:var(--amber,#F59E0B);color:#151515;padding:10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;max-width:92vw}
 #previewBar button{background:#151515;color:#fff;border:none;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:600;font-size:12.5px;white-space:nowrap}
+.neg-form{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.neg-alertbar{background:var(--amber,#f59e0b);color:#151515;padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px}
+.neg-card{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;flex-wrap:wrap}
+.neg-card.susp{opacity:.6}
+.neg-name{font-weight:600;font-size:14.5px}
+.neg-meta{font-size:12px;color:var(--txt2);margin-top:3px}
+.neg-meta a{color:var(--primary);text-decoration:none}
+.neg-badge.susp{background:var(--red,#ef4444);color:#fff;font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600}
+.neg-alert{font-size:11px;padding:1px 7px;border-radius:6px;font-weight:600;margin-left:4px}
+.neg-alert.venc{background:var(--red,#ef4444);color:#fff}
+.neg-alert.pronto{background:var(--amber,#f59e0b);color:#151515}
+.neg-acts{display:flex;gap:7px;flex-wrap:wrap}
 .auth-card.wide{max-width:440px}
 .perfil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin:8px 0 4px}
 .perfil-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:.15s}
@@ -962,6 +974,7 @@ const S = {
   // FACTURACIÓN
   dian:       {g:'Facturación', n:'Comprobantes DIAN', ico:'🧾', st:'pronto', fase:'Fiscal', desc:'Emisión de facturas electrónicas y documentos válidos ante la DIAN, con trazabilidad de cada comprobante.', feat:['Factura electrónica DIAN','Notas de venta','Envío y resúmenes a la DIAN','Anulaciones y notas de crédito','Numeración y resoluciones','Comprobante por WhatsApp']},
   // EQUIPO
+  negocios:   {g:'Fenlora', n:'Negocios', ico:'🏢', st:'activo', fase:'Fenlora', desc:'Gestiona los negocios de tus clientes: crear, editar, suspender, planes y vencimientos.', feat:['Crear/editar/eliminar negocios','Subdominio por negocio','Planes y estado','Alertas de vencimiento']},
   empleados:  {g:'Equipo', n:'Empleados y Meseros', ico:'👥', st:'activo', fase:'Fase 2', desc:'Gestiona a tu equipo: meseros, cajeros, cocina. Cada uno entra con su PIN personal aunque compartan una sola pantalla.', feat:['Empleados por rol','PIN personal por mesero','Identificación en pantalla compartida','Datos de contacto','Historial de actividad','Bloqueos y permisos']},
   roles:      {g:'Equipo', n:'Roles y Permisos', ico:'🔐', st:'pronto', fase:'Fase 2', desc:'Define qué puede ver y hacer cada rol: quién factura, quién anula, quién ve reportes o cambia precios.', feat:['Roles configurables','Permisos por módulo','Quién puede anular o dar cortesías','Bloqueo de precios y montos','Registro de auditoría']},
   nomina:     {g:'Equipo', n:'Asistencias y Nómina', ico:'🕐', st:'pronto', fase:'Futuro', desc:'Control de asistencia del personal y apoyo para la nómina — quién entró, salió y cuánto trabajó.', feat:['Marcación de entrada/salida','Reporte de asistencias','Horas trabajadas','Base para planilla']},
@@ -976,13 +989,13 @@ const S = {
   seguridad:  {g:'Configuración', n:'Seguridad y Auditoría', ico:'🛡️', st:'pronto', fase:'Fase 2', desc:'Medidas antirrobo y trazabilidad: alertas por correo cuando se abre caja, se anula una comanda o se cambia un precio.', feat:['Auditoría de acciones sensibles','Alertas por correo al dueño','Bloqueo de precios desde el celular','Bloqueo de montos por cajero','Registro de anulaciones']},
 };
 
-const GROUPS=['Operación','Catálogo','Inventario','Clientes','Automatizaciones','Facturación','Equipo','Análisis','Configuración'];
+const GROUPS=['Fenlora','Operación','Catálogo','Inventario','Clientes','Automatizaciones','Facturación','Equipo','Análisis','Configuración'];
 const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximamente'};
 
 /* build nav */
 const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
-function _canSee(k){ const rol=window.ROL||'admin'; if(rol==='admin')return true;
+function _canSee(k){ if(k==='negocios') return !!window._esSuper; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
@@ -1034,13 +1047,14 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
   else if(k==='caja') initCaja();
   else if(k==='categorias') initCategorias();
   else if(k==='empleados') initEmpleados();
+  else if(k==='negocios') initNegocios();
   else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
@@ -3499,6 +3513,83 @@ function syncCatalog(){   // rebota (debounce) y espeja local → nube
 // reintentar al recuperar conexión
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_catDirty&&_cloudReady()) syncCatalog(); }); }
 
+/* ═══════════ FENLORA · GESTIÓN DE NEGOCIOS (solo super admin) ═══════════ */
+let NEGOCIOS_ADMIN=[];
+async function pullNegocios(){
+  if(!_cloudReady())return;
+  try{ const {data,error}=await sb.from('negocios').select('*').order('creado',{ascending:false}); if(error)throw error;
+    NEGOCIOS_ADMIN=data||[]; if(document.getElementById('negList'))renderNegList();
+  }catch(e){ console.warn('pullNegocios:',e.message||e); if(document.getElementById('negList'))document.getElementById('negList').innerHTML='<div class="dash-empty">No se pudieron cargar los negocios: '+String(e.message||e).slice(0,60)+'</div>'; }
+}
+function _negBaseHost(){ try{ const h=location.hostname; const p=h.split('.'); return p.length>=2?p.slice(-2).join('.'):h; }catch(e){ return 'fenloravisual.com'; } }
+function _negAlerta(neg){
+  if(!neg.vence) return '';
+  const dias=Math.ceil((new Date(neg.vence+'T23:59:59')-new Date())/86400000);
+  if(dias<0) return '<span class="neg-alert venc">⚠ Vencido hace '+(-dias)+'d</span>';
+  if(dias<=7) return '<span class="neg-alert pronto">⏳ Vence en '+dias+'d</span>';
+  return '';
+}
+async function crearNegocioAdmin(){
+  const n=(document.getElementById('negNombre').value||'').trim();
+  let sub=(document.getElementById('negSub').value||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  const plan=document.getElementById('negPlan').value; const vence=document.getElementById('negVence').value||null;
+  if(!n){ toastT('Escribe el nombre del negocio'); return; }
+  try{ const {data,error}=await sb.rpc('admin_crear_negocio',{p_nombre:n,p_sub:sub||null,p_plan:plan,p_vence:vence}); if(error)throw error;
+    toastT('Negocio "'+n+'" creado ✓');
+    document.getElementById('negNombre').value=''; document.getElementById('negSub').value=''; document.getElementById('negVence').value='';
+    await pullNegocios();
+  }catch(e){ toastT('No se pudo crear: '+String(e.message||e).slice(0,70)); }
+}
+async function _negUpdate(id,patch){ try{ const {error}=await sb.from('negocios').update(patch).eq('id',id); if(error)throw error; await pullNegocios(); }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,60)); } }
+function editarNegocioPrompt(id){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return;
+  const nombre=prompt('Nombre del negocio:',g.nombre); if(nombre===null)return;
+  const sub=prompt('Subdominio (ej: dulcecafe). Vacío = sin subdominio:',g.subdominio||''); if(sub===null)return;
+  const plan=prompt('Plan (prueba / basico / pro):',g.plan||'prueba'); if(plan===null)return;
+  const vence=prompt('Vence (AAAA-MM-DD). Vacío = sin fecha:',g.vence||''); if(vence===null)return;
+  _negUpdate(id,{nombre:nombre.trim(),subdominio:(sub.trim().toLowerCase().replace(/[^a-z0-9-]/g,''))||null,plan:plan.trim()||'prueba',vence:vence.trim()||null});
+}
+function toggleSuspender(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; const nuevo=(g.estado==='suspendido')?'activo':'suspendido'; if(!confirm((nuevo==='suspendido'?'¿Suspender':'¿Reactivar')+' a '+g.nombre+'?'))return; _negUpdate(id,{estado:nuevo}); }
+async function eliminarNegocioAdmin(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; if(!confirm('¿ELIMINAR "'+g.nombre+'" y TODOS sus datos? Esto no se puede deshacer.'))return; try{ const {error}=await sb.from('negocios').delete().eq('id',id); if(error)throw error; toastT('Negocio eliminado'); await pullNegocios(); }catch(e){ toastT('No se pudo eliminar: '+String(e.message||e).slice(0,60)); } }
+function renderNegList(){
+  const el=document.getElementById('negList'); if(!el)return;
+  if(!NEGOCIOS_ADMIN.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no hay negocios. Crea el primero arriba 👆</div>'; return; }
+  const host=_negBaseHost();
+  const planLbl={prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'};
+  el.innerHTML=NEGOCIOS_ADMIN.map(g=>{
+    const susp=g.estado==='suspendido';
+    const url=g.subdominio?(g.subdominio+'.'+host):null;
+    return `<div class="neg-card ${susp?'susp':''}">
+      <div class="neg-main">
+        <div class="neg-name">${g.nombre} ${susp?'<span class="neg-badge susp">Suspendido</span>':''} ${_negAlerta(g)}</div>
+        <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a>'):'<span style="color:var(--txt3)">sin subdominio</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
+      </div>
+      <div class="neg-acts">
+        <button class="btn ghost" onclick="editarNegocioPrompt('${g.id}')">✏️ Editar</button>
+        <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
+        <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
+      </div></div>`;
+  }).join('');
+}
+function negociosView(){
+  const venc=NEGOCIOS_ADMIN.filter(g=>g.vence&&new Date(g.vence+'T23:59:59')<new Date()).length;
+  const pronto=NEGOCIOS_ADMIN.filter(g=>{ if(!g.vence)return false; const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); return d>=0&&d<=7; }).length;
+  return `
+  <div class="page-head"><h1>🏢 Negocios <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
+    <div class="sub">Crea y administra los negocios de tus clientes. Cada uno opera en su propio subdominio con el mismo POS.</div></div>
+  ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
+  <div class="section-title">Crear negocio</div>
+  <div class="neg-form">
+    <input class="pf-in" id="negNombre" placeholder="Nombre del negocio (ej: Pizza Hut)">
+    <input class="pf-in" id="negSub" placeholder="subdominio (ej: pizzahut)" style="max-width:180px">
+    <select class="pf-in" id="negPlan" style="max-width:150px"><option value="prueba">🔹 Prueba</option><option value="basico">🔸 Básico</option><option value="pro">⭐ Pro</option></select>
+    <input class="pf-in" id="negVence" type="date" style="max-width:170px" title="Vencimiento">
+    <button class="btn primary" style="width:auto;padding:10px 18px" onclick="crearNegocioAdmin()">+ Crear</button>
+  </div>
+  <div class="section-title" style="margin-top:22px">Todos los negocios</div>
+  <div id="negList"></div>`;
+}
+function initNegocios(){ renderNegList(); pullNegocios(); }
 /* ═══════════ EQUIPO / EMPLEADOS ═══════════ */
 let EMPLEADOS=[];
 try{ EMPLEADOS=JSON.parse(localStorage.getItem('fenlora_empleados')||'[]'); }catch(e){ EMPLEADOS=[]; }
@@ -3781,7 +3872,8 @@ function entrarComoPerfil(perfil){
   hideAuth(); window.__booted=true; bootPanel();
 }
 async function afterLogin(user){
-  window._authUser=user;let negId=null;let verificado=false;
+  window._authUser=user;
+  try{ const {data:es}=await sb.rpc('es_super_admin'); window._esSuper=!!es; }catch(e){ window._esSuper=false; }let negId=null;let verificado=false;
   // Consultar la membresía con reintentos (por si la conexión tarda)
   for(let i=0;i<3 && !negId;i++){
     try{
