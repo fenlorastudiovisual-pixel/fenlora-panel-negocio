@@ -3528,7 +3528,7 @@ async function pullNegocios(){
     NEGOCIOS_ADMIN=data||[]; if(document.getElementById('negList'))renderNegList();
   }catch(e){ console.warn('pullNegocios:',e.message||e); if(document.getElementById('negList'))document.getElementById('negList').innerHTML='<div class="dash-empty">No se pudieron cargar los negocios: '+String(e.message||e).slice(0,60)+'</div>'; }
 }
-function _negBaseHost(){ try{ const h=location.hostname; const p=h.split('.'); return p.length>=2?p.slice(-2).join('.'):h; }catch(e){ return 'fenloravisual.com'; } }
+function _negBaseHost(){ try{ return location.host; }catch(e){ return 'pos.fenloravisual.com'; } }
 function _negAlerta(neg){
   if(!neg.vence) return '';
   const dias=Math.ceil((new Date(neg.vence+'T23:59:59')-new Date())/86400000);
@@ -3565,11 +3565,12 @@ function renderNegList(){
   const planLbl={prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'};
   el.innerHTML=NEGOCIOS_ADMIN.map(g=>{
     const susp=g.estado==='suspendido';
-    const url=g.subdominio?(g.subdominio+'.'+host):null;
+    const url=g.subdominio?(host+'/'+g.subdominio):null;
+    const urlM=g.subdominio?(host+'/'+g.subdominio+'/meseros'):null;
     return `<div class="neg-card ${susp?'susp':''}">
       <div class="neg-main">
         <div class="neg-name">${g.nombre} ${susp?'<span class="neg-badge susp">Suspendido</span>':''} ${_negAlerta(g)}</div>
-        <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a>'):'<span style="color:var(--txt3)">sin subdominio</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
+        <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a> · 🧑‍🍳 <a href="https://'+urlM+'" target="_blank">/meseros</a>'):'<span style="color:var(--txt3)">sin URL asignada</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
       </div>
       <div class="neg-acts">
         <button class="btn ghost" onclick="editarNegocioPrompt('${g.id}')">✏️ Editar</button>
@@ -3588,7 +3589,7 @@ function negociosView(){
   <div class="section-title">Crear negocio</div>
   <div class="neg-form">
     <input class="pf-in" id="negNombre" placeholder="Nombre del negocio (ej: Pizza Hut)">
-    <input class="pf-in" id="negSub" placeholder="subdominio (ej: pizzahut)" style="max-width:180px">
+    <input class="pf-in" id="negSub" placeholder="ruta URL (ej: pizzahut)" style="max-width:180px" title="La URL será pos.fenloravisual.com/pizzahut">
     <select class="pf-in" id="negPlan" style="max-width:150px"><option value="prueba">🔹 Prueba</option><option value="basico">🔸 Básico</option><option value="pro">⭐ Pro</option></select>
     <input class="pf-in" id="negVence" type="date" style="max-width:170px" title="Vencimiento">
     <button class="btn primary" style="width:auto;padding:10px 18px" onclick="crearNegocioAdmin()">+ Crear</button>
@@ -3911,7 +3912,7 @@ async function afterLogin(user){
   }
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
   if(typeof pullEmpleados==='function'){ try{ await pullEmpleados(); }catch(e){} }
-  if(EMPLEADOS.some(e=>e.activo!==false)){ if(typeof authBusy==='function')authBusy(false); showPerfiles(); return; }
+  if(_esModoMeseros() && EMPLEADOS.some(e=>e.activo!==false)){ if(typeof authBusy==='function')authBusy(false); showPerfiles(); return; }
   window.ROL=window._realRol||'admin'; window._empleado=null;
   hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
 }
@@ -3929,10 +3930,11 @@ async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{l
 function _buildManifest(){
   try{
     const nombre=(window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'FENLORA CLOUD';
-    const esMeseros=/\/meseros\/?$/.test(location.pathname);
+    const esMeseros=_esModoMeseros();
+    const base=window._tenant?('/'+window._tenant):'';
     const appName=nombre+(esMeseros?' · Meseros':'');
     const m={ name:appName, short_name:nombre.slice(0,14), description:'Sistema POS · '+nombre,
-      start_url:esMeseros?'./meseros':'./', scope:'./', display:'standalone', orientation:'any',
+      start_url:(esMeseros?(base+'/meseros'):(base+'/'))||'/', scope:(base+'/')||'/', display:'standalone', orientation:'any',
       background_color:'#080D1A', theme_color:'#0E1525', lang:'es',
       icons:[{src:'./icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
              {src:'./icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}] };
@@ -3958,16 +3960,16 @@ async function instalarApp(){
 }
 _buildManifest();
 /* ─── MULTI-TENANT POR DOMINIO (pos = maestro; sub.dominio = negocio) ─── */
-function _tenantFromHost(){
+function _tenantFromPath(){
   try{
-    const h=(location.hostname||'').toLowerCase();
-    if(!h||h==='localhost'||/^127\.|^10\.|^192\.168\.|\.pages\.dev$/.test(h)) return null;
-    const parts=h.split('.');
-    if(parts.length>=3){ const sub=parts[0]; if(sub==='pos'||sub==='www'||sub==='app'||sub==='sistemaspos') return null; return sub; }
-    return null;
+    const segs=(location.pathname||'/').split('/').filter(Boolean);
+    if(!segs.length) return null;          // raíz = MAESTRO (Fenlora)
+    if(segs[0]==='meseros') return null;   // /meseros suelto = maestro
+    return segs[0].toLowerCase();          // primer segmento = negocio
   }catch(e){ return null; }
 }
-window._tenant=_tenantFromHost();
+function _esModoMeseros(){ try{ return /(^|\/)meseros\/?$/.test(location.pathname||''); }catch(e){ return false; } }
+window._tenant=_tenantFromPath();
 window._tenantNeg=null;
 function _marcaNegocio(){ return (window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'Panel del Negocio'; }
 async function resolveTenant(){
