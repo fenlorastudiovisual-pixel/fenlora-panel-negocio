@@ -2446,7 +2446,7 @@ function searchEnter(target,e){
   if(list.length){ pick(target,list[0].id); const inp=document.getElementById('search_'+target); if(inp)inp.value=''; renderProds(target); }
   else toastT('No se encontró el producto');
 }
-function pick(target,id){const p=PRODUCTS.find(x=>x.id===id);if(p.opts){openOpts(target,p);}else{addLine(target,p,[]);}}
+function pick(target,id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;if(p.opts&&p.opts.length){openOpts(target,p);}else{addLine(target,p,[]);}}
 function addLine(target,p,sel){
   const extra=sel.reduce((s,o)=>s+o.p,0);
   ORD[target].push({lid:LID++,id:p.id,n:p.n,qty:1,opts:sel,unit:p.pr+extra,sent:false,held:false,cort:false,llevar:false,desc:0,area:p.area||'COCINA',notes:[[]]});
@@ -3563,7 +3563,7 @@ function empleadosView(){
 function initEmpleados(){ renderEmpList(); pullEmpleados(); }
 
 /* ═══════════ COMANDAS EN TIEMPO REAL (offline-first) ═══════════ */
-const _deviceId = (function(){ try{ return (localStorage.getItem('fenlora_dev')||(()=>{const d=newId().slice(0,8);localStorage.setItem('fenlora_dev',d);return d;})()); }catch(e){ return newId().slice(0,8); } })();
+const _deviceId = (function(){ try{ let d=sessionStorage.getItem('fenlora_dev'); if(!d){ d=newId().slice(0,8); sessionStorage.setItem('fenlora_dev',d); } return d; }catch(e){ return newId().slice(0,8); } })();
 let _applyingRemote=false, _comT=null, _comChannel=null, _comDirty=false;
 
 function _comRow(target){
@@ -3596,10 +3596,10 @@ async function pullComandas(){
     const {data,error}=await sb.from('comandas').select('*').eq('estado','activa'); if(error)throw error;
     _applyingRemote=true;
     (data||[]).forEach(r=>{ if(!r.clave)return; ORD[r.clave]=r.lineas||[]; ORDMETA[r.clave]=r.meta||{}; if(ORDCAT[r.clave]==null)ORDCAT[r.clave]='Recomendados'; if(typeof syncMesa==='function')syncMesa(r.clave); });
-    _applyingRemote=false;
     if(typeof saveState==='function')saveState();
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
     if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+    _applyingRemote=false;
   }catch(e){ _applyingRemote=false; console.warn('pullComandas:',e.message||e); }
 }
 function _applyRemoteComanda(row){
@@ -3702,7 +3702,7 @@ function renderAuth(){
     setTimeout(()=>{const e=document.getElementById('obNombre');if(e)e.focus();},50);return;
   }
   const reg=authMode==='register';
-  s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${reg?'Crea tu cuenta':'Panel del Negocio'}</div>
+  s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${reg?'Crea tu cuenta':_marcaNegocio()}</div>
     <div class="auth-f"><label>Correo</label><input class="pf-in" id="authEmail" type="email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')document.getElementById('authPass').focus()"></div>
     <div class="auth-f"><label>Contraseña</label><input class="pf-in" id="authPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()"></div>
     <div id="authErr" class="auth-err"></div>
@@ -3738,7 +3738,7 @@ function _perfilesHTML(){
   const rolLbl={mesero:'Mesero',cajero:'Cajero',cocina:'Cocina'};
   const tiles=emps.map(e=>`<div class="perfil-tile" onclick="pickPerfil('${e.id}')"><div class="perfil-av">${(e.nombre[0]||'?').toUpperCase()}</div><div class="perfil-n">${e.nombre}</div><div class="perfil-r">${rolLbl[e.rol]||e.rol}</div></div>`).join('');
   const adminTile=`<div class="perfil-tile admin" onclick="pickAdminPerfil()"><div class="perfil-av">👑</div><div class="perfil-n">Administrador</div><div class="perfil-r">Dueño</div></div>`;
-  return `<div class="auth-card wide"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">¿Quién eres?</div>
+  return `<div class="auth-card wide"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${_marcaNegocio()!=='Panel del Negocio'?_marcaNegocio()+' · ':''}¿Quién eres?</div>
     <div class="perfil-grid">${tiles}${adminTile}</div>
     <div class="auth-alt"><span onclick="cerrarSesion()">Cerrar sesión del negocio</span></div></div>`;
 }
@@ -3803,6 +3803,13 @@ async function afterLogin(user){
     authErr('No pudimos verificar tu negocio (revisa tu conexión). Intenta ingresar de nuevo.');
     return;
   }
+  // Seguridad multi-tenant: en un subdominio de negocio, la sesión debe ser de ESE negocio
+  if(window._tenantNeg && negId && negId!==window._tenantNeg.id){
+    if(typeof authBusy==='function')authBusy(false);
+    showAuth('login');
+    if(typeof authErr==='function')authErr('Esta cuenta no pertenece a '+window._tenantNeg.nombre+'. Usa la cuenta de este negocio.');
+    return;
+  }
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
   if(typeof pullEmpleados==='function'){ try{ await pullEmpleados(); }catch(e){} }
   if(EMPLEADOS.some(e=>e.activo!==false)){ if(typeof authBusy==='function')authBusy(false); showPerfiles(); return; }
@@ -3819,8 +3826,29 @@ async function crearNegocioSubmit(){
   }catch(e){authBusy(false);authErr('No se pudo crear el negocio: '+(_authMsg(e)));}
 }
 async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{localStorage.removeItem('fenlora_negocio');}catch(e){}window.NEGOCIO_ID=null;window.__booted=false;showAuth('login');}
+/* ─── MULTI-TENANT POR DOMINIO (pos = maestro; sub.dominio = negocio) ─── */
+function _tenantFromHost(){
+  try{
+    const h=(location.hostname||'').toLowerCase();
+    if(!h||h==='localhost'||/^127\.|^10\.|^192\.168\.|\.pages\.dev$/.test(h)) return null;
+    const parts=h.split('.');
+    if(parts.length>=3){ const sub=parts[0]; if(sub==='pos'||sub==='www'||sub==='app'||sub==='sistemaspos') return null; return sub; }
+    return null;
+  }catch(e){ return null; }
+}
+window._tenant=_tenantFromHost();
+window._tenantNeg=null;
+function _marcaNegocio(){ return (window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'Panel del Negocio'; }
+async function resolveTenant(){
+  window._tenantNeg=null;
+  if(!window._tenant||!sb) return;
+  try{ const {data,error}=await sb.rpc('negocio_por_subdominio',{p_sub:window._tenant}); if(error)throw error;
+    if(data&&data.length){ window._tenantNeg={id:data[0].id,nombre:data[0].nombre,sub:window._tenant}; }
+  }catch(e){ console.warn('resolveTenant:',e.message||e); }
+}
 async function initAuth(){
   if(!sb){showAuth('offline');return;}
+  await resolveTenant();
   try{const {data:{session}}=await sb.auth.getSession();
     if(session&&session.user){await afterLogin(session.user);}else{showAuth('login');}
   }catch(e){showAuth('login');}
