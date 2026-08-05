@@ -1968,6 +1968,24 @@ function _bars(obj,fmt){
   if(!entries.length)return '<div class="dash-empty">Sin datos.</div>';
   return `<div class="rep-bars">${entries.map(([k,v])=>`<div class="rep-brow"><div class="rep-lbl">${k}</div><div class="rep-track"><div class="rep-fill" style="width:${Math.max(2,Math.round(v/max*100))}%"></div></div><div class="rep-val">${fmt?fmt(v):COP(v)}</div></div>`).join('')}</div>`;
 }
+function repDataAnul(anul){
+  const n=anul.length;
+  const monto=anul.reduce((s,a)=>s+(a.monto||0),0);
+  const porMotivo={},porProd={},porMesero={};
+  anul.forEach(a=>{ const mo=((a.motivo||'').trim())||'(sin motivo)'; porMotivo[mo]=(porMotivo[mo]||0)+1; const pr=a.producto||'—'; porProd[pr]=(porProd[pr]||0)+1; const me=a.mesero||'—'; porMesero[me]=(porMesero[me]||0)+1; });
+  return {n,monto,porMotivo,porProd,porMesero};
+}
+function _cntTxt(v){ return v+(v===1?' vez':' veces'); }
+function _anulSectionHTML(anul){
+  const a=repDataAnul(anul);
+  if(!a.n) return `<div class="section-title" style="margin-top:24px">🚫 Anulaciones</div><div class="dash-empty">Sin anulaciones en el rango 🎉</div>`;
+  return `<div class="section-title" style="margin-top:24px">🚫 Anulaciones · ${a.n} · ${COP(a.monto)} en valor anulado</div>
+    <div class="rep-2col">
+      <div><div class="section-title">Por qué se anulan (motivo)</div>${_bars(a.porMotivo,_cntTxt)}</div>
+      <div><div class="section-title">Producto más anulado</div>${_bars(a.porProd,_cntTxt)}</div>
+    </div>
+    <div class="section-title" style="margin-top:16px">Por mesero</div>${_bars(a.porMesero,_cntTxt)}`;
+}
 async function verReportes(){
   const out=document.getElementById('repOut');if(!out)return;
   const de=document.getElementById('repDesde'),ha=document.getElementById('repHasta');
@@ -1975,7 +1993,9 @@ async function verReportes(){
   const to=(ha&&ha.value)?new Date(ha.value+'T23:59:59').getTime():Date.now();
   out.innerHTML='<div class="dash-empty" style="margin-top:16px">Cargando ventas…</div>';
   const list=await _fetchFacturas(from,to);
-  if(!list.length){out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hay ventas en ese rango de fechas.</div>';window._repList=[];return;}
+  const anul=await _fetchAnulaciones(from,to); window._repAnul=anul;
+  if(!list.length && !anul.length){out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hay ventas ni anulaciones en ese rango de fechas.</div>';window._repList=[];return;}
+  if(!list.length){ out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hubo ventas en el rango, pero sí anulaciones:</div>'+_anulSectionHTML(anul); window._repList=[]; return; }
   window._repList=list;const r=repData(list);
   const cards=[['Ventas',COP(r.ventas),'💰'],['Facturas',r.n,'🧾'],['Ticket promedio',COP(r.ticket),'🎫'],['Productos vendidos',r.nItems,'🍽️'],['Propinas',COP(r.propinas),'🙌']];
   const diaObj={};Object.keys(r.porDia).sort().forEach(k=>{const dt=new Date(k+'T12:00:00');diaObj[dt.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short'})]=r.porDia[k];});
@@ -1997,6 +2017,7 @@ async function verReportes(){
       <div class="medio-list"><div class="medio-row"><span>Comprobante (POS)</span><b>${r.pos}</b></div><div class="medio-row"><span>Factura electrónica</span><b>${r.fe}</b></div></div>
     </div>
   </div>
+  ${_anulSectionHTML(anul)}
   <button class="btn primary" style="width:auto;padding:11px 18px;margin-top:20px" onclick="descargarReporteCSV()">📥 Descargar reporte (CSV)</button>`;
 }
 function descargarReporteCSV(){
@@ -2010,6 +2031,14 @@ function descargarReporteCSV(){
   L.push(['Ventas por hora']);for(let h=0;h<24;h++)if(r.horas[h]>0)L.push([(h<10?'0':'')+h+':00',r.horas[h]]);L.push([]);
   L.push(['Ventas por origen']);Object.entries(r.origen).forEach(([k,v])=>L.push([k,v]));L.push([]);
   L.push(['Tipo de documento']);L.push(['Comprobante POS',r.pos]);L.push(['Factura electronica',r.fe]);
+  const anul=window._repAnul||[];
+  if(anul.length){ const ra=repDataAnul(anul); L.push([]); L.push(['ANULACIONES','total',ra.n,'valor',ra.monto]);
+    L.push([]); L.push(['Por motivo']); Object.entries(ra.porMotivo).forEach(([k,v])=>L.push([k,v]));
+    L.push([]); L.push(['Por producto']); Object.entries(ra.porProd).forEach(([k,v])=>L.push([k,v]));
+    L.push([]); L.push(['Por mesero']); Object.entries(ra.porMesero).forEach(([k,v])=>L.push([k,v]));
+    L.push([]); L.push(['Detalle de anulaciones']); L.push(['Fecha','Tipo','Mesa/Origen','Mesero','Producto','Cant','Valor','Motivo']);
+    anul.forEach(a=>L.push([new Date(a.ts).toLocaleString('es-CO'),a.tipo,a.origen||a.mesa,a.mesero,a.producto,a.qty,a.monto,a.motivo]));
+  }
   _download('reporte_ventas.csv','\ufeff'+L.map(row=>csvRow(row)).join('\r\n'));toastT('📥 Reporte descargado');
 }
 
@@ -2528,9 +2557,17 @@ function changeQty(target,lid,d){
 }
 function delLine(target,lid){
   const l=ORD[target].find(x=>x.lid===lid); if(!l)return;
-  if(l.sent){const mot=prompt('Este plato ya fue enviado a producción.\nMotivo de anulación:');if(!mot)return;toastT('Anulado: '+l.n+' — '+mot);}
+  if(l.sent){
+    const mot=prompt('Este plato ya fue enviado a cocina.\n¿Por qué se anula "'+l.n+'"? (ej: el cliente ya no lo quiere, demora, error):');
+    if(!mot)return;
+    const meta=ORDMETA[target]||{};
+    if(typeof addAnulacion==='function') addAnulacion({ ts:Date.now(), tipo:'producto', mesa:target, origen:(DYN[target]&&DYN[target].title)||target, mesero:meta.mesero||(typeof _meseroActual==='function'?_meseroActual():''), producto:l.n, qty:l.qty, unit:l.unit, monto:l.unit*l.qty, motivo:mot });
+    toastT('🚫 Anulado: '+l.n+' — '+mot);
+  }
   ORD[target]=ORD[target].filter(x=>x.lid!==lid);
   renderComanda(target);syncMesa(target);
+  if(typeof pushComandasSoon==='function')pushComandasSoon(true);
+  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
 }
 function toggleHold(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l&&!l.sent){l.held=!l.held;renderComanda(target);}}
 function toggleCort(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l){l.cort=!l.cort;toastT(l.cort?'🎁 Cortesía: '+l.n:'Cortesía quitada');renderComanda(target);syncMesa(target);}}
@@ -2595,7 +2632,7 @@ function comandaBody(target){
     const tags=(l.held?' <span class="held-tag">retenido</span>':'')+(l.cort?' <span class="cort-tag">cortesía</span>':'')+(l.llevar?' <span class="llevar-tag">🥡 para llevar</span>':'')+(desc&&!l.cort?` <span class="disc-tag">🏷️ −${COP(desc)}</span>`:'')+kstate;
     const acc=`<div class="cl-acc">
       <button class="accb b1" title="Notas / observación por unidad" onclick="openNotes('${target}',${l.lid})">🗒️</button>
-      <button class="accb b2" title="Quitar / anular" onclick="delLine('${target}',${l.lid})">🗑️</button>
+      <button class="accb b2" title="${l.sent?'Anular este producto (con motivo)':'Quitar del pedido'}" onclick="delLine('${target}',${l.lid})">${l.sent?'🚫':'🗑️'}</button>
       <button class="accb b3 ${l.cort?'on':''}" title="Cortesía (no se cobra)" onclick="toggleCort('${target}',${l.lid})">🎁</button>
       <button class="accb b4 ${l.llevar?'on':''}" title="Para llevar (empacar)" onclick="toggleLlevar('${target}',${l.lid})">🥡</button>
       <button class="accb b5 ${desc?'on':''}" title="Descuento de este plato" onclick="openLineDisc('${target}',${l.lid})">🏷️</button></div>`;
@@ -3074,6 +3111,8 @@ function cancelarComanda(target){
   if(!ORD[target]||!ORD[target].length){toastT('No hay comanda para anular');return;}
   const mot=prompt('Motivo de anulación de la comanda (ej: la mesa se retiró, pedido por error):');
   if(!mot)return;
+  const _meta=ORDMETA[target]||{}; const _lines=ORD[target]||[]; const _tot=(typeof netTotal==='function')?netTotal(_lines):0;
+  if(typeof addAnulacion==='function') addAnulacion({ ts:Date.now(), tipo:'comanda', mesa:target, origen:(DYN[target]&&DYN[target].title)||target, mesero:_meta.mesero||(typeof _meseroActual==='function'?_meseroActual():''), producto:'Comanda completa ('+_lines.length+' ítems)', qty:_lines.reduce((s,l)=>s+l.qty,0), unit:0, monto:_tot, motivo:mot });
   toastT('🚫 Comanda anulada: '+((DYN[target]&&DYN[target].title)||'')+' — '+mot);
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];try{ delete _fasePrev[target]; delete _kdsPrevState[target]; }catch(e){}if(typeof closeComandaCloud==='function')closeComandaCloud(target);
@@ -3391,6 +3430,11 @@ let FACTURAS=[];
 function loadFacturas(){ try{const r=localStorage.getItem('fenlora_facturas');FACTURAS=r?JSON.parse(r):[];}catch(e){FACTURAS=[];} }
 function saveFacturas(){ try{localStorage.setItem('fenlora_facturas',JSON.stringify(FACTURAS));}catch(e){} }
 function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas(); if(active==='reportes'&&typeof verReportes==='function')verReportes();}}); if(active==='reportes'&&typeof verReportes==='function')setTimeout(()=>verReportes(),300); }
+/* ── ANULACIONES (producto puntual o comanda completa) para métricas en Reportes ── */
+let ANULACIONES=[];
+function loadAnulaciones(){ try{const r=localStorage.getItem('fenlora_anulaciones');ANULACIONES=r?JSON.parse(r):[];}catch(e){ANULACIONES=[];} }
+function saveAnulaciones(){ try{localStorage.setItem('fenlora_anulaciones',JSON.stringify(ANULACIONES));}catch(e){} }
+function addAnulacion(a){ if(!a.id)a.id=(typeof newId==='function'?newId():'a'+Date.now()); a._sync=false; ANULACIONES.unshift(a); saveAnulaciones(); if(typeof pushAnulacion==='function')pushAnulacion(a).then(ok=>{if(ok){a._sync=true;saveAnulaciones(); if(active==='reportes'&&typeof verReportes==='function')verReportes();}}); }
 function _sameDay(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth()&&a.getDate()===r.getDate();}
 function _sameMonth(ts,r){const a=new Date(ts);return a.getFullYear()===r.getFullYear()&&a.getMonth()===r.getMonth();}
 function refreshDashboard(){const tp=[...document.querySelectorAll('.tabpanel')].find(p=>p.dataset.k==='panel');if(tp)tp.innerHTML=dashboard();}
@@ -3498,6 +3542,7 @@ function restoreWorkspace(){
   if(tabs.length) openTab('panel');
 }
 loadFacturas();
+loadAnulaciones();
 loadProductos();
 loadCats();
 loadAreas();
@@ -4130,6 +4175,10 @@ function _cierreRow(c){ return {id:c.id, negocio_id:NEGOCIO_ID, abierta_en:c.abi
 function _rowCierre(r){ return {id:r.id, abiertaEn:r.abierta_en?new Date(r.abierta_en).getTime():null, cerradaEn:r.cerrada_en?new Date(r.cerrada_en).getTime():null, base:r.base, cajero:r.cajero, ventasTotal:r.ventas_total, porMedio:r.por_medio||{}, efectivoVentas:r.efectivo_ventas, propinas:r.propinas, ingresos:r.ingresos, egresos:r.egresos, efectivoEsperado:r.efectivo_esperado, efectivoContado:r.efectivo_contado, diferencia:r.diferencia, nFacturas:r.n_facturas, movimientos:r.movimientos||[]}; }
 
 async function pushFactura(f){ if(!_cloudReady())return false; try{ const {error}=await sb.from('facturas').upsert(_facturaRow(f),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ window._ventaSyncErr=(e&&e.message)||String(e); if(!window._ventaErrShown){window._ventaErrShown=true; if(typeof toastT==='function')toastT('⚠️ Venta local OK, pero no subió a la nube: '+String(window._ventaSyncErr).slice(0,80));} console.warn('pushFactura:',e); return false; } }
+function _anulRow(a){ return {id:a.id, negocio_id:NEGOCIO_ID, ts:new Date(a.ts).toISOString(), tipo:a.tipo||'producto', mesa:a.mesa||'', origen:a.origen||'', mesero:a.mesero||'', producto:a.producto||'', qty:a.qty||0, unit:a.unit||0, monto:a.monto||0, motivo:a.motivo||''}; }
+function _rowAnul(r){ return {id:r.id, ts:new Date(r.ts).getTime(), tipo:r.tipo, mesa:r.mesa, origen:r.origen, mesero:r.mesero, producto:r.producto, qty:r.qty, unit:r.unit, monto:r.monto, motivo:r.motivo}; }
+async function pushAnulacion(a){ if(!_cloudReady())return false; try{ const {error}=await sb.from('anulaciones').upsert(_anulRow(a),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ console.warn('pushAnulacion (queda local):',e.message||e); return false; } }
+async function _fetchAnulaciones(from,to){ if(_cloudReady()){ try{ const {data,error}=await sb.from('anulaciones').select('*').gte('ts',new Date(from).toISOString()).lte('ts',new Date(to).toISOString()); if(error)throw error; return (data||[]).map(_rowAnul); }catch(e){ console.warn('anulaciones: usando datos locales,',e.message||e); } } return ANULACIONES.filter(a=>a.ts>=from&&a.ts<=to); }
 async function pushCierre(c){ if(!_cloudReady())return false; try{ const {error}=await sb.from('cierres_caja').upsert(_cierreRow(c),{onConflict:'id'}); if(error)throw error; return true; }catch(e){ window._ventaSyncErr=(e&&e.message)||String(e); console.warn('pushCierre:',e); return false; } }
 async function flushVentas(){
   if(!_cloudReady())return;
@@ -4139,6 +4188,9 @@ async function flushVentas(){
   changed=false;
   for(const c of CIERRES){ if(!c._sync){ if(await pushCierre(c)){ c._sync=true; changed=true; } } }
   if(changed)saveCierres();
+  changed=false;
+  for(const a of ANULACIONES){ if(!a._sync){ if(await pushAnulacion(a)){ a._sync=true; changed=true; } } }
+  if(changed)saveAnulaciones();
 }
 async function _fetchFacturas(from,to){
   if(_cloudReady()){
@@ -4217,7 +4269,7 @@ async function _hashPin(id,pin){
   catch(e){ const str=id+'|'+pin+'|fenlora'; let h=5381; for(let i=0;i<str.length;i++)h=((h*33)^str.charCodeAt(i))>>>0; return 'f'+h.toString(16); }
 }
 function showPerfiles(){ authMode='perfil'; document.body.classList.remove('authed'); renderAuth(); }
-function cambiarUsuario(){ if(typeof closeTopMenus==='function')closeTopMenus(); showPerfiles(); }
+function cambiarUsuario(){ if(typeof closeTopMenus==='function')closeTopMenus(); try{localStorage.removeItem('fenlora_perfil');}catch(e){} window._empleado=null; showPerfiles(); }
 function _perfilesHTML(){
   const modo=_modoPersonal();
   const rolLbl={mesero:'Mesero',cajero:'Cajero',cocina:'Cocina'};
@@ -4305,7 +4357,19 @@ async function afterLogin(user){
   }
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
   if(typeof pullEmpleados==='function'){ try{ await pullEmpleados(); }catch(e){} }
-  if(_esModoMeseros() && EMPLEADOS.some(e=>e.activo!==false)){ if(typeof authBusy==='function')authBusy(false); showPerfiles(); return; }
+  if(_esModoMeseros() && EMPLEADOS.some(e=>e.activo!==false)){
+    if(typeof authBusy==='function')authBusy(false);
+    // Restaurar la sesión guardada del empleado en ESTE dispositivo (celular personal) → no re-pedir PIN al reabrir la app.
+    try{
+      const saved=JSON.parse(localStorage.getItem('fenlora_perfil')||'null');
+      const modo=_modoPersonal();
+      if(saved && saved.id){
+        const emp=EMPLEADOS.find(e=>e.id===saved.id && e.activo!==false && (!modo || e.rol===modo));
+        if(emp){ entrarComoPerfil({id:emp.id,nombre:emp.nombre,rol:emp.rol}); return; }
+      }
+    }catch(e){}
+    showPerfiles(); return;
+  }
   window.ROL=window._realRol||'admin'; window._empleado=null;
   hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
 }
