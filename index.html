@@ -1399,6 +1399,7 @@ const DULCE_CAFE=[
 const PRODUCTS=DULCE_CAFE.map(p=>JSON.parse(JSON.stringify(p)));
 const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
 const MESEROS=['Sebastián','Laura','Andrés','Kelly'];
+function _meserosLista(){ try{ const ns=(EMPLEADOS||[]).filter(e=>e.activo!==false).map(e=>e.nombre); return ns.length?ns:MESEROS.slice(); }catch(e){ return MESEROS.slice(); } }
 function _meseroActual(){ return (window._empleado&&window._empleado.nombre) || (window.ROL==='admin'?'Administrador':'Mesero'); }
 const ALMACENES=['Almacén principal','Barra'];
 const PAGOS=[['efectivo','💵','Efectivo'],['tarjeta','💳','Tarjeta'],['nequi','📱','Nequi'],['daviplata','📲','Daviplata'],['qr','🔳','Pago QR']];
@@ -2421,7 +2422,7 @@ function renderMeta(target){
   const el=document.getElementById('cmeta_'+target); if(!el)return;
   const meta=ORDMETA[target]||{}; const isMesa=target.startsWith('mesa_');
   let html=`<div class="cm-field">🏬 <select onchange="setAlmacen('${target}',this.value)">${ALMACENES.map(a=>`<option ${a===meta.almacen?'selected':''}>${a}</option>`).join('')}</select></div>
-    <div class="cm-field">👤 <select onchange="setMesero('${target}',this.value)">${MESEROS.map(x=>`<option ${x===meta.mesero?'selected':''}>${x}</option>`).join('')}</select></div>`;
+    <div class="cm-field">👤 <select onchange="setMesero('${target}',this.value)">${(function(){var ns=_meserosLista();if(meta.mesero&&ns.indexOf(meta.mesero)<0)ns=[meta.mesero].concat(ns);return ns.map(x=>`<option ${x===meta.mesero?'selected':''}>${x}</option>`).join('');})()}</select></div>`;
   if(isMesa){
     html+=`<div class="cm-com">👥 Comensales <div class="qb" onclick="chgComensales('${target}',-1)">−</div><b id="cmn_${target}">${meta.com||1}</b><div class="qb" onclick="chgComensales('${target}',1)">+</div></div>`;
   } else if(meta.phone){
