@@ -1722,9 +1722,9 @@ function loadCaja(){try{const r=localStorage.getItem('fenlora_caja');CAJA=r?JSON
 function cajaResumen(){
   if(!CAJA)return null;
   const fs=FACTURAS.filter(f=>f.ts>=CAJA.abiertaEn);
-  const porMedio={};fs.forEach(f=>{const k=f.medioLabel||f.medio;porMedio[k]=(porMedio[k]||0)+f.total;});
-  const ventas=fs.reduce((s,f)=>s+f.total,0);
-  const efectivoVentas=fs.filter(f=>f.medio==='efectivo').reduce((s,f)=>s+f.total,0);
+  const porMedio={};fs.forEach(f=>{const k=f.medioLabel||f.medio;porMedio[k]=(porMedio[k]||0)+f.total;});   // recibido por medio (incluye propina)
+  const ventas=fs.reduce((s,f)=>s+(f.total-(f.propina||0)),0);   // ventas NETAS del negocio (sin propina)
+  const efectivoVentas=fs.filter(f=>f.medio==='efectivo').reduce((s,f)=>s+f.total,0);   // efectivo físico recibido (incluye propina en efectivo)
   const propinas=fs.reduce((s,f)=>s+(f.propina||0),0);
   const ingresos=(CAJA.movimientos||[]).filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0);
   const egresos=(CAJA.movimientos||[]).filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.monto,0);
@@ -1753,7 +1753,7 @@ function cajaView(){
   const r=cajaResumen();
   const cards=[
     ['Base inicial',COP(CAJA.base),'💼'],
-    ['Ventas del turno',COP(r.ventas),'💰'],
+    ['Ventas (sin propina)',COP(r.ventas),'💰'],
     ['Efectivo esperado',COP(r.efectivoEsperado),'💵'],
     ['Propinas',COP(r.propinas),'🙌'],
   ];
@@ -1989,16 +1989,17 @@ function _repRange(){
   return FACTURAS.filter(f=>f.ts>=from&&f.ts<=to);
 }
 function repData(list){
-  const ventas=list.reduce((s,f)=>s+f.total,0);
+  const _neto=f=>f.total-(f.propina||0);   // venta neta (sin propina)
+  const ventas=list.reduce((s,f)=>s+_neto(f),0);
   const propinas=list.reduce((s,f)=>s+(f.propina||0),0);
   const nItems=list.reduce((s,f)=>s+(f.nItems||0),0);
   const ticket=list.length?Math.round(ventas/list.length):0;
-  const porDia={};list.forEach(f=>{const k=_isoDate(f.ts);porDia[k]=(porDia[k]||0)+f.total;});
+  const porDia={};list.forEach(f=>{const k=_isoDate(f.ts);porDia[k]=(porDia[k]||0)+_neto(f);});
   const prod={};list.forEach(f=>(f.items||[]).forEach(it=>{if(it.cort)return;if(!prod[it.n])prod[it.n]={qty:0,rev:0};prod[it.n].qty+=it.qty;prod[it.n].rev+=it.unit*it.qty;}));
   const topProd=Object.entries(prod).map(([n,v])=>({n,qty:v.qty,rev:v.rev})).sort((a,b)=>b.qty-a.qty);
-  const medios={};list.forEach(f=>{const k=f.medioLabel||f.medio;medios[k]=(medios[k]||0)+f.total;});
-  const horas={};for(let h=0;h<24;h++)horas[h]=0;list.forEach(f=>{horas[new Date(f.ts).getHours()]+=f.total;});
-  const origen={};list.forEach(f=>{const k=repClasifOrigen(f.origen);origen[k]=(origen[k]||0)+f.total;});
+  const medios={};list.forEach(f=>{const k=f.medioLabel||f.medio;medios[k]=(medios[k]||0)+f.total;});   // recibido por medio (incluye propina)
+  const horas={};for(let h=0;h<24;h++)horas[h]=0;list.forEach(f=>{horas[new Date(f.ts).getHours()]+=_neto(f);});
+  const origen={};list.forEach(f=>{const k=repClasifOrigen(f.origen);origen[k]=(origen[k]||0)+_neto(f);});
   const fe=list.filter(f=>f.dian).length;const pos=list.length-fe;
   return {ventas,propinas,nItems,ticket,n:list.length,porDia,topProd,medios,horas,origen,fe,pos};
 }
@@ -2036,7 +2037,7 @@ async function verReportes(){
   if(!list.length && !anul.length){out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hay ventas ni anulaciones en ese rango de fechas.</div>';window._repList=[];return;}
   if(!list.length){ out.innerHTML='<div class="dash-empty" style="margin-top:16px">No hubo ventas en el rango, pero sí anulaciones:</div>'+_anulSectionHTML(anul); window._repList=[]; return; }
   window._repList=list;const r=repData(list);
-  const cards=[['Ventas',COP(r.ventas),'💰'],['Facturas',r.n,'🧾'],['Ticket promedio',COP(r.ticket),'🎫'],['Productos vendidos',r.nItems,'🍽️'],['Propinas',COP(r.propinas),'🙌']];
+  const cards=[['Ventas (sin propina)',COP(r.ventas),'💰'],['Propinas',COP(r.propinas),'🙌'],['Total recibido',COP(r.ventas+r.propinas),'💵'],['Facturas',r.n,'🧾'],['Ticket promedio',COP(r.ticket),'🎫'],['Productos vendidos',r.nItems,'🍽️']];
   const diaObj={};Object.keys(r.porDia).sort().forEach(k=>{const dt=new Date(k+'T12:00:00');diaObj[dt.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short'})]=r.porDia[k];});
   const horaObj={};for(let h=0;h<24;h++){if(r.horas[h]>0)horaObj[(h<10?'0':'')+h+':00']=r.horas[h];}
   const maxQ=r.topProd.length?r.topProd[0].qty:1;
@@ -2046,7 +2047,7 @@ async function verReportes(){
     <div>
       <div class="section-title">📅 Ventas por día</div>${_bars(diaObj)}
       <div class="section-title" style="margin-top:22px">🕐 Ventas por hora (horas pico)</div>${_bars(horaObj)}
-      <div class="section-title" style="margin-top:22px">💳 Medios de pago</div>${_bars(r.medios)}
+      <div class="section-title" style="margin-top:22px">💳 Recibido por medio <span style="font-weight:400;color:var(--txt3);font-size:11px">(incluye propina)</span></div>${_bars(r.medios)}
     </div>
     <div>
       <div class="section-title">🏆 Productos más vendidos</div>
@@ -2952,6 +2953,8 @@ function confirmPay(){
   if(!pay.m){toastT('Elige un medio de pago');return;}
   if(pay.fe && (!(pay.feData.num||'').trim() || !(pay.feData.nombre||'').trim())){toastT('Para factura electrónica ingresa el documento y el nombre del cliente');return;}
   const t=payTotals();const target=payTarget;const label=(PAGOS.find(p=>p[0]===pay.m)||[])[2];
+  if(!target||!ORD[target]||!ORD[target].length){ closePay(); return; }                       // nada que cobrar
+  if((ORDMETA[target]||{}).fase==='facturada'){ closePay(); toastT('⚠️ Esta cuenta ya fue facturada'); return; }  // evita doble cobro
   const lines=ORD[target]||[];const meta=ORDMETA[target]||{};
   const factura={
     num: meta.num||('F-'+Date.now()),
@@ -3079,6 +3082,7 @@ function scAdd(){window._sc.parts.push({amount:0,medio:'efectivo'});renderSplitC
 function scDel(i){window._sc.parts.splice(i,1);renderSplitCheckout();}
 function confirmSplitCheckout(){
   const {target,parts}=window._sc;const meta=ORDMETA[target]||{};const lines=ORD[target]||[];
+  if((ORDMETA[target]||{}).fase==='facturada'){ closeSplit(); toastT('⚠️ Esta cuenta ya fue facturada'); return; }  // evita doble cobro
   const baseNum=meta.num||('F-'+Date.now());
   parts.forEach((p,i)=>{
     addFactura({
