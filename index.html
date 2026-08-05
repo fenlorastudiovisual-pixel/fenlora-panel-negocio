@@ -1463,6 +1463,8 @@ const MESAS=[
   {n:9,est:'libre',piso:'Terraza'},{n:10,est:'libre',piso:'Terraza'},
 ];
 const getMesa=n=>MESAS.find(m=>m.n===n);
+/* Escapa un texto para meterlo dentro de onclick="fn('...')" sin romper el JS/HTML (nombres con comillas). */
+function _q(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' '); }
 const COMTYPES=[['mesas','🍽️','Mesas',6],['llevar','🥡','Llevar',2],['delivery','🛵','Delivery',1],['dext','🛴','Delivery Externo',0],['online','🌐','Online',3]];
 
 /* ═══ COCINA (KDS) ═══ */
@@ -1601,7 +1603,7 @@ function renderPrdCats(){
   const el=document.getElementById('prdCats');if(!el)return;
   const cats=['Todos',...CATS.filter(c=>c!=='Recomendados')];
   PRODUCTS.forEach(p=>{if(p.cat&&!cats.includes(p.cat))cats.push(p.cat);});
-  el.innerHTML=cats.map(c=>`<button class="prd-ctab ${prdCat===c?'on':''}" onclick="prdSetCat('${c}')">${c}</button>`).join('');
+  el.innerHTML=cats.map(c=>`<button class="prd-ctab ${prdCat===c?'on':''}" onclick="prdSetCat('${_q(c)}')">${c}</button>`).join('');
 }
 function prdSetCat(c){prdCat=c;renderPrdCats();renderProductos();}
 function renderProductos(){
@@ -1716,7 +1718,7 @@ function delProd(id){if(!confirm('¿Eliminar este producto del catálogo?'))retu
 
 /* ═══ CAJA (apertura, movimientos, arqueo/cierre de turno) ═══ */
 let CAJA=null, CIERRES=[];
-function saveCaja(){try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof pushCaja==='function'&&!_applyingCaja)pushCaja();}
+function saveCaja(){if(CAJA&&!_applyingCaja)CAJA._ts=Date.now();try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof pushCaja==='function'&&!_applyingCaja)pushCaja();}
 function saveCierres(){try{localStorage.setItem('fenlora_cierres',JSON.stringify(CIERRES));}catch(e){}}
 function loadCaja(){try{const r=localStorage.getItem('fenlora_caja');CAJA=r?JSON.parse(r):null;const c=localStorage.getItem('fenlora_cierres');CIERRES=c?JSON.parse(c):[];}catch(e){CAJA=null;CIERRES=[];}}
 function cajaResumen(){
@@ -1811,7 +1813,7 @@ function consolidadoSection(){
     </div>
     <div id="consolidadoOut"></div>`;
 }
-function csvRow(arr){return (arr||[]).map(v=>{v=(v==null?'':String(v));return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(';');}
+function csvRow(arr){return (arr||[]).map(v=>{v=(v==null?'':String(v));if(/^[=+\-@\t\r]/.test(v))v="'"+v;return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(';');}
 function _download(name,content,mime){try{const blob=new Blob([content],{type:(mime||'text/csv')+';charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},120);}catch(e){toastT('Este navegador no permitió la descarga');}}
 function cierreCSV(c){
   const medios=Object.keys(c.porMedio||{});const L=[];
@@ -2137,11 +2139,14 @@ function impFile(input){
 function _impNorm(rows){
   const nrm=s=>(s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const col=(row,...names)=>{for(const n of names){for(const k of Object.keys(row)){if(nrm(k)===nrm(n))return row[k];}}return '';};
+  const hasCol=(row,...names)=>{for(const n of names){for(const k of Object.keys(row)){if(nrm(k)===nrm(n))return true;}}return false;};
   const boolv=(v,def)=>{v=(v||'').toString().trim();if(!v)return def;return /^(si|s|sí|yes|y|true|1|x)$/i.test(v);};
   return rows.map(r=>{
     const n=(col(r,'nombre','producto','name')||'').toString().trim();
     const pr=parseInt((col(r,'precio','valor','price')||'').toString().replace(/[^\d]/g,''))||0;
-    return {n,pr,cat:((col(r,'categoria','cat')||'Otros').toString().trim())||'Otros',area:((col(r,'area')||'COCINA').toString().trim().toUpperCase())||'COCINA',e:((col(r,'emoji','icono')||'🍽️').toString().trim())||'🍽️',desc:(col(r,'descripcion')||'').toString().trim(),activo:boolv(col(r,'disponible','activo'),true),enPanel:true,enQR:boolv(col(r,'menu qr','qr','menuqr'),true),rec:boolv(col(r,'recomendado','destacado'),false),_valid:!!(n&&pr>0)};
+    return {n,pr,cat:((col(r,'categoria','cat')||'Otros').toString().trim())||'Otros',area:((col(r,'area')||'COCINA').toString().trim().toUpperCase())||'COCINA',e:((col(r,'emoji','icono')||'🍽️').toString().trim())||'🍽️',desc:(col(r,'descripcion')||'').toString().trim(),activo:boolv(col(r,'disponible','activo'),true),enPanel:true,enQR:boolv(col(r,'menu qr','qr','menuqr'),true),rec:boolv(col(r,'recomendado','destacado'),false),
+      _hasActivo:hasCol(r,'disponible','activo'),_hasQR:hasCol(r,'menu qr','qr','menuqr'),_hasRec:hasCol(r,'recomendado','destacado'),_hasDesc:hasCol(r,'descripcion'),_hasEmoji:hasCol(r,'emoji','icono'),_hasCat:hasCol(r,'categoria','cat'),_hasArea:hasCol(r,'area'),
+      _valid:!!(n&&pr>0)};
   });
 }
 function _prodNameKey(n){return (n||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
@@ -2171,7 +2176,8 @@ function impConfirm(){
   let nuevos=0,act=0;
   prods.forEach(p=>{
     const ex=(mode==='add')?_findProdByName(p.n):null;
-    if(ex){ ex.n=p.n;ex.pr=p.pr;ex.cat=p.cat;ex.area=p.area;ex.e=p.e;ex.desc=p.desc;ex.activo=p.activo;ex.enPanel=p.enPanel;ex.enQR=p.enQR;ex.rec=p.rec; act++; }
+    // Al ACTUALIZAR solo se pisa lo que venga en el archivo; los flags/columnas ausentes se conservan del producto existente.
+    if(ex){ ex.n=p.n;ex.pr=p.pr; if(p._hasCat)ex.cat=p.cat; if(p._hasArea)ex.area=p.area; if(p._hasEmoji)ex.e=p.e; if(p._hasDesc)ex.desc=p.desc; if(p._hasActivo)ex.activo=p.activo; if(p._hasQR)ex.enQR=p.enQR; if(p._hasRec)ex.rec=p.rec; act++; }
     else { PRODUCTS.push({id:'p'+(productSeq++),n:p.n,pr:p.pr,cat:p.cat,area:p.area,e:p.e,desc:p.desc,activo:p.activo,enPanel:p.enPanel,enQR:p.enQR,rec:p.rec}); nuevos++; }
   });
   saveProductos();closeImport();
@@ -2189,7 +2195,7 @@ function loadAreas(){try{const r=localStorage.getItem('fenlora_areas');if(r){con
 function _catCount(c){return PRODUCTS.filter(p=>p.cat===c).length;}
 function _areaCount(a){return PRODUCTS.filter(p=>(p.area||'COCINA')===a).length;}
 function refreshCatConsumers(){
-  Object.keys(ORD).forEach(k=>{const ch=document.getElementById('chips_'+k);if(ch)ch.innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[k]?' active':''}" onclick="setCat('${k}','${c}')">${c}</div>`).join('');});
+  Object.keys(ORD).forEach(k=>{const ch=document.getElementById('chips_'+k);if(ch)ch.innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[k]?' active':''}" onclick="setCat('${_q(k)}','${_q(c)}')">${c}</div>`).join('');});
   if(document.getElementById('prdGrid')){if(typeof renderPrdCats==='function')renderPrdCats();if(typeof renderProductos==='function')renderProductos();}
 }
 function categoriasView(){
@@ -2461,9 +2467,10 @@ function askAddress(){
   m.classList.add('on');
 }
 function startDelivery(){
-  const addr=(document.getElementById('addrInput').value||'').trim()||'Sin dirección';
+  const addr=(document.getElementById('addrInput').value||'').trim();
   const phone=(document.getElementById('addrPhone').value||'').trim();
   const name=(document.getElementById('addrName').value||'').trim();
+  if(!addr){ toastT('📍 Escribe la dirección de entrega'); const e=document.getElementById('addrInput'); if(e)e.focus(); return; }   // domicilio sin dirección no sirve
   closeCom();
   const id='delivery_'+(ordSeq++);
   openOrder(id,'Domicilio #'+id.split('_')[1],'🛵',{address:addr,phone,cliente:name});
@@ -2538,7 +2545,7 @@ function renderMeta(target){
   el.innerHTML=html;
 }
 function initOrder(target){
-  document.getElementById('chips_'+target).innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[target]?' active':''}" onclick="setCat('${target}','${c}')">${c}</div>`).join('');
+  document.getElementById('chips_'+target).innerHTML=CATS.map(c=>`<div class="chip${c===ORDCAT[target]?' active':''}" onclick="setCat('${_q(target)}','${_q(c)}')">${c}</div>`).join('');
   renderMeta(target);renderProds(target);renderComanda(target);
 }
 function renderFields(target){
@@ -3195,14 +3202,19 @@ function moverComanda(n){
 }
 function doMoveComanda(from,to){
   const fk='mesa_'+from,tk='mesa_'+to;
-  ORD[tk]=ORD[fk]||[];ORDMETA[tk]=ORDMETA[fk]||{};ORDCAT[tk]=ORDCAT[fk]||'Recomendados';
+  ORD[tk]=ORD[fk]||[];ORDMETA[tk]=Object.assign({},ORDMETA[fk]||{});ORDCAT[tk]=ORDCAT[fk]||'Recomendados';
+  ORDMETA[tk].title='Mesa '+pad(to);   // el encabezado/pestaña/ticket deben decir la mesa NUEVA
   delete ORD[fk];delete ORDMETA[fk];delete ORDCAT[fk];if(typeof closeComandaCloud==='function')closeComandaCloud(fk);
   const mf=getMesa(from),mt=getMesa(to);
-  const tot=netTotal(ORD[tk]);
-  if(mf){mf.est='libre';mf.t='';mf.m=0;} if(mt){mt.est='ocup';mt.t='ahora';mt.m=tot;}
+  const tot=netTotal(ORD[tk]);const fase=(ORDMETA[tk]||{}).fase;
+  if(mf){mf.est='libre';mf.t='';mf.m=0;} if(mt){mt.est=(fase==='precuenta'||fase==='facturada')?'cobr':'ocup';mt.t='ahora';mt.m=tot;}
+  if(typeof _touched!=='undefined')_touched.add(tk);
   closeMesaAct();
   if(openTabs.includes(fk)){closeTab(fk);}
   openOrder(tk,'Mesa '+pad(to),'🍽️');
+  if(typeof syncMesa==='function')syncMesa(tk);
+  if(typeof saveState==='function')saveState();
+  if(typeof pushComandasSoon==='function')pushComandasSoon(true);   // sincroniza el traslado a los demás dispositivos
   toastT('Comanda movida a Mesa '+pad(to));
   if(document.getElementById('comContent'))renderComContent();
 }
@@ -3210,8 +3222,7 @@ function doMoveComanda(from,to){
 /* ── trasladar platos entre mesas ── */
 function moverPlatos(target){
   const lines=ORD[target]; if(!lines.length){toastT('No hay platos');return;}
-  const libres=MESAS.filter(m=>m.est==='libre');
-  const otras=MESAS.filter(m=>('mesa_'+m.n)!==target);
+  const otras=MESAS.filter(m=>(((m.grp)||('mesa_'+m.n))!==target));   // excluye la mesa/grupo actual
   const m=document.getElementById('moveModal');
   window._movSel={};
   m.innerHTML=`<div class="modal" style="width:440px">
@@ -3228,14 +3239,20 @@ function moverPlatos(target){
 function doMoverPlatos(target){
   const sel=window._movSel||{};const ids=Object.keys(sel).filter(k=>sel[k]).map(Number);
   if(!ids.length){toastT('Marca al menos un plato');return;}
-  const to=+document.getElementById('movDest').value;const tk='mesa_'+to;
-  if(!ORD[tk]){ORD[tk]=[];ORDCAT[tk]='Recomendados';ORDMETA[tk]=Object.assign({com:2,mesero:_meseroActual(),almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'});}
+  const to=+document.getElementById('movDest').value;const mt=getMesa(to);
+  const tk=(mt&&mt.grp)||('mesa_'+to);   // si la mesa destino está unida, va a la comanda del GRUPO (no se pierde)
+  if(tk===target){toastT('Elige una mesa distinta');return;}
+  if(!ORD[tk]){ORD[tk]=[];ORDCAT[tk]='Recomendados';ORDMETA[tk]=Object.assign({com:2,mesero:_meseroActual(),almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',title:(mt&&mt.grpLabel)||('Mesa '+pad(to))});}
   const move=ORD[target].filter(l=>ids.includes(l.lid));
   ORD[target]=ORD[target].filter(l=>!ids.includes(l.lid));
   move.forEach(l=>ORD[tk].push(l));
-  const mt=getMesa(to);if(mt){mt.est='ocup';mt.t='ahora';mt.m=netTotal(ORD[tk]);}
-  closeMove();renderComanda(target);syncMesa(target);
-  toastT(ids.length+' plato(s) trasladado(s) a Mesa '+pad(to));
+  if(typeof _touched!=='undefined'){_touched.add(target);_touched.add(tk);}
+  if(mt){mt.est='ocup';mt.t='ahora';mt.m=netTotal(ORD[tk]);}
+  if(typeof syncMesa==='function'){syncMesa(tk);syncMesa(target);}
+  closeMove();renderComanda(target);
+  if(typeof saveState==='function')saveState();
+  if(typeof pushComandasSoon==='function')pushComandasSoon(true);   // sincroniza a los demás dispositivos
+  toastT(ids.length+' plato(s) trasladado(s) a '+((mt&&mt.grpLabel)||('Mesa '+pad(to))));
 }
 function closeMove(){document.getElementById('moveModal').classList.remove('on');}
 document.getElementById('moveModal').addEventListener('click',e=>{if(e.target.id==='moveModal')closeMove();});
@@ -3278,7 +3295,8 @@ document.getElementById('impModal').addEventListener('click',e=>{if(e.target.id=
 document.getElementById('catModal').addEventListener('click',e=>{if(e.target.id==='catModal')closeCatModal();});
 
 /* ═══ MÓDULO: MESAS, QR y NFC + Experiencia del cliente (QR) ═══ */
-let QROPTS={carta:true,mesero:true,cuenta:true,autoped:false,resena:true};
+let QROPTS=(function(){ try{ const r=localStorage.getItem('fenlora_qropts'); if(r){ return Object.assign({carta:true,mesero:true,cuenta:true,autoped:false,resena:true}, JSON.parse(r)); } }catch(e){} return {carta:true,mesero:true,cuenta:true,autoped:false,resena:true}; })();
+function saveQrOpts(){ try{ localStorage.setItem('fenlora_qropts',JSON.stringify(QROPTS)); }catch(e){} }
 const QR_OPTIONS=[
   ['carta','📖','Ver la carta / Menú digital','Fotos, precios y descripciones de tus platos'],
   ['mesero','🙋','Llamar al mesero','Manda un aviso al panel indicando la mesa'],
@@ -3322,7 +3340,7 @@ function renderQrOpts(){
   el.innerHTML=QR_OPTIONS.map(o=>`<div class="opt-toggle ${QROPTS[o[0]]?'on':''}" onclick="toggleQrOpt('${o[0]}')">
     <div class="oi">${o[1]}</div><div class="ot"><b>${o[2]}</b><span>${o[3]}</span></div><div class="sw"></div></div>`).join('');
 }
-function toggleQrOpt(k){QROPTS[k]=!QROPTS[k];renderQrOpts();renderQrPhone();}
+function toggleQrOpt(k){QROPTS[k]=!QROPTS[k];saveQrOpts();renderQrOpts();renderQrPhone();}
 
 /* ── mockup de celular premium ── */
 function renderQrPhone(){
@@ -3405,24 +3423,37 @@ function renderMesasLB(amb){
     </div>`).join(''):`<div class="empty" style="padding:26px">Sin mesas en ${amb}. Crea una con “Nueva mesa”.</div>`;
 }
 function nextMesaN(){return MESAS.reduce((mx,m)=>Math.max(mx,m.n),0)+1;}
-function addMesa(amb){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});toastT('Mesa '+pad(n)+' creada en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();}
+function addMesa(amb){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});if(typeof saveState==='function')saveState();toastT('Mesa '+pad(n)+' creada en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();}
 function genMasivo(amb){
   const v=prompt('¿Cuántas mesas quieres generar en '+amb+'?','4');const c=parseInt(v);if(!c||c<1)return;
   for(let i=0;i<c;i++){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});}
-  toastT(c+' mesas generadas en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+  if(typeof saveState==='function')saveState();toastT(c+' mesas generadas en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
 }
 function delMesa(n){
   const mm=getMesa(n);if(!mm)return;const amb=mm.piso;
-  const msg=mm.est!=='libre'?'La Mesa '+pad(n)+' está ocupada/tiene consumo. ¿Eliminar de todas formas?':'¿Eliminar la Mesa '+pad(n)+'?';
+  const clave=(mm.grp)||('mesa_'+n);
+  const tieneComanda=(ORD[clave]&&ORD[clave].length)||mm.est!=='libre';
+  const msg=tieneComanda?'La Mesa '+pad(n)+' tiene un pedido activo. Si la eliminas, ese pedido se ANULARÁ y saldrá de cocina. ¿Continuar?':'¿Eliminar la Mesa '+pad(n)+'?';
   if(!confirm(msg))return;
+  // Anular/liberar la comanda para NO dejarla huérfana (en cocina/nube) al borrar la mesa
+  if(ORD[clave] || mm.est!=='libre'){
+    if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});
+    delete ORD[clave];delete ORDMETA[clave];delete ORDCAT[clave];
+    if(typeof closeComandaCloud==='function')closeComandaCloud(clave);
+    if(typeof openTabs!=='undefined'&&openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
+  }
   const i=MESAS.findIndex(m=>m.n===n);if(i>=0)MESAS.splice(i,1);
+  if(typeof saveState==='function')saveState();
   toastT('Mesa '+pad(n)+' eliminada');
   if(document.getElementById('mesasLB'))renderMesasLB(amb);
   renderAmbientes();if(document.getElementById('comContent'))renderComContent();
 }
 function delAllMesas(amb){
-  if(!confirm('¿Eliminar TODAS las mesas de '+amb+'? Esta acción no se puede deshacer.'))return;
+  const ocupadas=MESAS.filter(m=>m.piso===amb&&(m.est!=='libre'||(ORD[(m.grp)||('mesa_'+m.n)]))).length;
+  if(!confirm('¿Eliminar TODAS las mesas de '+amb+'?'+(ocupadas?(' '+ocupadas+' tiene(n) pedido activo, que se ANULARÁ.'):'')+' Esta acción no se puede deshacer.'))return;
+  MESAS.filter(m=>m.piso===amb).forEach(m=>{ const clave=(m.grp)||('mesa_'+m.n); if(ORD[clave]){ delete ORD[clave];delete ORDMETA[clave];delete ORDCAT[clave]; if(typeof closeComandaCloud==='function')closeComandaCloud(clave); if(typeof openTabs!=='undefined'&&openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave); } });
   for(let i=MESAS.length-1;i>=0;i--){if(MESAS[i].piso===amb)MESAS.splice(i,1);}
+  if(typeof saveState==='function')saveState();
   toastT('Mesas de '+amb+' eliminadas');renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
 }
 function closeMesasLB(){document.getElementById('mesasModal').classList.remove('on');}
@@ -3686,9 +3717,9 @@ async function pullCatalog(){
   if(!_cloudReady())return;
   try{
     const [pr,ca,ar]=await Promise.all([
-      sb.from('productos').select('*'),
-      sb.from('categorias').select('*').order('orden'),
-      sb.from('areas').select('*').order('orden')
+      sb.from('productos').select('*').eq('negocio_id',NEGOCIO_ID),
+      sb.from('categorias').select('*').eq('negocio_id',NEGOCIO_ID).order('orden'),
+      sb.from('areas').select('*').eq('negocio_id',NEGOCIO_ID).order('orden')
     ]);
     if(pr.error||ca.error||ar.error) throw (pr.error||ca.error||ar.error);
     const hasCloud=(pr.data&&pr.data.length)||(ca.data&&ca.data.length)||(ar.data&&ar.data.length);
@@ -3729,10 +3760,10 @@ function syncCatalog(){   // rebota (debounce) y espeja local → nube
   _syncT=setTimeout(async()=>{
     try{
       _ensureUuids();
-      const {data:cloudRows,error}=await sb.from('productos').select('id'); if(error)throw error;
+      const {data:cloudRows,error}=await sb.from('productos').select('id').eq('negocio_id',NEGOCIO_ID); if(error)throw error;
       const localIds=new Set(PRODUCTS.map(p=>p.id));
       const del=(cloudRows||[]).filter(r=>!localIds.has(r.id)).map(r=>r.id);
-      if(del.length) await sb.from('productos').delete().in('id',del);
+      if(del.length) await sb.from('productos').delete().eq('negocio_id',NEGOCIO_ID).in('id',del);
       if(PRODUCTS.length) await sb.from('productos').upsert(PRODUCTS.map(_prodRow));
       await _pushCatsAreas();
       _catDirty=false;
@@ -4062,7 +4093,11 @@ let _applyingCaja=false, _cajaCh=null;
 async function pullCaja(){
   if(!_cloudReady())return;
   try{ const {data,error}=await sb.from('caja_estado').select('estado').eq('negocio_id',NEGOCIO_ID).maybeSingle(); if(error)throw error;
-    _applyingCaja=true; CAJA=(data&&data.estado)||null; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
+    const nube=(data&&data.estado)||null;
+    // No dejar que un vacío/estado viejo de la nube borre una caja que abrí localmente (p.ej. offline): re-subo la mía.
+    if(nube===null){ if(CAJA&&CAJA.abierta){ if(typeof pushCaja==='function')pushCaja(); return; } }
+    else if(CAJA&&CAJA.abierta&&CAJA._ts&&(!nube._ts||CAJA._ts>nube._ts)){ if(typeof pushCaja==='function')pushCaja(); return; }
+    _applyingCaja=true; CAJA=nube; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
   }catch(e){ _applyingCaja=false; console.warn('pullCaja:',e.message||e); }
 }
 function pushCaja(){
@@ -4073,7 +4108,9 @@ function subscribeCaja(){
   if(!_cloudReady()||typeof sb.channel!=='function')return;
   try{ if(_cajaCh){ try{sb.removeChannel(_cajaCh);}catch(e){} _cajaCh=null; }
     _cajaCh=sb.channel('caja-'+NEGOCIO_ID).on('postgres_changes',{event:'*',schema:'public',table:'caja_estado',filter:'negocio_id=eq.'+NEGOCIO_ID},payload=>{
-      _applyingCaja=true; CAJA=(payload.new&&payload.new.estado)||null; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
+      const nube=(payload.new&&payload.new.estado)||null;
+      if(nube && CAJA&&CAJA.abierta&&CAJA._ts&&nube._ts&&CAJA._ts>nube._ts) return;  // ignora eco viejo (lo mío es más nuevo)
+      _applyingCaja=true; CAJA=nube; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
     }).subscribe();
   }catch(e){ console.warn('subscribeCaja:',e.message||e); }
 }
@@ -4112,7 +4149,7 @@ function subscribeComandas(){
       }).subscribe();
   }catch(e){ console.warn('subscribeComandas:',e.message||e); }
 }
-if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty){ Object.keys(ORD).forEach(k=>_touched.add(k)); pushComandasSoon(); } subscribeComandas(); } }); }
+if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty){ Object.keys(ORD).forEach(k=>_touched.add(k)); pushComandasSoon(); } if(CAJA&&CAJA.abierta&&typeof pushCaja==='function')pushCaja(); subscribeComandas(); } }); }
 /* Latido de seguridad: cada 20s (con la pestaña visible) reconcilia contra la nube — libera mesas
    anuladas/cobradas en otro equipo aunque se pierda un evento realtime. Y al volver a la app, sincroniza al instante. */
 if(typeof window!=='undefined'){
@@ -4378,6 +4415,23 @@ function entrarComoPerfil(perfil){
   try{localStorage.setItem('fenlora_perfil',JSON.stringify(perfil));}catch(e){}
   hideAuth(); window.__booted=true; bootPanel();
 }
+/* Limpia TODO lo específico de un negocio (caché local + memoria). Se llama al cambiar de negocio
+   o al cerrar sesión, para que un negocio NUNCA vea datos (productos, facturas, caja) de otro
+   en el mismo navegador. Causa raíz de varias fugas entre tenants. */
+function _limpiarCachesNegocio(){
+  ['fenlora_productos','fenlora_facturas','fenlora_anulaciones','fenlora_cierres','fenlora_caja','fenlora_estado','fenlora_cats','fenlora_areas','fenlora_empleados','fenlora_perfil','fenlora_rol','fenlora_menustyle','fenlora_qropts'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  try{ PRODUCTS.length=0; }catch(e){}
+  try{ FACTURAS.length=0; }catch(e){}
+  try{ ANULACIONES.length=0; }catch(e){}
+  try{ CIERRES.length=0; }catch(e){}
+  try{ if(typeof EMPLEADOS!=='undefined')EMPLEADOS.length=0; }catch(e){}
+  try{ CAJA=null; }catch(e){}
+  try{ CATS.length=0; CATS.push('Recomendados'); }catch(e){}
+  try{ AREAS.length=0; AREAS.push('COCINA','BARRA'); }catch(e){}
+  try{ Object.keys(ORD).forEach(k=>delete ORD[k]); Object.keys(ORDMETA).forEach(k=>delete ORDMETA[k]); Object.keys(ORDCAT).forEach(k=>delete ORDCAT[k]); }catch(e){}
+  try{ MESAS.forEach(m=>{m.est='libre';m.t='';m.m=0;m.grp=null;m.grpLabel=null;m.merged=false;m.mesero=null;}); }catch(e){}
+  try{ if(typeof _kdsPrevState!=='undefined')_kdsPrevState={}; if(typeof _fasePrev!=='undefined')_fasePrev={}; }catch(e){}
+}
 async function afterLogin(user){
   window._authUser=user;
   try{ const {data:es}=await sb.rpc('es_super_admin'); window._esSuper=!!es; }catch(e){ window._esSuper=false; }let negId=null;let verificado=false;
@@ -4409,6 +4463,7 @@ async function afterLogin(user){
     if(typeof authErr==='function')authErr('Esta cuenta no pertenece a '+window._tenantNeg.nombre+'. Usa la cuenta de este negocio.');
     return;
   }
+  try{ const _prev=localStorage.getItem('fenlora_negocio'); if(_prev && _prev!==negId && typeof _limpiarCachesNegocio==='function'){ _limpiarCachesNegocio(); } }catch(e){}   // cambió de negocio → no arrastrar datos del anterior
   window.NEGOCIO_ID=negId;try{localStorage.setItem('fenlora_negocio',negId);}catch(e){}
   if(typeof pullEmpleados==='function'){ try{ await pullEmpleados(); }catch(e){} }
   if(_esModoMeseros() && EMPLEADOS.some(e=>e.activo!==false)){
@@ -4432,11 +4487,12 @@ async function crearNegocioSubmit(){
   if(!nombre){authErr('Escribe el nombre del negocio');return;}
   authErr('');authBusy(true);
   try{const {data,error}=await sb.rpc('crear_negocio',{p_nombre:nombre,p_sede:sede});if(error)throw error;
+    try{ if(typeof _limpiarCachesNegocio==='function')_limpiarCachesNegocio(); }catch(e){}   // negocio nuevo arranca limpio
     window.NEGOCIO_ID=data;try{localStorage.setItem('fenlora_negocio',data);}catch(e){}
     hideAuth();if(!window.__booted){window.__booted=true;bootPanel();}
   }catch(e){authBusy(false);authErr('No se pudo crear el negocio: '+(_authMsg(e)));}
 }
-async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{localStorage.removeItem('fenlora_negocio');}catch(e){}window.NEGOCIO_ID=null;window.__booted=false;showAuth('login');}
+async function cerrarSesion(){try{if(sb)await sb.auth.signOut();}catch(e){}try{if(typeof _limpiarCachesNegocio==='function')_limpiarCachesNegocio();}catch(e){}try{localStorage.removeItem('fenlora_negocio');}catch(e){}window.NEGOCIO_ID=null;window.__booted=false;showAuth('login');}
 /* ─── PWA: app instalable + auto-actualización ─── */
 function _buildManifest(){
   try{

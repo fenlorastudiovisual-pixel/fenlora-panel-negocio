@@ -1,75 +1,83 @@
-# 🔍 Informe de Auditoría — FENLORA CLOUD POS
+# 🔍 Informe de Auditoría COMPLETA — FENLORA CLOUD POS
 
 **Fecha:** 5 de agosto de 2026
-**Alcance:** dinero (precios, adiciones, impuestos, propinas), caja, reportes, perfiles/roles de empleados y el ciclo completo del pedido con dos dispositivos.
-**Método:** simulaciones internas automatizadas (127 verificaciones) que reproducen casos reales de clientes y cruzan la matemática esperada contra lo que hace el sistema.
+**Alcance:** TODO el proyecto — el recorrido del cliente de punta a punta (llega → se sienta → pide → cocina → sirve → cobra → se va) y **todas** las secciones/módulos: catálogo, categorías y áreas, importador Excel, menú QR, equipo/empleados, negocios (superadmin), login/multi-tenant, domicilios/llevar/online, mover comandas y platos, mesas unidas, dashboard, caja, reportes.
+**Método:** 152 pruebas automáticas internas + 4 revisiones profundas del código en paralelo (una por grupo de módulos).
+
+> Nota de honestidad: la **primera** auditoría cubrió el núcleo (dinero, caja, reportes, roles, ciclo del pedido). Esta **segunda** pasada cubrió el resto del proyecto y destapó varios bugs reales, ahora corregidos.
 
 ---
 
-## ✅ Resultado general
+## ✅ Resultado
 
-**127 verificaciones, todas correctas** tras aplicar 2 correcciones. Se encontró **1 error de contabilidad** y **1 riesgo** (doble cobro), ambos corregidos. El resto del sistema quedó verificado y cuadrando.
-
----
-
-## 🛠️ Lo que se corrigió
-
-### 1. "Ventas" incluía las propinas (error de contabilidad)
-Antes, el total de **Ventas** —tanto en Caja como en Reportes— sumaba la propina. La propina no es venta del negocio (es del mesero), así que las ventas salían infladas.
-
-**Corregido:**
-- **Ventas (sin propina):** ahora es solo lo que vendió el negocio (productos), sin propina.
-- **Propinas:** siguen mostrándose aparte.
-- **Total recibido:** tarjeta nueva = ventas + propinas (lo que realmente entró).
-- **Efectivo esperado en caja:** SIGUE incluyendo la propina pagada en efectivo, porque ese dinero físicamente está en la caja (así el arqueo cuadra con lo que cuentas).
-- En Reportes, "Medios de pago" se renombró a **"Recibido por medio (incluye propina)"** para que quede claro.
-
-### 2. Riesgo de doble cobro (doble toque en "Cobrar")
-Si se tocaba "Cobrar" dos veces rápido, se podían generar dos facturas de la misma mesa.
-
-**Corregido:** ahora si una cuenta ya fue facturada, un segundo cobro se ignora con el aviso "⚠️ Esta cuenta ya fue facturada". Aplica al cobro normal y al cobro dividido.
+**152 verificaciones, todas en verde** tras aplicar las correcciones. Se encontraron **17 problemas** (2 en la 1ª pasada + 15 en la 2ª). Los de impacto ALTO y MEDIO quedaron corregidos; los menores quedan anotados abajo con transparencia.
 
 ---
 
-## 🔎 Lo que se revisó y quedó CORRECTO (sin cambios)
+## 🛠️ CORREGIDO en esta pasada completa
 
-**Precios y adiciones**
-- Suma base + variantes + adiciones, por cantidad (ej: base 5.000 + 2 adiciones de 1.000 = 7.000 c/u × 2 = 14.000). ✔
-- Variante y adiciones al mismo tiempo suman bien (ej: tamaño grande +3.000 y 2 extras = 7.500). ✔
-- Cortesías: no se cobran (valor 0) pero sí quedan en el pedido. ✔
-- Descuentos por plato y descuento al cobrar: se restan bien, sin doble descuento, y nunca dan total negativo. ✔
+### 🔴 ALTA — Fuga de datos entre negocios (el más grave)
+Como los negocios comparten el mismo navegador (multi-tenant por ruta), al cambiar de un negocio a otro se **arrastraban en memoria/caché los productos, facturas, caja y comandas del negocio anterior**, e incluso podía subirse el catálogo de un negocio a la base de datos de otro.
+**Corregido:** al cambiar de negocio o cerrar sesión, ahora se **limpia todo lo del negocio anterior** (productos, facturas, anulaciones, cierres, caja, comandas, categorías, áreas, empleados, sesión). Además se agregó el filtro por negocio (`negocio_id`) a las consultas y borrados de productos como doble seguro.
 
-**Caja**
-- Efectivo esperado = base + ventas en efectivo + ingresos − egresos. ✔ (ej: 100.000 + 25.500 + 50.000 − 20.000 = 155.500)
-- Solo cuenta las facturas del turno abierto (no mezcla turnos anteriores). ✔
-- Pagos con tarjeta no suman al efectivo esperado. ✔
-- Arqueo/cierre: diferencia = contado − esperado, y guarda el desglose por medio. ✔
+### 🔴 ALTA — Eliminar una mesa ocupada dejaba el pedido "fantasma"
+Borrar una mesa con consumo la quitaba del mapa pero **su pedido seguía vivo en cocina y en la nube**, sin poder cobrarlo ni cerrarlo.
+**Corregido:** ahora al eliminar una mesa ocupada se **anula y libera su pedido** correctamente (avisando antes), y se sincroniza a los demás dispositivos. Igual para "eliminar todas las mesas" de un ambiente.
 
-**Reportes**
-- Total de ventas, propinas, ticket promedio, nº de facturas, productos más vendidos, por medio, por hora, por día y por mesero: cuadran. ✔
-- Anulaciones: cuenta, valor, por motivo, por producto y por mesero. ✔
+### 🔴 ALTA — Mover platos a una mesa unida los perdía
+"Trasladar platos" a una mesa que estaba **unida** los mandaba a una comanda individual huérfana y **desaparecían** de la vista.
+**Corregido:** ahora respeta la mesa unida (usa la comanda del grupo), no se pierde nada, y se sincroniza y guarda.
 
-**Perfiles y roles**
-- PIN de empleados: se guarda cifrado (SHA-256), verifica el correcto y rechaza el incorrecto. ✔
-- Mesero ve Mesas y Cocina; NO ve Caja, Reportes ni Productos. ✔
-- Cajero ve Caja; NO ve Reportes. ✔
-- Cocina solo ve Cocina. ✔
-- Admin ve todo. ✔
-- Cobrar: solo admin y cajero. Marcar en cocina (listo/entregado): solo cocina y admin. ✔
+### 🟠 MEDIA — Mover una comanda dejaba el número de mesa viejo
+Al mover la comanda de la Mesa 5 a la 8, el encabezado, la pestaña y el ticket seguían diciendo "Mesa 5".
+**Corregido:** ahora el traslado actualiza el título a la mesa nueva, guarda y sincroniza (antes ni se guardaba ni se sincronizaba).
 
-**Ciclo completo con 2 dispositivos (mesero + admin)**
-- Pedido → cocina → listo (aviso al mesero con botón y al admin solo con X) → precuenta (mesa "por cobrar" + aviso al admin) → facturar (mesa "facturada, falta pago") → confirmar pago (mesa liberada en ambos). ✔
-- Cobro dividido: genera una factura por persona, la suma cuadra con el total y solo la primera lleva los productos (no duplica). ✔
-- Anulación de un producto ya enviado: pide motivo, lo registra para reportes y lo saca del pedido. ✔
-- Mesas unidas (incluidas no contiguas, ej: 3+5): se ven completas en todos los dispositivos. ✔
+### 🟠 MEDIA — La config del menú QR no se guardaba
+Los interruptores del QR (Pedir la cuenta, Llamar mesero, etc.) volvían a los valores por defecto al recargar.
+**Corregido:** ahora se guardan y sobreviven al reinicio.
+
+### 🟠 MEDIA — El importador de Excel pisaba ajustes del producto
+Al re-importar una lista de precios (sin las columnas "Disponible"/"QR"/"Recomendado"), esos productos volvían a quedar disponibles/visibles aunque los hubieras ocultado.
+**Corregido:** al **actualizar**, ahora solo se pisa lo que venga en el archivo; las columnas ausentes conservan el ajuste actual del producto.
+
+### 🟠 MEDIA — La caja abierta sin internet se podía borrar al reconectar
+Si abrías caja offline, al volver la señal un estado viejo de la nube podía **borrar la caja abierta y sus movimientos**.
+**Corregido:** ahora un estado vacío o más viejo de la nube **no** pisa una caja abierta local; al reconectar se sube primero la caja local. (Marca de tiempo para no perder el más reciente.)
+
+### 🟠 MEDIA — Domicilio sin dirección
+Se podía crear un domicilio sin dirección de entrega.
+**Corregido:** ahora exige la dirección antes de crear el pedido.
+
+### 🟡 Otros arreglos
+- **Doble cobro** (1ª pasada): un doble toque en "Cobrar" podía generar dos facturas. Corregido con bloqueo de idempotencia (normal y dividido).
+- **"Ventas" incluía propinas** (1ª pasada): ahora Ventas es neto (sin propina), Propinas aparte, tarjeta "Total recibido", y el efectivo esperado sigue incluyendo la propina física en caja.
+- **Nombres de categoría con comilla** (ej. `D'Café`) rompían los filtros: ahora se escapan.
+- **CSV**: se neutraliza la inyección de fórmulas (celdas que empiezan por `= + - @`).
+- **Configuración de mesas** (crear/generar/borrar) ahora se guarda de inmediato, no depende del autoguardado.
 
 ---
 
-## 📌 Notas / recomendaciones a futuro (no urgente)
+## 🔎 Verificado y CORRECTO (sin cambios)
 
-- **Impuestos (IVA/INC):** hoy el sistema trabaja con precios finales (lo que ve el cliente). Cuando actives facturación DIAN real habrá que definir si el precio incluye o excluye impuesto y desglosarlo. Queda pendiente para la fase fiscal.
-- **Stock/Kardex:** no entró en esta auditoría (es de otra fase). Cuando lo activemos, se audita el descuento de inventario por venta.
-- **Pasarela de pagos:** el "Confirmar pago" manual queda listo para reemplazarse por el aviso automático de la pasarela cuando la conectemos.
+- **Precios:** base + variantes + adiciones por cantidad; cortesías (no cobran); descuentos por plato y al cobrar (sin doble descuento ni negativos). ✔
+- **Caja:** efectivo esperado, ingresos/egresos, tarjeta que no suma a efectivo, arqueo (contado vs esperado), historial y consolidado CSV (columnas alineadas, rango correcto). ✔
+- **Reportes:** ventas netas, propinas, total recibido, ticket, top productos, por medio, hora, día, mesero, y anulados (cuenta/valor/motivo/producto/mesero). ✔
+- **Empleados/roles:** PIN cifrado (SHA-256) que valida bien; permisos por rol correctos (mesero: mesas+cocina; cajero: +caja; cocina: solo cocina; admin: todo); cobrar solo admin/cajero; marcar en cocina solo cocina/admin. ✔
+- **Catálogo/categorías:** guardar/editar/borrar producto, opciones/variantes, foto; borrar categoría reasigna a "Otros" (no deja huérfanos); borrar área reasigna; renombrar propaga; importador deduplica por nombre. ✔
+- **Ciclo completo con 2 dispositivos:** pedido → cocina → listo (aviso a mesero con botón y a admin solo con X) → precuenta (por cobrar + aviso admin) → facturar (facturada, falta pago) → confirmar pago (liberada en ambos); mesas unidas no contiguas se ven completas en todos. ✔
+- **Pedidos no-mesa:** llevar/domicilio/online se cobran y cierran bien (no quedan ocupando nada). ✔
+- **Operaciones:** retenido no se envía a cocina; notas siguen a la cantidad; solo se unen mesas libres; anular mesa unida libera todas. ✔
+- **Módulos "pronto"** (stock, recetas, compras, DIAN, impresoras): abren sin romperse. ✔
 
 ---
-*Auditoría realizada con 127 pruebas automáticas internas. Todo en verde.*
+
+## 📌 Puntos menores anotados (no urgentes, para una próxima vuelta)
+
+- Un empleado eliminado por el admin podría entrar **sin internet** con su PIN previo (offline). Online queda bloqueado. Se resuelve del todo con el Worker de acceso (Camino B).
+- Con dos cajeros registrando movimientos **al mismo tiempo** en la misma caja, el segundo puede pisar al primero (last-write-wins). Poco común; se puede blindar con merge por movimiento.
+- El importador cuenta como "2 nuevos" dos filas con el mismo nombre nuevo (crea 1). Solo afecta el conteo de la previa, no los datos.
+- Vaciar por completo una comanda **unida** deja las mesas ocupadas hasta que se cancele (por diseño de la unión).
+- Impuestos DIAN, stock/kardex y pasarela de pagos siguen pendientes de sus fases.
+
+---
+*Auditoría completa con 152 pruebas automáticas internas + revisión de todos los módulos. Todo en verde tras las correcciones.*
