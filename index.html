@@ -1180,7 +1180,7 @@ function dashboard(){
     ['MESA 05','libre','Disponible',''],['MESA 06','ocup','hace 1 h','$120.000'],
   ];
   return `
-  <div class="page-head"><h1>👋 Buen día, Sebastián</h1><div class="sub">Esto es lo que está pasando en Dulce Café · Sede Centro hoy.</div></div>
+  <div class="page-head"><h1>👋 Buen día, ${_saludoNombre()}</h1><div class="sub">Esto es lo que está pasando en Dulce Café · Sede Centro hoy.</div></div>
   <div class="kpi-grid">${kpis.map(k=>`
     <div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}
   </div>
@@ -3302,7 +3302,7 @@ function dashboard(){
   const ult=FACTURAS.slice(0,8);
   const mesas=MESAS.filter(m=>m.piso==='Piso 1');
   return `
-  <div class="page-head"><h1>👋 Hola, Sebastián</h1><div class="sub">Resumen de Dulce Café · Sede Centro. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
+  <div class="page-head"><h1>👋 Hola, ${_saludoNombre()}</h1><div class="sub">Resumen de Dulce Café · Sede Centro. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
   <div class="kpi-grid">${kpis.map(k=>`<div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}</div>
   <div class="section-title">⚡ Accesos directos</div>
   <div class="qa-grid">${qa.map(q=>`<div class="qa" onclick="openTab('${q[0]}')"><div class="qi" style="background:${q[3]};color:${q[4]}">${q[1]}</div><div class="qn">${q[2]}</div></div>`).join('')}</div>
@@ -4021,6 +4021,7 @@ function _esModoMeseros(){ try{ return /(^|\/)meseros\/?$/.test(location.pathnam
 window._tenant=_tenantFromPath();
 window._tenantNeg=null;
 function _marcaNegocio(){ return (window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'Panel del Negocio'; }
+function _saludoNombre(){ if(window._tenant && window._tenantNeg && window._tenantNeg.nombre) return window._tenantNeg.nombre; return 'Fenlora'; }
 async function resolveTenant(){
   window._tenantNeg=null;
   if(!window._tenant||!sb) return;
