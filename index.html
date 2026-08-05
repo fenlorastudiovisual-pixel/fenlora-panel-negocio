@@ -184,6 +184,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 #previewBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100000;background:var(--amber,#F59E0B);color:#151515;padding:10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;max-width:92vw}
 #previewBar button{background:#151515;color:#fff;border:none;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:600;font-size:12.5px;white-space:nowrap}
 .neg-form{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.nf{margin-bottom:13px}
+.nf label{display:block;font-size:12px;color:var(--txt2);margin-bottom:6px;font-weight:500}
+.nf-row{display:flex;gap:12px}
+.nf-row .nf{flex:1;min-width:0}
 .neg-alertbar{background:var(--amber,#f59e0b);color:#151515;padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px}
 .neg-card{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;flex-wrap:wrap}
 .neg-card.susp{opacity:.6}
@@ -3591,14 +3595,44 @@ async function crearNegocioAdmin(){
   }catch(e){ toastT('No se pudo crear: '+String(e.message||e).slice(0,70)); }
 }
 async function _negUpdate(id,patch){ try{ const {error}=await sb.from('negocios').update(patch).eq('id',id); if(error)throw error; await pullNegocios(); }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,60)); } }
-function editarNegocioPrompt(id){
-  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return;
-  const nombre=prompt('Nombre del negocio:',g.nombre); if(nombre===null)return;
-  const sub=prompt('Subdominio (ej: dulcecafe). Vacío = sin subdominio:',g.subdominio||''); if(sub===null)return;
-  const plan=prompt('Plan (prueba / basico / pro):',g.plan||'prueba'); if(plan===null)return;
-  const vence=prompt('Vence (AAAA-MM-DD). Vacío = sin fecha:',g.vence||''); if(vence===null)return;
-  _negUpdate(id,{nombre:nombre.trim(),subdominio:(sub.trim().toLowerCase().replace(/[^a-z0-9-]/g,''))||null,plan:plan.trim()||'prueba',vence:vence.trim()||null});
+let _negEditId=null;
+function _nmRuta(){ const el=document.getElementById('nmRutaPrev'); if(!el)return; const sub=document.getElementById('nmSub'); const base=_slugify((document.getElementById('nmNombre')||{}).value||''); const actual=_slugify((sub||{}).value||'')||base; el.innerHTML = actual?('🌐 URL del dueño: <b>'+_negBaseHost()+'/'+actual+'</b>'):''; }
+function openNegModal(id){
+  const g = id ? NEGOCIOS_ADMIN.find(x=>x.id===id) : null; _negEditId = id||null;
+  const v=(x)=> (g && g[x]!=null) ? String(g[x]).replace(/"/g,'&quot;') : '';
+  const planOpts=['prueba','basico','pro'].map(pl=>'<option value="'+pl+'"'+((g&&g.plan===pl)?' selected':'')+'>'+({prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'}[pl])+'</option>').join('');
+  const html='<div class="modal" style="max-width:500px"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
+    +'<div class="modal-b">'
+    +'<div class="nf"><label>Nombre del negocio *</label><input class="pf-in" id="nmNombre" value="'+v('nombre')+'" oninput="_nmRuta()" placeholder="Ej: Dulce Café"></div>'
+    +'<div class="nf-row"><div class="nf"><label>WhatsApp del dueño *</label><input class="pf-in" id="nmWa" value="'+v('whatsapp')+'" placeholder="Ej: 3112746813"></div>'
+    +'<div class="nf"><label>Correo del dueño *</label><input class="pf-in" id="nmCorreo" value="'+v('correo')+'" placeholder="dueno@correo.com"></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>NIT / Cédula (opcional)</label><input class="pf-in" id="nmDoc" value="'+v('documento')+'" placeholder="Ej: 900123456"></div>'
+    +'<div class="nf"><label>Ruta URL '+(g?'':'(automática)')+'</label><input class="pf-in" id="nmSub" value="'+v('subdominio')+'" oninput="_nmRuta()" placeholder="se genera del nombre"></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Plan</label><select class="pf-in" id="nmPlan">'+planOpts+'</select></div>'
+    +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
+    +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
+    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
+  let host=document.getElementById('negModalHost'); if(!host){host=document.createElement('div');host.id='negModalHost';document.body.appendChild(host);}
+  host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeNegModal()">'+html+'</div>';
+  _nmRuta();
 }
+function closeNegModal(){ const h=document.getElementById('negModalHost'); if(h)h.innerHTML=''; _negEditId=null; }
+async function saveNegModal(){
+  const gv=(id)=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
+  const nombre=gv('nmNombre'), wa=gv('nmWa'), co=gv('nmCorreo'), doc=gv('nmDoc'), sub=_slugify(gv('nmSub')), plan=document.getElementById('nmPlan').value, vence=gv('nmVence')||null;
+  if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
+  if(_negEditId){
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null});
+    toastT('Cambios guardados ✓'); closeNegModal();
+  } else {
+    if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
+    if(!/.+@.+\..+/.test(co)){ toastT('Escribe un correo válido del dueño'); return; }
+    try{ const {error}=await sb.rpc('admin_crear_negocio',{p_nombre:nombre,p_sub:sub||null,p_plan:plan,p_vence:vence,p_whatsapp:wa,p_correo:co,p_documento:doc||null}); if(error)throw error;
+      toastT('Negocio "'+nombre+'" creado ✓'); closeNegModal(); await pullNegocios();
+    }catch(e){ toastT('No se pudo crear: '+String(e.message||e).slice(0,70)); }
+  }
+}
+function entrarNegocio(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; if(!g.subdominio){ toastT('Primero asígnale una ruta (Editar)'); return; } window.open('https://'+_negBaseHost()+'/'+g.subdominio,'_blank'); }
 function toggleSuspender(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; const nuevo=(g.estado==='suspendido')?'activo':'suspendido'; if(!confirm((nuevo==='suspendido'?'¿Suspender':'¿Reactivar')+' a '+g.nombre+'?'))return; _negUpdate(id,{estado:nuevo}); }
 async function eliminarNegocioAdmin(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; if(!confirm('¿ELIMINAR "'+g.nombre+'" y TODOS sus datos? Esto no se puede deshacer.'))return; try{ const {error}=await sb.from('negocios').delete().eq('id',id); if(error)throw error; toastT('Negocio eliminado'); await pullNegocios(); }catch(e){ toastT('No se pudo eliminar: '+String(e.message||e).slice(0,60)); } }
 function renderNegList(){
@@ -3617,7 +3651,8 @@ function renderNegList(){
       </div>
       <div class="neg-acts">
         <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
-        <button class="btn ghost" onclick="editarNegocioPrompt('${g.id}')">✏️ Editar</button>
+        <button class="btn ghost" onclick="entrarNegocio('${g.id}')">➡️ Entrar</button>
+        <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar</button>
         <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
         <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
       </div></div>`;
@@ -3630,17 +3665,7 @@ function negociosView(){
   <div class="page-head"><h1>🏢 Negocios <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
     <div class="sub">Crea y administra los negocios de tus clientes. Cada uno opera en su propia dirección (ruta) con el mismo POS.</div></div>
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
-  <div class="section-title">Crear negocio</div>
-  <div class="neg-form">
-    <input class="pf-in" id="negNombre" placeholder="Nombre del negocio *" oninput="_previewRuta()">
-    <input class="pf-in" id="negWa" placeholder="WhatsApp del dueño *" style="max-width:200px">
-    <input class="pf-in" id="negCorreo" placeholder="Correo del dueño *" style="max-width:220px">
-    <input class="pf-in" id="negDoc" placeholder="NIT / Cédula (opcional)" style="max-width:190px">
-    <select class="pf-in" id="negPlan" style="max-width:150px"><option value="prueba">🔹 Prueba</option><option value="basico">🔸 Básico</option><option value="pro">⭐ Pro</option></select>
-    <input class="pf-in" id="negVence" type="date" style="max-width:170px" title="Vencimiento">
-    <button class="btn primary" style="width:auto;padding:10px 18px" onclick="crearNegocioAdmin()">+ Crear</button>
-    <div id="negRutaPrev" style="width:100%;font-size:12px;color:var(--txt2);margin-top:2px"></div>
-  </div>
+  <div style="margin:6px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
   <div class="section-title" style="margin-top:22px">Todos los negocios</div>
   <div id="negList"></div>`;
 }
