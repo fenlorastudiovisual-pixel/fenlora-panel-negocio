@@ -1399,6 +1399,7 @@ const DULCE_CAFE=[
 const PRODUCTS=DULCE_CAFE.map(p=>JSON.parse(JSON.stringify(p)));
 const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
 const MESEROS=['Sebastián','Laura','Andrés','Kelly'];
+function _meseroActual(){ return (window._empleado&&window._empleado.nombre) || (window.ROL==='admin'?'Administrador':'Mesero'); }
 const ALMACENES=['Almacén principal','Barra'];
 const PAGOS=[['efectivo','💵','Efectivo'],['tarjeta','💳','Tarjeta'],['nequi','📱','Nequi'],['daviplata','📲','Daviplata'],['qr','🔳','Pago QR']];
 const TIPS=[0,5,10,15];
@@ -1821,7 +1822,7 @@ function descargarConsolidadoCSV(){const list=window._conList||_conRange();if(!l
 function initCaja(){/* render vía buildPanel innerHTML */}
 function abrirCaja(){
   const v=parseInt((document.getElementById('cajaBase').value||'').replace(/\D/g,''))||0;
-  CAJA={abierta:true,base:v,abiertaEn:Date.now(),cajero:'Sebastián',movimientos:[]};
+  CAJA={abierta:true,base:v,abiertaEn:Date.now(),cajero:_meseroActual(),movimientos:[]};
   saveCaja();rerenderCaja();toastT('🔓 Caja abierta con base '+COP(v));
 }
 function openMov(tipo){
@@ -2373,7 +2374,7 @@ function startDelivery(){
 function openOrder(target,title,ico,meta){
   if(!ORD[target]||!ORD[target].length){
     ORD[target]=ORD[target]||[];ORDCAT[target]='Recomendados';
-    ORDMETA[target]=Object.assign({com:4,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',openedAt:Date.now(),title,ico},meta||{});
+    ORDMETA[target]=Object.assign({com:4,mesero:_meseroActual(),almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',openedAt:Date.now(),title,ico},meta||{});
   }
   const mt=ORDMETA[target]; if(mt){ if(!mt.title)mt.title=title; if(!mt.ico)mt.ico=ico; if(!mt.openedAt)mt.openedAt=Date.now(); }
   DYN[target]={title:(mt&&mt.title)||title,ico:(mt&&mt.ico)||ico,render:()=>orderView(target),init:()=>initOrder(target)};
@@ -2641,9 +2642,18 @@ function setObs(target,v){ORDMETA[target].obs=v;}
 function syncMesa(target){
   if(!target.startsWith('mesa_'))return;
   if(typeof _touched!=='undefined' && !_applyingRemote && target){ _touched.add(target); }
-  const lines=ORD[target];
+  const lines=ORD[target]||[];
   const total=netTotal(lines);
-  target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est=lines.length?'ocup':'libre';m.t='ahora';m.m=total;}});
+  const nums=target.replace('mesa_','').split('_').filter(Boolean);
+  const esUnida = nums.length>1;
+  const label = esUnida ? ('Mesa '+nums.map(x=>pad(+x)).join(' + ')) : null;
+  const existe = !!ORD[target];   // la comanda existe (aunque esté vacía) → la mesa está tomada
+  nums.forEach(x=>{const m=getMesa(+x);if(m){
+    m.est = (esUnida ? existe : lines.length>0) ? 'ocup' : 'libre';
+    m.t='ahora'; m.m=total;
+    if(esUnida && existe){ m.merged=true; m.grp=target; m.grpLabel=label; }
+    else if(!esUnida){ m.merged=false; m.grp=null; m.grpLabel=null; }
+  }});
 }
 
 /* ── 4 botones de guardado ── */
@@ -3027,7 +3037,7 @@ function doMoverPlatos(target){
   const sel=window._movSel||{};const ids=Object.keys(sel).filter(k=>sel[k]).map(Number);
   if(!ids.length){toastT('Marca al menos un plato');return;}
   const to=+document.getElementById('movDest').value;const tk='mesa_'+to;
-  if(!ORD[tk]){ORD[tk]=[];ORDCAT[tk]='Recomendados';ORDMETA[tk]=Object.assign({com:2,mesero:'Sebastián',almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'});}
+  if(!ORD[tk]){ORD[tk]=[];ORDCAT[tk]='Recomendados';ORDMETA[tk]=Object.assign({com:2,mesero:_meseroActual(),almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1'});}
   const move=ORD[target].filter(l=>ids.includes(l.lid));
   ORD[target]=ORD[target].filter(l=>!ids.includes(l.lid));
   move.forEach(l=>ORD[tk].push(l));
