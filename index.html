@@ -1655,7 +1655,7 @@ function delProd(id){if(!confirm('¿Eliminar este producto del catálogo?'))retu
 
 /* ═══ CAJA (apertura, movimientos, arqueo/cierre de turno) ═══ */
 let CAJA=null, CIERRES=[];
-function saveCaja(){try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){}}
+function saveCaja(){try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof pushCaja==='function'&&!_applyingCaja)pushCaja();}
 function saveCierres(){try{localStorage.setItem('fenlora_cierres',JSON.stringify(CIERRES));}catch(e){}}
 function loadCaja(){try{const r=localStorage.getItem('fenlora_caja');CAJA=r?JSON.parse(r):null;const c=localStorage.getItem('fenlora_cierres');CIERRES=c?JSON.parse(c):[];}catch(e){CAJA=null;CIERRES=[];}}
 function cajaResumen(){
@@ -2328,6 +2328,7 @@ function newOrder(type){
 
 /* comensales modal */
 function askComensales(n){
+  if(typeof _cajaAbierta==='function' && !_cajaAbierta()){ toastT('⚠️ Abre la caja antes de tomar pedidos'); }
   pendingMesa=n;comensales=1;
   const m=document.getElementById('comModal');
   m.innerHTML=`<div class="modal" style="width:340px">
@@ -3818,6 +3819,26 @@ function _removeRemoteComanda(clave){
   if(typeof saveState==='function')saveState();
   _applyingRemote=false;
 }
+let _applyingCaja=false, _cajaCh=null;
+async function pullCaja(){
+  if(!_cloudReady())return;
+  try{ const {data,error}=await sb.from('caja_estado').select('estado').eq('negocio_id',NEGOCIO_ID).maybeSingle(); if(error)throw error;
+    _applyingCaja=true; CAJA=(data&&data.estado)||null; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
+  }catch(e){ _applyingCaja=false; console.warn('pullCaja:',e.message||e); }
+}
+function pushCaja(){
+  if(!_cloudReady())return;
+  try{ sb.from('caja_estado').upsert({negocio_id:NEGOCIO_ID,estado:CAJA,actualizado:new Date().toISOString()},{onConflict:'negocio_id'}).then(()=>{},()=>{}); }catch(e){}
+}
+function subscribeCaja(){
+  if(!_cloudReady()||typeof sb.channel!=='function')return;
+  try{ if(_cajaCh){ try{sb.removeChannel(_cajaCh);}catch(e){} _cajaCh=null; }
+    _cajaCh=sb.channel('caja-'+NEGOCIO_ID).on('postgres_changes',{event:'*',schema:'public',table:'caja_estado',filter:'negocio_id=eq.'+NEGOCIO_ID},payload=>{
+      _applyingCaja=true; CAJA=(payload.new&&payload.new.estado)||null; try{localStorage.setItem('fenlora_caja',JSON.stringify(CAJA));}catch(e){} if(typeof rerenderCaja==='function')rerenderCaja(); _applyingCaja=false;
+    }).subscribe();
+  }catch(e){ console.warn('subscribeCaja:',e.message||e); }
+}
+function _cajaAbierta(){ return !!(CAJA&&CAJA.abierta); }
 function subscribeComandas(){
   if(!_cloudReady()||typeof sb.channel!=='function')return;
   try{
@@ -3862,7 +3883,7 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
