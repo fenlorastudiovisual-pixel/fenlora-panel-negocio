@@ -554,6 +554,21 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
   .cluster-link{display:none}  /* el 🔗 entre tarjetas estorba al envolver; el rótulo de arriba ya indica que están unidas */
 }
 
+/* ── Aviso GRANDE al mesero cuando cocina marca el pedido listo ── */
+.listo-ov{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(3,10,8,.74);backdrop-filter:blur(4px);padding:20px}
+.listo-ov.on{display:flex;animation:listoIn .22s ease}
+@keyframes listoIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.listo-card{background:linear-gradient(180deg,#0b3b2b,#062018);border:2px solid var(--primary);border-radius:24px;padding:34px 26px;text-align:center;max-width:430px;width:100%;box-shadow:0 30px 80px -18px rgba(0,229,160,.6)}
+.listo-card.cuenta{background:linear-gradient(180deg,#3d2a08,#201404);border-color:var(--amber);box-shadow:0 30px 80px -18px rgba(245,197,66,.55)}
+.listo-card.cuenta .listo-t{color:var(--amber)}
+.listo-card.cuenta .listo-btn{background:var(--amber);color:#241a02}
+.listo-emoji{font-size:64px;line-height:1;animation:listoPulse 1s infinite}
+@keyframes listoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.listo-t{font-family:'Outfit',sans-serif;font-weight:800;font-size:25px;letter-spacing:1px;color:var(--primary);margin-top:8px}
+.listo-mesa{font-family:'Outfit',sans-serif;font-weight:800;font-size:34px;color:#fff;margin-top:2px}
+.listo-sub{font-size:14px;color:#bfeede;margin-top:10px}
+.listo-btn{margin-top:22px;width:100%;background:var(--primary);color:#052e21;border:none;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;font-weight:800;font-size:17px;cursor:pointer}
+
 /* ── Info extra en las tarjetas de mesa ── */
 .mesa{display:flex;flex-direction:column;min-height:128px}
 .mesa-m{position:static !important;margin-top:auto;padding-top:8px}
@@ -1295,7 +1310,6 @@ function suggestNotes(p){
   const out=[];[...base,...fill].forEach(x=>{if(!out.includes(x)&&out.length<15)out.push(x);});
   return out;
 }
-const ADIC={t:'Agrégale algo más',type:'multi',items:[{n:'Leche vegetal',p:1000},{n:'Crema batida',p:1000},{n:'Sabor extra',p:800}]};
 const SABOR={t:'Sabor',type:'single',req:1,items:[{n:'Vainilla',p:0},{n:'Caramelo',p:0},{n:'Amaretto',p:0},{n:'Macadamia',p:0}]};
 const TAZAS={t:'Tazas',type:'single',req:1,items:[{n:'2 tazas',p:0},{n:'3 tazas',p:4000},{n:'4 tazas',p:8000},{n:'6 tazas',p:14000},{n:'8 tazas',p:22000}]};
 const DULCE_CAFE=[
@@ -1306,11 +1320,11 @@ const DULCE_CAFE=[
   {id:'d5',n:'Café Campesino',pr:4000,cat:'Calientes',e:'☕',area:'BARRA'},
   {id:'d6',n:'Machiato',pr:4500,cat:'Calientes',e:'☕',area:'BARRA'},
   {id:'d7',n:'Café Bombom',pr:8000,cat:'Calientes',e:'☕',area:'BARRA'},
-  {id:'d8',n:'Capuccino Tradicional',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1,opts:[ADIC]},
-  {id:'d9',n:'Capuccino Saborizado',pr:8500,cat:'Calientes',e:'☕',area:'BARRA',opts:[SABOR,ADIC]},
-  {id:'d10',n:'Café Latte',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1,opts:[ADIC]},
-  {id:'d11',n:'Café Latte Oreo',pr:8000,cat:'Calientes',e:'☕',area:'BARRA',opts:[ADIC]},
-  {id:'d12',n:'Mocca',pr:7000,cat:'Calientes',e:'☕',area:'BARRA',opts:[ADIC]},
+  {id:'d8',n:'Capuccino Tradicional',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1},
+  {id:'d9',n:'Capuccino Saborizado',pr:8500,cat:'Calientes',e:'☕',area:'BARRA',opts:[SABOR]},
+  {id:'d10',n:'Café Latte',pr:6000,cat:'Calientes',e:'☕',area:'BARRA',rec:1},
+  {id:'d11',n:'Café Latte Oreo',pr:8000,cat:'Calientes',e:'☕',area:'BARRA'},
+  {id:'d12',n:'Mocca',pr:7000,cat:'Calientes',e:'☕',area:'BARRA'},
   {id:'d13',n:'Milo',pr:6000,cat:'Calientes',e:'🍫',area:'BARRA'},
   {id:'d14',n:'Infusión de frutas',pr:5500,cat:'Calientes',e:'🍵',area:'BARRA'},
   {id:'d15',n:'Infusión de frutos rojos',pr:5000,cat:'Calientes',e:'🍵',area:'BARRA'},
@@ -1333,7 +1347,7 @@ const DULCE_CAFE=[
   {id:'d32',n:'Capuccino Frío Saborizado',pr:12000,cat:'Frías',e:'🧋',area:'BARRA',opts:[SABOR]},
   {id:'d33',n:'Capuccino con Helado',pr:10000,cat:'Frías',e:'🍨',area:'BARRA'},
   {id:'d34',n:'Latte Frío',pr:7500,cat:'Frías',e:'🧋',area:'BARRA'},
-  {id:'d35',n:'Frappe de café',pr:7000,cat:'Frías',e:'🧋',area:'BARRA',opts:[ADIC]},
+  {id:'d35',n:'Frappe de café',pr:7000,cat:'Frías',e:'🧋',area:'BARRA'},
   {id:'d36',n:'Frappucino',pr:9000,cat:'Frías',e:'🧋',area:'BARRA'},
   {id:'d37',n:'Mocca Frío',pr:8000,cat:'Frías',e:'🧋',area:'BARRA'},
   {id:'d38',n:'Malteada de café',pr:11500,cat:'Frías',e:'🥤',area:'BARRA'},
@@ -2240,7 +2254,8 @@ function mesaCard(m){
   const key=m.grp||('mesa_'+m.n);
   const ometa=ORDMETA[key]||{};
   const mins=(!libre&&ometa.openedAt)?Math.max(0,Math.floor((Date.now()-ometa.openedAt)/60000)):null;
-  const timeStr=libre?'Disponible':(m.est==='cobr'?'Por cobrar':(mins!=null?('hace '+mins+' min'):(m.t||'ahora')));
+  const fase=ometa.fase;
+  const timeStr=libre?'Disponible':(fase==='facturada'?'Facturada · falta pago':(fase==='precuenta'?'Pidió la cuenta':(m.est==='cobr'?'Por cobrar':(mins!=null?('hace '+mins+' min'):(m.t||'ahora')))));
   const mesero=ometa.mesero||m.mesero;
   const koc=mesaKitchen(m);
   const K={sinpedir:['⏳','Sin enviar','k-wait'],parcial:['➕','Por enviar','k-wait'],cocina:['🍳','En cocina','k-cook'],listo:['✅','Listo p/ servir','k-ready'],servido:['🍽️','Servido','k-served']};
@@ -2248,10 +2263,12 @@ function mesaCard(m){
   const nit=(ORD[key]||[]).reduce((s,l)=>s+l.qty,0);
   const badges=[];
   if(!libre){
-    if(m.alerta) badges.push(`<span class="mb alert ${m.alerta}">${m.alerta==='mesero'?'🔔 Llamó':'🧾 Pidió cuenta'}</span>`);
+    if(fase==='facturada') badges.push(`<span class="mb alert cuenta">💵 Facturada · falta pago</span>`);
+    else if(fase==='precuenta') badges.push(`<span class="mb alert cuenta">🧾 Pidió la cuenta</span>`);
+    else if(m.alerta) badges.push(`<span class="mb alert ${m.alerta}">${m.alerta==='mesero'?'🔔 Llamó':'🧾 Pidió cuenta'}</span>`);
     badges.push(`<span class="mb com">👥 ${com}</span>`);
     if(nit) badges.push(`<span class="mb">🍽️ ${nit}</span>`);
-    if(koc&&K[koc]) badges.push(`<span class="mb ${K[koc][2]}">${K[koc][0]} ${K[koc][1]}</span>`);
+    if(!fase && koc&&K[koc]) badges.push(`<span class="mb ${K[koc][2]}">${K[koc][0]} ${K[koc][1]}</span>`);
   }
   return `<div class="mesa ${m.est}${unirSel.includes(m.n)?' sel':''}" onclick="clickMesa(${m.n},'${m.est}')">
     ${!libre?`<button class="mesa-act" title="Acciones" onclick="event.stopPropagation();openMesaAct(${m.n})">⋮</button>`:''}
@@ -2265,6 +2282,7 @@ function renderComContent(){
   const c=document.getElementById('comContent'); if(!c)return;
   const ct=document.getElementById('comTypes'); if(ct) ct.querySelectorAll('.comtype').forEach((el,i)=>{const b=el.querySelector('.ct-badge'); if(b&&COMTYPES[i])b.textContent=comCount(COMTYPES[i][0]);});
   if(comType==='mesas'){
+    if(typeof _normalizarMesasUnidas==='function')_normalizarMesasUnidas();
     let html=`<div class="mesas-head"><b>🗺️ Mapa de mesas</b>
       <div class="mesa-legend"><span>🟢 Libre</span><span>🟠 Ocupada</span><span>🔴 Por cobrar</span></div>
       <button class="btn ghost" style="width:auto;padding:9px 14px" onclick="toggleUnir()">${unirMode?'✕ Cancelar':'🔗 Unir mesas'}</button></div>`;
@@ -2618,13 +2636,13 @@ function comandaFoot(target){
     <div class="save-grid">
       <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
       <button class="sbtn prod" onclick="enviarProduccion('${target}')" ${pend?'':'disabled'}><span class="si">🔥</span>Enviar a Producción${pend?' ('+pend+')':''}</button>
-      <button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Enviar Comanda</button>
+      ${(window.ROL||'admin')!=='mesero'?`<button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Enviar Comanda</button>`:''}
       ${_puedeCobrar()?`<button class="sbtn fact" onclick="openPay('${target}')"><span class="si">💵</span>Facturar y Grabar</button>`:''}
     </div>
     ${held?`<div style="font-size:10.5px;color:var(--amber);text-align:center;margin-top:8px">⏸ ${held} plato(s) retenido(s) — se envían cuando toques "▶ enviar" en cada uno</div>`:''}
     <div class="sec-row">
       ${_puedeCobrar()?`<button class="btn ghost" onclick="dividir('${target}')">✂️ Dividir</button>`:''}
-      <button class="btn ghost" onclick="printComanda('${target}','precuenta')">🧮 Precuenta</button>
+      <button class="btn ghost" onclick="pedirCuenta('${target}')">🧮 Precuenta</button>
       <button class="btn ghost" onclick="moverPlatos('${target}')">↔ Mover platos</button>
       <button class="btn ghost sec-danger" onclick="cancelarComanda('${target}')">🚫 Anular</button>
     </div>`;
@@ -2669,12 +2687,31 @@ function syncMesa(target){
   const esUnida = nums.length>1;
   const label = esUnida ? ('Mesa '+nums.map(x=>pad(+x)).join(' + ')) : null;
   const existe = !!ORD[target];   // la comanda existe (aunque esté vacía) → la mesa está tomada
+  const fase=(ORDMETA[target]||{}).fase;   // 'precuenta' | 'facturada' → la mesa está "por cobrar", no se pisa
   nums.forEach(x=>{const m=getMesa(+x);if(m){
-    m.est = (esUnida ? existe : lines.length>0) ? 'ocup' : 'libre';
+    if(fase==='precuenta'||fase==='facturada') m.est='cobr';
+    else m.est = (esUnida ? existe : lines.length>0) ? 'ocup' : 'libre';
     m.t='ahora'; m.m=total;
     if(esUnida && existe){ m.merged=true; m.grp=target; m.grpLabel=label; }
     else if(!esUnida){ m.merged=false; m.grp=null; m.grpLabel=null; }
   }});
+}
+/* Reconstruye SIEMPRE las mesas unidas desde las comandas activas (robusto contra estado local viejo:
+   una mesa que quedó "pegada" como disponible aunque su comanda unida exista, o un grupo viejo sin comanda). */
+function _normalizarMesasUnidas(){
+  const grpOf={},labelOf={};
+  Object.keys(ORD).forEach(k=>{
+    if(!k.startsWith('mesa_'))return;
+    const nums=k.replace('mesa_','').split('_').filter(Boolean);
+    if(nums.length>1){ const label='Mesa '+nums.map(x=>pad(+x)).join(' + '); nums.forEach(x=>{ grpOf[+x]=k; labelOf[+x]=label; }); }
+  });
+  MESAS.forEach(m=>{
+    if(grpOf[m.n]){ m.merged=true; m.grp=grpOf[m.n]; m.grpLabel=labelOf[m.n]; if(m.est==='libre')m.est='ocup'; }
+    else if(m.grp && !ORD[m.grp]){ // grupo viejo cuya comanda ya no existe → soltar la mesa
+      m.merged=false; m.grp=null; m.grpLabel=null;
+      if(m.est!=='cobr') m.est=(ORD['mesa_'+m.n]&&ORD['mesa_'+m.n].length)?'ocup':'libre';
+    }
+  });
 }
 
 /* ── 4 botones de guardado ── */
@@ -2733,7 +2770,20 @@ function printComanda(target,mode){
       <div style="font-size:11.5px;color:var(--txt2);text-align:center;margin-top:10px">${pre?'Se entrega al cliente para que revise antes de pagar. No cobra ni cierra la mesa.':'Comprobante del pedido para el mesero/registro. Con “Enviar a Producción” va a cocina.'}</div></div>
     <div class="modal-f"><div class="print-actions">${acts}</div></div></div>`;
   m.classList.add('on');
-  if(pre&&isMesa){ target.replace('mesa_','').split('_').forEach(x=>{const mm=getMesa(+x);if(mm&&mm.est!=='libre')mm.est='cobr';}); if(document.getElementById('comContent'))renderComContent(); }
+}
+/* El mesero (o quien sea) PIDE la cuenta: la mesa pasa a "por cobrar" (fase sincronizada), NO se libera,
+   y le llega aviso al admin/cajero para que la facture. Luego muestra la precuenta impresa. */
+function pedirCuenta(target){
+  const lines=ORD[target]||[]; if(!lines.length){toastT('La comanda está vacía');return;}
+  if(target.startsWith('mesa_')){
+    ORDMETA[target]=ORDMETA[target]||{};
+    if(ORDMETA[target].fase!=='facturada'){ ORDMETA[target].fase='precuenta'; ORDMETA[target].precuentaAt=Date.now(); }
+    if(typeof syncMesa==='function')syncMesa(target);
+    if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
+    if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
+    toastT('🧾 Cuenta solicitada · el cajero/admin la verá para facturar');
+  }
+  printComanda(target,'precuenta');
 }
 function closePrint(){document.getElementById('printModal').classList.remove('on');}
 document.getElementById('printModal').addEventListener('click',e=>{if(e.target.id==='printModal')closePrint();});
@@ -2841,13 +2891,39 @@ function confirmPay(){
   };
   addFactura(factura);
   closePay();
-  toastT(`${pay.fe?'📄 Factura electrónica':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} en ${label}`);
-  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
-  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
-  closeTab(target);
+  if(target.startsWith('mesa_')){
+    // FACTURAR ≠ PAGADO: la mesa queda "facturada / falta confirmar pago", NO se libera todavía.
+    ORDMETA[target]=ORDMETA[target]||{};
+    ORDMETA[target].fase='facturada'; ORDMETA[target].facturaNum=factura.num; ORDMETA[target].facturadaAt=Date.now();
+    if(typeof syncMesa==='function')syncMesa(target);
+    if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
+    closeTab(target);
+    if(document.getElementById('comContent'))renderComContent();
+    if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+    saveState();
+    toastT(`${pay.fe?'📄 Factura':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} · falta CONFIRMAR PAGO para liberar la mesa`);
+  } else {
+    // Pedidos sin mesa (llevar / domicilio / online): no hay mesa que retener → se cierra de una.
+    toastT(`${pay.fe?'📄 Factura electrónica':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} en ${label}`);
+    delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
+    closeTab(target);
+    if(document.getElementById('comContent'))renderComContent();
+    saveState();
+  }
+}
+/* Admin/cajero confirma que el cliente YA pagó → libera la mesa en TODOS los dispositivos. */
+function confirmarPago(clave){
+  if(!clave)return;
+  if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});
+  delete ORD[clave];delete ORDMETA[clave];delete ORDCAT[clave];
+  try{ delete _fasePrev[clave]; delete _kdsPrevState[clave]; }catch(e){}
+  if(typeof closeComandaCloud==='function')closeComandaCloud(clave);
+  try{closeMesaAct();}catch(e){}
+  if(typeof openTabs!=='undefined' && openTabs.includes(clave) && typeof closeTab==='function')closeTab(clave);
   if(document.getElementById('comContent'))renderComContent();
   if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   saveState();
+  toastT('✅ Pago confirmado · mesa liberada');
 }
 function closePay(){document.getElementById('payModal').classList.remove('on');}
 document.getElementById('payModal').addEventListener('click',e=>{if(e.target.id==='payModal')closePay();});
@@ -2940,11 +3016,19 @@ function confirmSplitCheckout(){
       split:{parte:i+1, de:parts.length}
     });
   });
-  toastT(parts.length+' facturas generadas · '+COP(parts.reduce((s,p)=>s+p.amount,0)));
-  if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const mm=getMesa(+x);if(mm){mm.est='libre';mm.t='';mm.m=0;mm.merged=false;mm.grp=null;mm.grpLabel=null;}});}
-  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
-  closeSplit();closeTab(target);saveState();
-  if(document.getElementById('comContent'))renderComContent();
+  toastT(parts.length+' facturas generadas · '+COP(parts.reduce((s,p)=>s+p.amount,0))+' · falta CONFIRMAR PAGO');
+  if(target.startsWith('mesa_')){
+    ORDMETA[target]=ORDMETA[target]||{};
+    ORDMETA[target].fase='facturada'; ORDMETA[target].facturaNum=baseNum; ORDMETA[target].facturadaAt=Date.now();
+    if(typeof syncMesa==='function')syncMesa(target);
+    if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
+    closeSplit();closeTab(target);saveState();
+    if(document.getElementById('comContent'))renderComContent();
+  } else {
+    delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
+    closeSplit();closeTab(target);saveState();
+    if(document.getElementById('comContent'))renderComContent();
+  }
 }
 function closeSplit(){document.getElementById('splitModal').classList.remove('on');}
 document.getElementById('splitModal').addEventListener('click',e=>{if(e.target.id==='splitModal')closeSplit();});
@@ -2992,7 +3076,7 @@ function cancelarComanda(target){
   if(!mot)return;
   toastT('🚫 Comanda anulada: '+((DYN[target]&&DYN[target].title)||'')+' — '+mot);
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
-  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
+  delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];try{ delete _fasePrev[target]; delete _kdsPrevState[target]; }catch(e){}if(typeof closeComandaCloud==='function')closeComandaCloud(target);
   try{closeMesaAct();}catch(e){}
   closeTab(target);
   if(document.getElementById('comContent'))renderComContent();
@@ -3001,13 +3085,16 @@ function cancelarComanda(target){
 }
 function openMesaAct(n){
   mesaActN=n;const mm=getMesa(n);const key=(mm&&mm.grp)||('mesa_'+n);const label=(mm&&mm.grpLabel)||('Mesa '+pad(n));const ico=(mm&&mm.grp)?'🔗':'🍽️';const has=ORD[key]&&ORD[key].length;
+  const fase=(ORDMETA[key]||{}).fase;
   const m=document.getElementById('mesaActModal');
   m.innerHTML=`<div class="modal" style="width:360px">
     <div class="modal-h"><b>⚙️ Acciones · ${label}</b><div class="mx" onclick="closeMesaAct()">✕</div></div>
     <div class="modal-b"><div class="act-list">
+      ${fase==='facturada'?`<div style="font-size:12px;color:var(--amber);background:var(--amber-dim);border-radius:10px;padding:8px 11px;margin-bottom:8px">💵 Ya facturada${(ORDMETA[key]||{}).facturaNum?(' ('+(ORDMETA[key]||{}).facturaNum+')'):''} · falta confirmar el pago para liberar.</div>`:(fase==='precuenta'?`<div style="font-size:12px;color:#ff8f6b;background:rgba(255,91,91,.12);border-radius:10px;padding:8px 11px;margin-bottom:8px">🧾 El mesero pidió la cuenta. Factúrala.</div>`:'')}
+      ${(_puedeCobrar()&&fase==='facturada')?`<div class="act-item" style="color:var(--primary)" onclick="closeMesaAct();confirmarPago('${key}')"><span class="ai">✅</span><b>Confirmar pago y liberar mesa</b></div>`:''}
       <div class="act-item" onclick="closeMesaAct();openOrder('${key}','${label}','${ico}')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
       <div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
-      ${_puedeCobrar()?`<div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>`:''}
+      ${(_puedeCobrar()&&fase!=='facturada')?`<div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>${fase==='precuenta'?'Facturar (cobrar)':'Cobrar'}</div>`:''}
       ${(mm&&mm.grp)?'':`<div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>`}
       ${has?`<div class="act-item danger" onclick="closeMesaAct();cancelarComanda('${key}')"><span class="ai">🚫</span>Cancelar / anular comanda</div>`:''}
     </div></div></div>`;
@@ -3843,6 +3930,9 @@ async function pullComandas(){
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
     if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
     _applyingRemote=false;
+    // Avisos: pedidos que quedaron listos (mesero) y mesas que pidieron cuenta (admin) — red si se pierde el realtime
+    (data||[]).forEach(r=>{ if(r&&r.clave){ try{ _chequearListoParaMesero(r.clave); }catch(e){} try{ _chequearFaseAdmin(r.clave); }catch(e){} } });
+    _readyBaseline=true;   // desde la 2ª pasada en adelante, sí avisamos en cada transición
   }catch(e){ _applyingRemote=false; console.warn('pullComandas:',e.message||e); }
 }
 function _applyRemoteComanda(row){
@@ -3858,12 +3948,15 @@ function _applyRemoteComanda(row){
   if(window._kdsOpen&&typeof renderKdsModal==='function')renderKdsModal();
   if(typeof saveState==='function')saveState();
   _applyingRemote=false;
+  try{ _chequearListoParaMesero(row.clave); }catch(e){}   // ¿este pedido acaba de quedar listo y es de este mesero? → avísale
+  try{ _chequearFaseAdmin(row.clave); }catch(e){}         // ¿pidieron la cuenta? → avisa al admin/cajero
 }
 function _removeRemoteComanda(clave){
   if(!clave)return;
   _applyingRemote=true;
   _recentClosed.add(clave); _touched.delete(clave);
   delete ORD[clave]; delete ORDMETA[clave]; delete ORDCAT[clave];
+  try{ delete _fasePrev[clave]; delete _kdsPrevState[clave]; }catch(e){}
   if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.m=0;m.t='';m.merged=false;m.grp=null;m.grpLabel=null;}});
   if(openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
   if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
@@ -3934,6 +4027,102 @@ if(typeof window!=='undefined'){
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _cloudReady()){ if(typeof pullComandas==='function')pullComandas(); if(typeof pullCaja==='function')pullCaja(); if(typeof subscribeComandas==='function')subscribeComandas(); } });
   }catch(e){}
 }
+
+/* ═══════════ AVISO AL MESERO: "tu pedido está listo" (cocina marcó todo listo) ═══════════ */
+let _kdsPrevState={};     // clave -> último estado de cocina visto en ESTE dispositivo
+let _readyBaseline=false; // ya tomamos la foto inicial (para no avisar en bloque al abrir la app)
+let _notifAsked=false;
+function _pedirPermisoAvisos(){
+  try{
+    if(!('Notification' in window))return;
+    const rol=window.ROL||'admin';
+    if(rol!=='mesero' && !(typeof _puedeCobrar==='function'&&_puedeCobrar()))return;  // avisos: meseros (pedido listo) y admin/cajero (piden cuenta)
+    if(Notification.permission==='default' && !_notifAsked){ _notifAsked=true; Notification.requestPermission().catch(()=>{}); }
+  }catch(e){}
+}
+function _esMiComanda(clave){ try{ const m=(ORDMETA[clave]||{}).mesero; return !!m && m===_meseroActual(); }catch(e){ return false; } }
+/* Aviso al ADMIN/cajero cuando una mesa pasa a "precuenta" (el mesero pidió la cuenta) */
+let _fasePrev={};
+function _chequearFaseAdmin(clave){
+  if(!clave)return;
+  const prev=_fasePrev[clave];
+  const fase=(ORDMETA[clave]||{}).fase||'';
+  _fasePrev[clave]=fase;
+  if(!_readyBaseline)return;
+  if(fase==='precuenta' && prev!=='precuenta' && (typeof _puedeCobrar==='function' && _puedeCobrar())){
+    _avisarAdminCuenta(clave);
+  }
+}
+function _avisarAdminCuenta(clave){
+  const meta=ORDMETA[clave]||{};
+  const titulo=meta.title||('Mesa '+clave.replace('mesa_','').split('_').join(' + '));
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([220,110,220]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const body=titulo+' pidió la cuenta. Ve a facturarla.';
+      const opt={body,tag:'cuenta-'+clave,renotify:true,requireInteraction:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(reg=>reg.showNotification('🧾 Piden la cuenta',opt)).catch(()=>{ try{new Notification('🧾 Piden la cuenta',{body});}catch(_){} }); }
+      else { try{new Notification('🧾 Piden la cuenta',{body});}catch(_){} }
+    }
+  }catch(e){}
+  _overlayAviso('cuenta',titulo);
+}
+function _chequearListoParaMesero(clave){
+  if(!clave || !clave.startsWith('mesa_')) { if(clave){ _kdsPrevState[clave]=(typeof mesaKitchen==='function')?mesaKitchen({grp:clave}):null; } }
+  if(!clave)return;
+  const prev=_kdsPrevState[clave];
+  const st=(typeof mesaKitchen==='function')?mesaKitchen({grp:clave}):null;
+  _kdsPrevState[clave]=st;
+  if(!_readyBaseline)return;                                    // primera carga: solo foto, sin avisar
+  if(st==='listo' && prev!=='listo' && _esMiComanda(clave)){ _avisarMeseroListo(clave); }
+}
+function _beepListo(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    const ctx=window._audioCtx||(window._audioCtx=new AC());
+    if(ctx.state==='suspended'){ ctx.resume().catch(()=>{}); }
+    const beep=(t,f)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=f;o.connect(g);g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.35,ctx.currentTime+t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+t+0.38);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.4);};
+    beep(0,880);beep(0.42,1175);
+  }catch(e){}
+}
+function _avisarMeseroListo(clave){
+  const meta=ORDMETA[clave]||{};
+  const titulo=meta.title||('Mesa '+clave.replace('mesa_','').split('_').map(x=>x).join(' + '));
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([220,110,220]); }catch(e){}
+  // Notificación del sistema (app en segundo plano / pantalla apagada pero viva)
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const body='Tu pedido de '+titulo+' ya está listo. Reclámalo en cocina.';
+      const opt={body,tag:'listo-'+clave,renotify:true,requireInteraction:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){
+        navigator.serviceWorker.ready.then(reg=>reg.showNotification('🔔 ¡Pedido listo!',opt)).catch(()=>{ try{new Notification('🔔 ¡Pedido listo!',{body});}catch(_){} });
+      } else { try{new Notification('🔔 ¡Pedido listo!',{body});}catch(_){} }
+    }
+  }catch(e){}
+  _overlayAviso('listo',titulo);
+}
+function _overlayAviso(kind,titulo){
+  const K = (kind==='cuenta')
+    ? {cls:'cuenta',emoji:'🧾',t:'¡PIDEN LA CUENTA!',sub:'Ve a la mesa y factúrala.',btn:'✅ Voy a facturar'}
+    : {cls:'',emoji:'🔔',t:'¡PEDIDO LISTO!',sub:'Reclámalo en cocina y entrégalo a la mesa.',btn:'✅ Voy por él'};
+  let el=document.getElementById('listoOverlay');
+  if(!el){ el=document.createElement('div'); el.id='listoOverlay'; el.className='listo-ov'; document.body.appendChild(el); }
+  el.innerHTML=`<div class="listo-card ${K.cls}">
+    <div class="listo-emoji">${K.emoji}</div>
+    <div class="listo-t">${K.t}</div>
+    <div class="listo-mesa">${titulo}</div>
+    <div class="listo-sub">${K.sub}</div>
+    <button class="listo-btn" onclick="_cerrarOverlayListo()">${K.btn}</button>
+  </div>`;
+  el.className='listo-ov on';
+}
+function _cerrarOverlayListo(){ const el=document.getElementById('listoOverlay'); if(el)el.className='listo-ov'; }
+/* pedir permiso de avisos + habilitar sonido en el primer toque (los navegadores lo exigen) */
+if(typeof window!=='undefined'){ try{ window.addEventListener('click',function _g(){ try{ if(window._audioCtx&&window._audioCtx.state==='suspended')window._audioCtx.resume(); }catch(e){} try{_pedirPermisoAvisos();}catch(e){} window.removeEventListener('click',_g); },{once:true}); }catch(e){} }
 /* ═══════════ VENTAS EN LA NUBE (facturas + cierres + reportes) ═══════════ */
 function _facturaRow(f){ return {id:f.id, negocio_id:NEGOCIO_ID, numero:f.num, ts:new Date(f.ts).toISOString(), origen:f.origen||'', mesero:f.mesero||'', cliente:f.cliente||'', items:f.items||[], n_items:f.nItems||0, subtotal:f.subtotal||0, propina:f.propina||0, descuento:f.descuento||0, total:f.total||0, medio:f.medio||'', medio_label:f.medioLabel||'', tipo:f.tipo||'pos', dian:!!f.dian, cliente_fe:f.clienteFE||null, split:f.split||null}; }
 function _rowFactura(r){ return {id:r.id, num:r.numero, ts:new Date(r.ts).getTime(), origen:r.origen, mesero:r.mesero, cliente:r.cliente, items:r.items||[], nItems:r.n_items, subtotal:r.subtotal, propina:r.propina, descuento:r.descuento, total:r.total, medio:r.medio, medioLabel:r.medio_label, tipo:r.tipo, dian:r.dian, clienteFE:r.cliente_fe, split:r.split}; }
@@ -3966,7 +4155,7 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); try{ _pedirPermisoAvisos(); }catch(e){} }
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
