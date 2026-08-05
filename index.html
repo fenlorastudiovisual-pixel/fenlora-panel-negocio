@@ -2603,6 +2603,7 @@ function comandaFoot(target){
     </div>`;
 }
 function renderComanda(target){
+  if(!_applyingRemote && target){ _touched.add(target); _recentClosed.delete(target); }
   const lines=ORD[target]||[];const items=lines.reduce((s,l)=>s+l.qty,0);const label=items+(items===1?' ítem':' ítems');
   const bodyHTML=comandaBody(target),footHTML=comandaFoot(target);
   const cnt=document.getElementById('ccount_'+target);if(cnt)cnt.textContent=label;
@@ -3712,11 +3713,14 @@ function _comRow(target){
     tipo:isMesa?'mesa':((target.split('_')[0])||'otro'), estado:'activa', meta:meta, lineas:ORD[target]||[] };
 }
 let _pendingClose=[];
+let _touched=new Set();      // claves que ESTE dispositivo modificó (solo esas se suben)
+let _recentClosed=new Set(); // claves pagadas/cerradas (no se vuelven a subir)
 async function _flushComandas(){
   if(!_cloudReady())return;
   try{
-    const keys=Object.keys(ORD);
-    if(keys.length) await sb.from('comandas').upsert(keys.map(_comRow),{onConflict:'negocio_id,clave'});
+    const claves=[..._touched].filter(k=>ORD[k] && !_recentClosed.has(k));
+    _touched.clear();
+    if(claves.length) await sb.from('comandas').upsert(claves.map(_comRow),{onConflict:'negocio_id,clave'});
     if(_pendingClose.length){ const arr=_pendingClose.splice(0); await sb.from('comandas').delete().eq('negocio_id',NEGOCIO_ID).in('clave',arr); }
     _comDirty=false;
   }catch(e){ _comDirty=true; console.warn('pushComandas (se reintenta):',e.message||e); }
@@ -3728,7 +3732,7 @@ function pushComandasSoon(immediate){
   if(immediate){ _flushComandas(); return; }
   _comT=setTimeout(_flushComandas, 250);
 }
-function closeComandaCloud(clave){ if(!clave)return; if(_cloudReady()){ _pendingClose.push(clave); pushComandasSoon(true); } else { _comDirty=true; } }
+function closeComandaCloud(clave){ if(!clave)return; _recentClosed.add(clave); _touched.delete(clave); if(_cloudReady()){ _pendingClose.push(clave); pushComandasSoon(true); } else { _comDirty=true; } }
 async function pullComandas(){
   if(!_cloudReady())return;
   try{
@@ -3755,8 +3759,9 @@ function _applyRemoteComanda(row){
   _applyingRemote=false;
 }
 function _removeRemoteComanda(clave){
-  if(!clave||!ORD[clave])return;
+  if(!clave)return;
   _applyingRemote=true;
+  _recentClosed.add(clave); _touched.delete(clave);
   delete ORD[clave]; delete ORDMETA[clave]; delete ORDCAT[clave];
   if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.m=0;m.t='ahora';}});
   if(openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
@@ -3776,7 +3781,7 @@ function subscribeComandas(){
       }).subscribe();
   }catch(e){ console.warn('subscribeComandas:',e.message||e); }
 }
-if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty)pushComandasSoon(); subscribeComandas(); } }); }
+if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty){ Object.keys(ORD).forEach(k=>_touched.add(k)); pushComandasSoon(); } subscribeComandas(); } }); }
 /* ═══════════ VENTAS EN LA NUBE (facturas + cierres + reportes) ═══════════ */
 function _facturaRow(f){ return {id:f.id, negocio_id:NEGOCIO_ID, numero:f.num, ts:new Date(f.ts).toISOString(), origen:f.origen||'', mesero:f.mesero||'', cliente:f.cliente||'', items:f.items||[], n_items:f.nItems||0, subtotal:f.subtotal||0, propina:f.propina||0, descuento:f.descuento||0, total:f.total||0, medio:f.medio||'', medio_label:f.medioLabel||'', tipo:f.tipo||'pos', dian:!!f.dian, cliente_fe:f.clienteFE||null, split:f.split||null}; }
 function _rowFactura(r){ return {id:r.id, num:r.numero, ts:new Date(r.ts).getTime(), origen:r.origen, mesero:r.mesero, cliente:r.cliente, items:r.items||[], nItems:r.n_items, subtotal:r.subtotal, propina:r.propina, descuento:r.descuento, total:r.total, medio:r.medio, medioLabel:r.medio_label, tipo:r.tipo, dian:r.dian, clienteFE:r.cliente_fe, split:r.split}; }
