@@ -3562,7 +3562,8 @@ function compartirNegocio(id){
 function compartirEmpleado(id){
   const e=EMPLEADOS.find(x=>x.id===id); if(!e)return;
   const slug=window._tenant||'tu-negocio';
-  const url='https://'+_negBaseHost()+'/'+slug+'/meseros';
+  const ruta={mesero:'meseros',cajero:'caja',cocina:'cocina'}[e.rol]||'meseros';
+  const url='https://'+_negBaseHost()+'/'+slug+'/'+ruta;
   const rol={mesero:'mesero',cajero:'cajero/a',cocina:'cocina'}[e.rol]||e.rol;
   const msg='¡Hola '+e.nombre+'! 👋 Este es tu acceso al sistema como *'+rol+'*\n\n📲 Abre este enlace en tu celular:\n'+url+'\n\n1) Elige tu nombre: *'+e.nombre+'*\n2) Crea tu PIN de 4 dígitos (la primera vez)\n\nPuedes instalarlo como app para abrirlo más rápido.';
   _openShare('Compartir acceso · '+e.nombre, msg);
