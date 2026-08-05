@@ -2639,6 +2639,7 @@ function setCliente(target,v){ORDMETA[target].cliente=v;}
 function setObs(target,v){ORDMETA[target].obs=v;}
 function syncMesa(target){
   if(!target.startsWith('mesa_'))return;
+  if(typeof _touched!=='undefined' && !_applyingRemote && target){ _touched.add(target); }
   const lines=ORD[target];
   const total=netTotal(lines);
   target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est=lines.length?'ocup':'libre';m.t='ahora';m.m=total;}});
@@ -2812,6 +2813,8 @@ function confirmPay(){
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
   closeTab(target);
+  if(document.getElementById('comContent'))renderComContent();
+  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   saveState();
 }
 function closePay(){document.getElementById('payModal').classList.remove('on');}
