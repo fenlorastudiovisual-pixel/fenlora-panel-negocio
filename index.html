@@ -2975,8 +2975,10 @@ function cancelarComanda(target){
   if(target.startsWith('mesa_')){target.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});}
   delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
   try{closeMesaAct();}catch(e){}
-  closeTab(target);saveState();
+  closeTab(target);
   if(document.getElementById('comContent'))renderComContent();
+  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  saveState();
 }
 function openMesaAct(n){
   mesaActN=n;const mm=getMesa(n);const key=(mm&&mm.grp)||('mesa_'+n);const label=(mm&&mm.grpLabel)||('Mesa '+pad(n));const ico=(mm&&mm.grp)?'🔗':'🍽️';const has=ORD[key]&&ORD[key].length;
