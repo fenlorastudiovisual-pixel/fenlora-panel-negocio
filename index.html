@@ -540,11 +540,19 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .home-ind{width:124px;height:4px;background:rgba(255,255,255,.3);border-radius:4px;margin:4px auto 10px}
 
 /* ── Clúster de mesas unidas (compacto, tarjetas tamaño normal) ── */
-.mesa-cluster{display:inline-block;vertical-align:top;border:1.5px dashed var(--primary);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.01));border-radius:16px;padding:10px 12px 12px;margin:0 14px 14px 0;position:relative;max-width:100%}
+.mesa-cluster{display:inline-block;vertical-align:top;border:1.5px dashed var(--primary);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.01));border-radius:16px;padding:10px 12px 12px;margin:0 14px 14px 0;position:relative;max-width:100%;box-sizing:border-box}
 .cluster-rib{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.4px;color:#052e21;background:var(--primary);padding:4px 12px;border-radius:20px;margin-bottom:10px;box-shadow:0 6px 14px -6px rgba(0,229,160,.6)}
-.cluster-body{display:flex;align-items:stretch;flex-wrap:nowrap;gap:0}
-.cluster-body .mesa{flex:0 0 168px;width:168px;margin:0}
-.cluster-link{flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--primary);align-self:center}
+/* Envuelven DENTRO del recuadro discontinuo (2 arriba, 1 abajo…), nunca se salen ni provocan scroll horizontal */
+.cluster-body{display:flex;align-items:stretch;flex-wrap:wrap;gap:10px;justify-content:flex-start}
+.cluster-body .mesa{flex:0 1 160px;width:160px;max-width:100%;margin:0}
+.cluster-link{flex:0 0 22px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--primary);align-self:center}
+/* En móvil: el clúster ocupa todo el ancho y las mesas caben 2 por fila, la 3ª baja, todo dentro del recuadro */
+@media(max-width:560px){
+  .mesa-cluster{display:block;width:100%;margin-right:0}
+  .cluster-body{gap:8px;justify-content:center}
+  .cluster-body .mesa{flex:1 1 44%;width:auto;min-width:128px;max-width:calc(50% - 8px)}
+  .cluster-link{display:none}  /* el 🔗 entre tarjetas estorba al envolver; el rótulo de arriba ya indica que están unidas */
+}
 
 /* ── Info extra en las tarjetas de mesa ── */
 .mesa{display:flex;flex-direction:column;min-height:128px}
@@ -2305,6 +2313,7 @@ function renderComContent(){
 function toggleUnir(){unirMode=!unirMode;unirSel=[];renderComContent();}
 function confirmarUnir(){
   if(unirSel.length<2){toastT('Selecciona al menos 2 mesas');return;}
+  if(typeof _exigirCaja==='function' && !_exigirCaja()){ return; }   // BLOQUEA: sin caja abierta no se unen mesas ni se abre comanda
   const nums=unirSel.slice().sort((a,b)=>a-b);
   const key='mesa_'+nums.join('_');
   const title='Mesa '+nums.map(pad).join(' + ');
@@ -2320,6 +2329,7 @@ function clickMesa(n,est){
   else {openOrder('mesa_'+n,'Mesa '+pad(n),'🍽️');}
 }
 function newOrder(type){
+  if(typeof _exigirCaja==='function' && !_exigirCaja()){ return; }   // BLOQUEA: sin caja abierta no hay pedido
   if(type==='delivery'){askAddress();return;}
   const map={llevar:['🥡','Para llevar'],dext:['🛴','Rappi/PYA'],online:['🌐','Online']};
   const id=type+'_'+(ordSeq++);
@@ -2328,7 +2338,7 @@ function newOrder(type){
 
 /* comensales modal */
 function askComensales(n){
-  if(typeof _cajaAbierta==='function' && !_cajaAbierta()){ toastT('⚠️ Abre la caja antes de tomar pedidos'); }
+  if(typeof _exigirCaja==='function' && !_exigirCaja()){ return; }   // BLOQUEA: sin caja abierta no hay pedido
   pendingMesa=n;comensales=1;
   const m=document.getElementById('comModal');
   m.innerHTML=`<div class="modal" style="width:340px">
@@ -2374,9 +2384,18 @@ function startDelivery(){
 
 /* order taking per target */
 function openOrder(target,title,ico,meta){
-  if(!ORD[target]||!ORD[target].length){
+  // ¿La comanda YA existe? (creada aquí o traída de la nube por otro mesero)
+  // Nos guiamos por ORDMETA, NO por si ORD tiene líneas: una mesa recién iniciada
+  // puede tener 0 productos y aun así ya tiene dueño (mesero). Así NUNCA se re-estampa
+  // el mesero actual encima del mesero que realmente abrió la mesa. (responsabilidad + propinas)
+  const yaExiste = !!ORDMETA[target];
+  if(!yaExiste){
     ORD[target]=ORD[target]||[];ORDCAT[target]='Recomendados';
     ORDMETA[target]=Object.assign({com:4,mesero:_meseroActual(),almacen:'Almacén principal',cliente:'',obs:'',num:'22600'+String(1000+(ordNumSeq++))+'-1',openedAt:Date.now(),title,ico},meta||{});
+  } else {
+    if(!ORD[target])ORD[target]=[];
+    if(ORDCAT[target]==null)ORDCAT[target]='Recomendados';
+    if(meta){ const _mesDueno=ORDMETA[target].mesero; ORDMETA[target]=Object.assign({},ORDMETA[target],meta); if(_mesDueno)ORDMETA[target].mesero=_mesDueno; }
   }
   const mt=ORDMETA[target]; if(mt){ if(!mt.title)mt.title=title; if(!mt.ico)mt.ico=ico; if(!mt.openedAt)mt.openedAt=Date.now(); }
   DYN[target]={title:(mt&&mt.title)||title,ico:(mt&&mt.ico)||ico,render:()=>orderView(target),init:()=>initOrder(target)};
@@ -3783,13 +3802,43 @@ function pushComandasSoon(immediate){
   if(immediate){ _flushComandas(); return; }
   _comT=setTimeout(_flushComandas, 250);
 }
-function closeComandaCloud(clave){ if(!clave)return; _recentClosed.add(clave); _touched.delete(clave); if(_cloudReady()){ _pendingClose.push(clave); pushComandasSoon(true); } else { _comDirty=true; } }
+function _comClosedRow(clave){
+  const isMesa=clave.startsWith('mesa_');
+  return { negocio_id:NEGOCIO_ID, clave, titulo:(ORDMETA[clave]&&ORDMETA[clave].title)||clave,
+    tipo:isMesa?'mesa':((clave.split('_')[0])||'otro'), estado:'cerrada', meta:{_dev:_deviceId}, lineas:[] };
+}
+/* Cierra la comanda (pago o anulación) y la libera en TODOS los dispositivos.
+   Clave del arreglo: NO borramos directo (el DELETE de Realtime no siempre trae la 'clave' a los otros
+   equipos → por eso la mesa no se liberaba). Primero marcamos estado='cerrada' con un UPSERT: eso dispara
+   un UPDATE de Realtime CON la fila completa (incluida la clave) en cada dispositivo, que libera la mesa.
+   Luego sí borramos la fila para dejar la nube limpia. */
+async function closeComandaCloud(clave){
+  if(!clave)return;
+  _recentClosed.add(clave); _touched.delete(clave);
+  if(!_cloudReady()){ _comDirty=true; return; }
+  try{
+    await sb.from('comandas').upsert(_comClosedRow(clave),{onConflict:'negocio_id,clave'}); // → UPDATE realtime con clave → libera mesa en todos
+    await sb.from('comandas').delete().eq('negocio_id',NEGOCIO_ID).eq('clave',clave);        // limpieza
+  }catch(e){ _comDirty=true; console.warn('closeComandaCloud (se reintenta):',e.message||e); }
+}
 async function pullComandas(){
   if(!_cloudReady())return;
   try{
     const {data,error}=await sb.from('comandas').select('*').eq('estado','activa'); if(error)throw error;
     _applyingRemote=true;
-    (data||[]).forEach(r=>{ if(!r.clave)return; ORD[r.clave]=r.lineas||[]; ORDMETA[r.clave]=r.meta||{}; if(ORDCAT[r.clave]==null)ORDCAT[r.clave]='Recomendados'; if(typeof syncMesa==='function')syncMesa(r.clave); });
+    const _remotas=new Set();
+    (data||[]).forEach(r=>{ if(!r.clave)return; _remotas.add(r.clave); ORD[r.clave]=r.lineas||[]; ORDMETA[r.clave]=r.meta||{}; if(ORDCAT[r.clave]==null)ORDCAT[r.clave]='Recomendados'; if(typeof syncMesa==='function')syncMesa(r.clave); });
+    // RECONCILIACIÓN (auto-limpieza): toda comanda local que YA no está activa en la nube
+    // (anulada o cobrada en otro dispositivo) se elimina y su mesa se libera. Así no hay que borrar caché a mano.
+    Object.keys(ORD).forEach(k=>{
+      if(_remotas.has(k))return;
+      if(_touched.has(k))return;   // algo que ESTE equipo acaba de crear y aún no sube → no lo borres
+      if(k===active)return;        // comanda abierta que estoy editando ahora mismo → no la quites de golpe
+      if(typeof openTabs!=='undefined' && openTabs.includes(k))return; // pestaña abierta → solo la cierra un cierre remoto real (evita carrera durante creación)
+      delete ORD[k]; delete ORDMETA[k]; delete ORDCAT[k];
+      if(k.startsWith('mesa_')) k.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.t='';m.m=0;m.merged=false;m.grp=null;m.grpLabel=null;}});
+      if(typeof openTabs!=='undefined' && openTabs.includes(k) && typeof closeTab==='function') closeTab(k);
+    });
     if(typeof saveState==='function')saveState();
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
     if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
@@ -3799,6 +3848,7 @@ async function pullComandas(){
 function _applyRemoteComanda(row){
   if(!row||!row.clave)return;
   if(row.meta && row.meta._dev===_deviceId)return;   // mi propio eco → ignorar
+  if(row.estado && row.estado!=='activa'){ _removeRemoteComanda(row.clave); return; }  // cerrada/anulada/pagada → liberar mesa
   _applyingRemote=true;
   ORD[row.clave]=row.lineas||[]; ORDMETA[row.clave]=row.meta||{}; if(ORDCAT[row.clave]==null)ORDCAT[row.clave]='Recomendados';
   if(typeof syncMesa==='function')syncMesa(row.clave);
@@ -3814,7 +3864,7 @@ function _removeRemoteComanda(clave){
   _applyingRemote=true;
   _recentClosed.add(clave); _touched.delete(clave);
   delete ORD[clave]; delete ORDMETA[clave]; delete ORDCAT[clave];
-  if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.m=0;m.t='ahora';}});
+  if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.m=0;m.t='';m.merged=false;m.grp=null;m.grpLabel=null;}});
   if(openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
   if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
   if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
@@ -3841,6 +3891,29 @@ function subscribeCaja(){
   }catch(e){ console.warn('subscribeCaja:',e.message||e); }
 }
 function _cajaAbierta(){ return !!(CAJA&&CAJA.abierta); }
+/* Bloqueo real: si la caja NO está abierta, no deja tomar pedidos y muestra un modal.
+   Devuelve true solo si se puede continuar. Admin/cajero ven botón "Ir a abrir caja". */
+function _exigirCaja(){
+  if(_cajaAbierta())return true;
+  const puede=(typeof _puedeCobrar==='function')&&_puedeCobrar(); // admin || cajero
+  const m=document.getElementById('comModal');
+  if(m){
+    m.innerHTML=`<div class="modal" style="width:360px">
+      <div class="modal-h"><b>🔒 Caja cerrada</b><div class="mx" onclick="closeCom()">✕</div></div>
+      <div class="modal-b" style="text-align:center">
+        <div style="font-size:42px;line-height:1;margin:4px 0 10px">💵</div>
+        <b style="font-family:'Outfit',sans-serif;font-size:17px">Primero abre la caja del turno</b>
+        <div style="font-size:13px;color:var(--txt2);margin-top:8px;line-height:1.5">No se pueden tomar pedidos hasta que la caja esté abierta.${puede?'':'<br>Pídele al cajero o al administrador que la abra.'}</div>
+      </div>
+      <div class="modal-f">${puede?`<button class="btn primary" style="width:100%" onclick="closeCom();irAbrirCaja()">🔓 Ir a abrir caja</button>`:`<button class="btn ghost" style="width:100%" onclick="closeCom()">Entendido</button>`}</div>
+    </div>`;
+    m.classList.add('on');
+  } else {
+    toastT('🔒 Abre la caja antes de tomar pedidos');
+  }
+  return false;
+}
+function irAbrirCaja(){ try{ if(typeof _puedeCobrar==='function'&&_puedeCobrar()) openTab('caja'); }catch(e){} }
 function subscribeComandas(){
   if(!_cloudReady()||typeof sb.channel!=='function')return;
   try{
@@ -3853,6 +3926,14 @@ function subscribeComandas(){
   }catch(e){ console.warn('subscribeComandas:',e.message||e); }
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_cloudReady()){ if(_comDirty){ Object.keys(ORD).forEach(k=>_touched.add(k)); pushComandasSoon(); } subscribeComandas(); } }); }
+/* Latido de seguridad: cada 20s (con la pestaña visible) reconcilia contra la nube — libera mesas
+   anuladas/cobradas en otro equipo aunque se pierda un evento realtime. Y al volver a la app, sincroniza al instante. */
+if(typeof window!=='undefined'){
+  try{
+    setInterval(()=>{ if(document.hidden)return; if(_cloudReady()&&typeof pullComandas==='function'){ pullComandas(); if(typeof pullCaja==='function')pullCaja(); } }, 20000);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _cloudReady()){ if(typeof pullComandas==='function')pullComandas(); if(typeof pullCaja==='function')pullCaja(); if(typeof subscribeComandas==='function')subscribeComandas(); } });
+  }catch(e){}
+}
 /* ═══════════ VENTAS EN LA NUBE (facturas + cierres + reportes) ═══════════ */
 function _facturaRow(f){ return {id:f.id, negocio_id:NEGOCIO_ID, numero:f.num, ts:new Date(f.ts).toISOString(), origen:f.origen||'', mesero:f.mesero||'', cliente:f.cliente||'', items:f.items||[], n_items:f.nItems||0, subtotal:f.subtotal||0, propina:f.propina||0, descuento:f.descuento||0, total:f.total||0, medio:f.medio||'', medio_label:f.medioLabel||'', tipo:f.tipo||'pos', dian:!!f.dian, cliente_fe:f.clienteFE||null, split:f.split||null}; }
 function _rowFactura(r){ return {id:r.id, num:r.numero, ts:new Date(r.ts).getTime(), origen:r.origen, mesero:r.mesero, cliente:r.cliente, items:r.items||[], nItems:r.n_items, subtotal:r.subtotal, propina:r.propina, descuento:r.descuento, total:r.total, medio:r.medio, medioLabel:r.medio_label, tipo:r.tipo, dian:r.dian, clienteFE:r.cliente_fe, split:r.split}; }
