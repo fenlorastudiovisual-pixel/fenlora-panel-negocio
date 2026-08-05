@@ -1005,6 +1005,7 @@ const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximam
 /* build nav */
 const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
+function _puedeCobrar(){ const r=window.ROL||'admin'; return r==='admin'||r==='cajero'; }
 function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
@@ -2580,7 +2581,7 @@ function comandaFoot(target){
       <button class="sbtn" disabled><span class="si">💾</span>Grabar</button>
       <button class="sbtn prod" disabled><span class="si">🔥</span>Enviar a Producción</button>
       <button class="sbtn" disabled><span class="si">🧾</span>Enviar Comanda</button>
-      <button class="sbtn fact" disabled><span class="si">💵</span>Facturar y Grabar</button></div>`;
+      ${_puedeCobrar()?`<button class="sbtn fact" disabled><span class="si">💵</span>Facturar y Grabar</button>`:''}</div>`;
   const subtotal=lines.reduce((s,l)=>s+l.unit*l.qty,0);
   const cortAmt=lines.filter(l=>l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
   const descAmt=lines.filter(l=>!l.cort).reduce((s,l)=>s+(l.desc||0),0);
@@ -2596,11 +2597,11 @@ function comandaFoot(target){
       <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
       <button class="sbtn prod" onclick="enviarProduccion('${target}')" ${pend?'':'disabled'}><span class="si">🔥</span>Enviar a Producción${pend?' ('+pend+')':''}</button>
       <button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Enviar Comanda</button>
-      <button class="sbtn fact" onclick="openPay('${target}')"><span class="si">💵</span>Facturar y Grabar</button>
+      ${_puedeCobrar()?`<button class="sbtn fact" onclick="openPay('${target}')"><span class="si">💵</span>Facturar y Grabar</button>`:''}
     </div>
     ${held?`<div style="font-size:10.5px;color:var(--amber);text-align:center;margin-top:8px">⏸ ${held} plato(s) retenido(s) — se envían cuando toques "▶ enviar" en cada uno</div>`:''}
     <div class="sec-row">
-      <button class="btn ghost" onclick="dividir('${target}')">✂️ Dividir</button>
+      ${_puedeCobrar()?`<button class="btn ghost" onclick="dividir('${target}')">✂️ Dividir</button>`:''}
       <button class="btn ghost" onclick="printComanda('${target}','precuenta')">🧮 Precuenta</button>
       <button class="btn ghost" onclick="moverPlatos('${target}')">↔ Mover platos</button>
       <button class="btn ghost sec-danger" onclick="cancelarComanda('${target}')">🚫 Anular</button>
@@ -2973,7 +2974,7 @@ function openMesaAct(n){
     <div class="modal-b"><div class="act-list">
       <div class="act-item" onclick="closeMesaAct();openOrder('${key}','${label}','${ico}')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
       <div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
-      <div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>
+      ${_puedeCobrar()?`<div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>Cobrar</div>`:''}
       ${(mm&&mm.grp)?'':`<div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>`}
       ${has?`<div class="act-item danger" onclick="closeMesaAct();cancelarComanda('${key}')"><span class="ai">🚫</span>Cancelar / anular comanda</div>`:''}
     </div></div></div>`;
@@ -3913,12 +3914,19 @@ async function _hashPin(id,pin){
 function showPerfiles(){ authMode='perfil'; document.body.classList.remove('authed'); renderAuth(); }
 function cambiarUsuario(){ if(typeof closeTopMenus==='function')closeTopMenus(); showPerfiles(); }
 function _perfilesHTML(){
-  const emps=EMPLEADOS.filter(e=>e.rol!=='admin'&&e.activo!==false);
+  const modo=_modoPersonal();
   const rolLbl={mesero:'Mesero',cajero:'Cajero',cocina:'Cocina'};
-  const tiles=emps.map(e=>`<div class="perfil-tile" onclick="pickPerfil('${e.id}')"><div class="perfil-av">${(e.nombre[0]||'?').toUpperCase()}</div><div class="perfil-n">${e.nombre}</div><div class="perfil-r">${rolLbl[e.rol]||e.rol}</div></div>`).join('');
-  const adminTile=`<div class="perfil-tile admin" onclick="pickAdminPerfil()"><div class="perfil-av">👑</div><div class="perfil-n">Administrador</div><div class="perfil-r">Dueño</div></div>`;
-  return `<div class="auth-card wide"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${_marcaNegocio()!=='Panel del Negocio'?_marcaNegocio()+' · ':''}¿Quién eres?</div>
-    <div class="perfil-grid">${tiles}${adminTile}</div>
+  let emps=EMPLEADOS.filter(e=>e.rol!=='admin'&&e.activo!==false);
+  if(modo) emps=emps.filter(e=>e.rol===modo);
+  const titulo=(_marcaNegocio()!=='Panel del Negocio'?_marcaNegocio()+' · ':'')+(modo?(rolLbl[modo]+'s'):'¿Quién eres?');
+  let cuerpo;
+  if(!emps.length){
+    cuerpo='<div class="dash-empty" style="margin:10px 0">Aún no hay '+(modo?rolLbl[modo].toLowerCase()+'s':'personal')+' registrados. Pídele al administrador que te agregue.</div>';
+  } else {
+    cuerpo='<div class="perfil-grid">'+emps.map(e=>`<div class="perfil-tile" onclick="pickPerfil('${e.id}')"><div class="perfil-av">${(e.nombre[0]||'?').toUpperCase()}</div><div class="perfil-n">${e.nombre}</div><div class="perfil-r">${rolLbl[e.rol]||e.rol}</div></div>`).join('')+'</div>';
+  }
+  return `<div class="auth-card wide"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${titulo}</div>
+    ${cuerpo}
     <div class="auth-alt"><span onclick="cerrarSesion()">Cerrar sesión del negocio</span></div></div>`;
 }
 function _pinHTML(){
@@ -4057,7 +4065,8 @@ function _tenantFromPath(){
     return segs[0].toLowerCase();          // primer segmento = negocio
   }catch(e){ return null; }
 }
-function _esModoMeseros(){ try{ return /(^|\/)meseros\/?$/.test(location.pathname||''); }catch(e){ return false; } }
+function _modoPersonal(){ try{ const p=(location.pathname||'').toLowerCase(); if(/\/meseros\/?$/.test(p))return 'mesero'; if(/\/caja\/?$/.test(p))return 'cajero'; if(/\/cocina\/?$/.test(p))return 'cocina'; return null; }catch(e){ return null; } }
+function _esModoMeseros(){ return !!_modoPersonal(); }
 window._tenant=_tenantFromPath();
 window._tenantNeg=null;
 function _marcaNegocio(){ return (window._tenantNeg&&window._tenantNeg.nombre)?window._tenantNeg.nombre:'Panel del Negocio'; }
