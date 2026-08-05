@@ -3520,6 +3520,44 @@ function syncCatalog(){   // rebota (debounce) y espeja local → nube
 // reintentar al recuperar conexión
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_catDirty&&_cloudReady()) syncCatalog(); }); }
 
+/* ═══════════ COMPARTIR ACCESOS (dueño / empleados) ═══════════ */
+let _shareData=null;
+function _openShare(titulo,msg){
+  _shareData={msg:msg, wa:'https://wa.me/?text='+encodeURIComponent(msg)};
+  const nativo = (typeof navigator!=='undefined'&&navigator.share)?'<button class="btn ghost" style="flex:1;min-width:110px" onclick="_shareNativo()">📤 Compartir</button>':'';
+  const html='<div class="modal-bg on" id="shareModal" onclick="if(event.target===this)closeShare()">'
+    +'<div class="modal" style="max-width:460px"><div class="modal-h"><b>'+titulo+'</b><div class="mx" onclick="closeShare()">✕</div></div>'
+    +'<div class="modal-b"><textarea id="shareTxt" class="pf-in" style="width:100%;height:150px;resize:none;font-size:13px" readonly></textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
+    +'<button class="btn primary" style="flex:1;min-width:110px" onclick="_shareWA()">💬 WhatsApp</button>'
+    +'<button class="btn ghost" style="flex:1;min-width:110px" onclick="_copyShare()">📋 Copiar</button>'+nativo
+    +'</div></div></div></div>';
+  let host=document.getElementById('shareHost');
+  if(!host){ host=document.createElement('div'); host.id='shareHost'; document.body.appendChild(host); }
+  host.innerHTML=html;
+  const t=document.getElementById('shareTxt'); if(t)t.value=msg;
+}
+function closeShare(){ const h=document.getElementById('shareHost'); if(h)h.innerHTML=''; }
+function _shareWA(){ if(_shareData)window.open(_shareData.wa,'_blank'); }
+function _shareNativo(){ if(_shareData&&navigator.share){ navigator.share({text:_shareData.msg}).catch(()=>{}); } }
+function _copyShare(){ if(!_shareData)return; const t=document.getElementById('shareTxt'); if(t){t.select();} try{ navigator.clipboard.writeText(_shareData.msg); toastT('Copiado ✓'); }catch(e){ try{document.execCommand('copy');toastT('Copiado ✓');}catch(_){ toastT('Copia el texto manualmente'); } } }
+// Compartir acceso del DUEÑO (desde la sección Negocios de Fenlora)
+function compartirNegocio(id){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return;
+  if(!g.subdominio){ toastT('Primero asígnale una ruta al negocio (botón Editar)'); return; }
+  const url='https://'+_negBaseHost()+'/'+g.subdominio;
+  const msg='¡Hola! 🔥 Este es el acceso a tu sistema POS *'+g.nombre+'*\n\n👨‍💼 Tu panel de administrador:\n'+url+'\n\nÁbrelo en tu celular, tablet o computador. Desde el menú puedes instalarlo como app. Dentro, en la sección Equipo, podrás crear a tus empleados y compartirles su acceso.';
+  _openShare('Compartir acceso · '+g.nombre, msg);
+}
+// Compartir acceso de un EMPLEADO según su rol (desde la sección Equipo del dueño)
+function compartirEmpleado(id){
+  const e=EMPLEADOS.find(x=>x.id===id); if(!e)return;
+  const slug=window._tenant||'tu-negocio';
+  const url='https://'+_negBaseHost()+'/'+slug+'/meseros';
+  const rol={mesero:'mesero',cajero:'cajero/a',cocina:'cocina'}[e.rol]||e.rol;
+  const msg='¡Hola '+e.nombre+'! 👋 Este es tu acceso al sistema como *'+rol+'*\n\n📲 Abre este enlace en tu celular:\n'+url+'\n\n1) Elige tu nombre: *'+e.nombre+'*\n2) Crea tu PIN de 4 dígitos (la primera vez)\n\nPuedes instalarlo como app para abrirlo más rápido.';
+  _openShare('Compartir acceso · '+e.nombre, msg);
+}
 /* ═══════════ FENLORA · GESTIÓN DE NEGOCIOS (solo super admin) ═══════════ */
 let NEGOCIOS_ADMIN=[];
 async function pullNegocios(){
@@ -3573,6 +3611,7 @@ function renderNegList(){
         <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a> · 🧑‍🍳 <a href="https://'+urlM+'" target="_blank">/meseros</a>'):'<span style="color:var(--txt3)">sin URL asignada</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
       </div>
       <div class="neg-acts">
+        <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
         <button class="btn ghost" onclick="editarNegocioPrompt('${g.id}')">✏️ Editar</button>
         <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
         <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
@@ -3584,7 +3623,7 @@ function negociosView(){
   const pronto=NEGOCIOS_ADMIN.filter(g=>{ if(!g.vence)return false; const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); return d>=0&&d<=7; }).length;
   return `
   <div class="page-head"><h1>🏢 Negocios <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
-    <div class="sub">Crea y administra los negocios de tus clientes. Cada uno opera en su propio subdominio con el mismo POS.</div></div>
+    <div class="sub">Crea y administra los negocios de tus clientes. Cada uno opera en su propia dirección (ruta) con el mismo POS.</div></div>
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
   <div class="section-title">Crear negocio</div>
   <div class="neg-form">
@@ -3639,6 +3678,7 @@ function renderEmpList(){
     <div class="emp-info"><div class="emp-av">${(e.nombre[0]||'?').toUpperCase()}</div>
       <div><div class="emp-name">${e.nombre}</div><div class="emp-meta">${rolLbl[e.rol]||e.rol} · <span class="${e.pin?'emp-pin-ok':'emp-pin-no'}">${e.pin?'PIN definido ✓':'PIN pendiente'}</span></div></div></div>
     <div class="emp-acts">
+      <button class="btn ghost" onclick="compartirEmpleado('${e.id}')">🔗 Compartir</button>
       <button class="btn ghost" onclick="resetPinEmpleado('${e.id}')">🔑 Resetear PIN</button>
       <button class="btn ghost danger" onclick="removeEmpleado('${e.id}')">🗑 Quitar</button>
     </div></div>`).join('');
@@ -3950,7 +3990,16 @@ let _deferredPrompt=null;
 if(typeof window!=='undefined'){
   window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); _deferredPrompt=e; });
   if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{ try{reg.update();}catch(e){} }).catch(()=>{}); });
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{ try{reg.update();}catch(e){}
+        setInterval(()=>{ try{reg.update();}catch(e){} }, 60000); // revisa updates cada minuto
+      }).catch(()=>{});
+      // Si ya había un SW controlando y entra uno nuevo → recargar una vez para mostrar lo último
+      if(navigator.serviceWorker.controller){
+        let _rec=false;
+        navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(_rec)return; _rec=true; location.reload(); });
+      }
+    });
   }
 }
 async function instalarApp(){

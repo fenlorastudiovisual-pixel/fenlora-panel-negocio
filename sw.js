@@ -1,5 +1,5 @@
-/* FENLORA POS · Service Worker — network-first (siempre lo último, con respaldo offline) */
-const CACHE = 'fenlora-pos-v1';
+/* FENLORA POS · Service Worker v2 — siempre lo último (network-first, sin caché viejo) */
+const CACHE = 'fenlora-pos-v2';
 const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -20,12 +20,15 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   let url;
   try { url = new URL(req.url); } catch (_) { return; }
-  // Solo manejamos el mismo origen. Supabase, fuentes y CDNs pasan directo (NO se tocan).
+  // Solo mismo origen. Supabase, fuentes y CDNs pasan directo (NO se tocan).
   if (url.origin !== location.origin) return;
-  // Network-first: intenta la versión más nueva; si no hay internet, usa el caché.
+
+  const esNavegacion = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+
   e.respondWith((async () => {
     try {
-      const fresh = await fetch(req);
+      // Para el HTML: forzamos traer del servidor (sin caché del navegador) → siempre lo último
+      const fresh = esNavegacion ? await fetch(req, { cache: 'no-store' }) : await fetch(req);
       const cache = await caches.open(CACHE);
       cache.put(req, fresh.clone()).catch(() => {});
       return fresh;
