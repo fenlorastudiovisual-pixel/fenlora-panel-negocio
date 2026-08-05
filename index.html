@@ -1005,7 +1005,7 @@ const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximam
 /* build nav */
 const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
-function _canSee(k){ if(k==='negocios') return !!window._esSuper; const rol=window.ROL||'admin'; if(rol==='admin')return true;
+function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
@@ -3414,10 +3414,10 @@ function toggleTopMenu(which){
       <div class="tm-act" onclick="toastT('Mi cuenta (próximamente)');closeTopMenus()">👤 Mi cuenta</div>
       <div class="tm-act" onclick="toastT('Cambiar de sede (próximamente)');closeTopMenus()">🏬 Cambiar de sede</div>
       <div class="tm-act" onclick="instalarApp()">📲 Instalar app</div>
-      <div class="tm-act" onclick="cambiarUsuario()">🔄 Cambiar de usuario</div>
+      ${_esModoMeseros()?`<div class="tm-act" onclick="cambiarUsuario()">🔄 Cambiar de usuario</div>`:''}
       <div class="tm-act" onclick="toggleTheme();closeTopMenus()">🌗 Cambiar tema</div>
       ${window._preview?`<div class="tm-act" style="color:var(--amber);font-weight:700" onclick="salirVistaPrevia();closeTopMenus()">↩ Volver a mi panel (Admin)</div>`
-        :(((window._realRol||'admin')==='admin')?`<div class="tm-sub">👁 Vista previa (demo)</div>
+        :((!window._tenant && (window._realRol||'admin')==='admin')?`<div class="tm-sub">👁 Vista previa (demo)</div>
       <div class="tm-act" onclick="verComo('mesero');closeTopMenus()">👁 Ver como Mesero</div>
       <div class="tm-act" onclick="verComo('cajero');closeTopMenus()">👁 Ver como Cajero</div>`:'')}
       <div class="tm-act danger" onclick="cerrarSesion();closeTopMenus()">🚪 Cerrar sesión</div>`;
