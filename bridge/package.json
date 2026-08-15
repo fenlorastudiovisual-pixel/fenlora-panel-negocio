@@ -1,0 +1,13 @@
+{
+  "name": "fenlora-print-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puente local para imprimir tickets del POS Fenlora en la impresora térmica USB",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -413,6 +413,33 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .disc-in{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;margin-bottom:16px}
 .disc-in:focus{border-color:var(--primary)}
 .pay-sum{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:6px}
+.efv-wrap{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.efv-grp-lb{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--txt3);margin:2px 0 8px}
+.efv-coins{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px}
+.efv-bills{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.efv-coin{position:relative;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:11px;color:#1a1500;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.35);transition:.12s;user-select:none}
+.efv-coin:active{transform:scale(.93)}
+.efv-bill{position:relative;border-radius:8px;padding:10px 8px;cursor:pointer;font-weight:800;font-size:12.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 2px 6px rgba(0,0,0,.35);transition:.12s;user-select:none;text-align:center}
+.efv-bill:active{transform:scale(.96)}
+.efv-badge{position:absolute;top:-7px;right:-7px;background:var(--accent);color:#04140f;font-size:10.5px;font-weight:800;border-radius:999px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 2px 5px rgba(0,0,0,.4)}
+.efv-c100{background:linear-gradient(145deg,#d7d7d7,#9a9a9a)}
+.efv-c200{background:linear-gradient(145deg,#f0d27a,#c79a2e)}
+.efv-c500{background:linear-gradient(145deg,#f3e2a9,#b8b8b8)}
+.efv-c1000{background:linear-gradient(145deg,#f6da8b,#caa53a)}
+.efv-b2000{background:linear-gradient(135deg,#6f8f3e,#3f5a22)}
+.efv-b5000{background:linear-gradient(135deg,#8a7ea3,#584d72)}
+.efv-b10000{background:linear-gradient(135deg,#c65a4b,#8f2f24)}
+.efv-b20000{background:linear-gradient(135deg,#d99a2b,#a66a10)}
+.efv-b50000{background:linear-gradient(135deg,#a24fa8,#6b2c73)}
+.efv-b100000{background:linear-gradient(135deg,#2f8f6a,#166148)}
+.efv-sum{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed var(--border)}
+.efv-row{display:flex;justify-content:space-between;font-size:13px;color:var(--txt2)}
+.efv-row b{color:var(--txt)}
+.efv-cambio{font-size:20px;font-weight:800}
+.efv-cambio.ok{color:var(--accent)}
+.efv-cambio.bad{color:var(--danger)}
+.efv-clear{font-size:11.5px;color:var(--txt3);text-decoration:underline;cursor:pointer;margin-top:4px;display:inline-block}
+.efv-exacto{font-size:11.5px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:5px 10px;cursor:pointer;color:var(--txt2)}
 
 /* tickets impresos */
 .ticket-wrap{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-height:52vh;overflow-y:auto;padding:4px}
@@ -1435,7 +1462,7 @@ const DULCE_CAFE=[
   {id:'d104',n:'Filtrado Prensa Francesa',pr:10000,cat:'Filtrados',e:'☕',area:'BARRA',opts:[TAZAS]},
 ];
 const PRODUCTS=DULCE_CAFE.map(p=>JSON.parse(JSON.stringify(p)));
-const AMBIENTES=[{n:'Piso 1'},{n:'Terraza'}];
+let AMBIENTES=[];
 const MESEROS=[];  // sin nombres demo: el mesero SIEMPRE es una persona real (empleado logueado o Administrador)
 function _meserosLista(){
   try{
@@ -1456,12 +1483,7 @@ let ordSeq=1, ordNumSeq=707, LID=1000, viewMode='grid';
 let pendingTarget=null, pendingProd=null, pendingSel={}, pendingMesa=null, comensales=1, comType='mesas', unirMode=false, unirSel=[];
 let notesTarget=null, notesLid=null, payTarget=null, pay={m:null,tip:0,disc:0}, mesaActN=null, moveTarget=null;
 
-const MESAS=[
-  {n:1,est:'libre',piso:'Piso 1'},{n:2,est:'libre',piso:'Piso 1'},{n:3,est:'libre',piso:'Piso 1'},
-  {n:4,est:'libre',piso:'Piso 1'},{n:5,est:'libre',piso:'Piso 1'},{n:6,est:'libre',piso:'Piso 1'},
-  {n:7,est:'libre',piso:'Terraza'},{n:8,est:'libre',piso:'Terraza'},
-  {n:9,est:'libre',piso:'Terraza'},{n:10,est:'libre',piso:'Terraza'},
-];
+let MESAS=[];  // se llena desde Supabase (tabla mesas) en _cargarSedeYMesas(), llamada al resolver el negocio
 const getMesa=n=>MESAS.find(m=>m.n===n);
 /* Escapa un texto para meterlo dentro de onclick="fn('...')" sin romper el JS/HTML (nombres con comillas). */
 function _q(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' '); }
@@ -2812,6 +2834,23 @@ function enviarProduccion(target){
 }
 function enviarComanda(target){printComanda(target,'comanda');}
 
+/* ── FENLORA PRINT BRIDGE ──────────────────────────────────────────────
+   Envía el ticket al servicio local (bridge.js) que corre en el equipo
+   conectado a la impresora térmica USB. Si ese equipo no tiene el bridge
+   corriendo (ej. otro negocio sin impresora todavía), el fetch falla en
+   silencio y la app sigue funcionando normal (solo queda el ticket en
+   pantalla, como hasta ahora). Puerto configurable si hace falta. */
+const FENLORA_BRIDGE_URL='http://localhost:4321/imprimir';
+async function _imprimirBridge(payload){
+  try{
+    const r=await fetch(FENLORA_BRIDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    return r.ok;
+  }catch(e){ return false; } // sin bridge local en este dispositivo → no hace nada, no rompe la UI
+}
+function imprimirTicket(msg){ toastT(msg); if(window._ultimoTicket)_imprimirBridge(window._ultimoTicket); }
+function imprimirTicketsCocina(msg){ toastT(msg); (window._ultimosTicketsCocina||[]).forEach(t=>_imprimirBridge(t)); }
+function imprimirFactura(msg){ toastT(msg); if(window._ultimaFactura)_imprimirBridge(window._ultimaFactura); }
+
 /* ── impresión comanda interna / precuenta ── */
 function printComanda(target,mode){
   const lines=ORD[target]; if(!lines.length){toastT('La comanda está vacía');return;}
@@ -2841,11 +2880,18 @@ function printComanda(target,mode){
     ${meta.obs?`<div class="tk-hr"></div><div>Obs: ${meta.obs}</div>`:''}
     <div class="tk-foot">${pre?'Documento NO fiscal · para revisión del cliente<br>':''}${fecha}<br>FENLORA CLOUD</div>
   </div>`;
+  window._ultimoTicket={
+    titulo:DYN[target].title.toUpperCase()+(mesaObj?(' · '+mesaObj.piso.toUpperCase()):''),
+    subtitulo:pre?'SU CUENTA':'COMANDA', esComanda:!pre,
+    cliente:meta.cliente||'', mesero:meta.mesero||'-', hora, orden:meta.num||'',
+    items:lines.map(l=>({qty:l.qty, nombre:l.n+(l.cort?' (CORTESIA)':'')+(l.llevar?' PARA LLEVAR':''), importe:l.cort?'0':COP(l.unit*l.qty), nota:[(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'',noteStr(l)].filter(Boolean).join(' · ')})),
+    total:COP(total), pie:'FENLORA CLOUD'
+  };
   const acts=pre
-    ? `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Precuenta impresa')">🖨️ Imprimir</button>
-       <button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint();openPay('${target}')">💵 Cobrar ahora</button>`
-    : `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Comanda impresa')">🖨️ Imprimir</button>
-       <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🔁 Reimpresa')">🔁 Reimprimir</button>
+    ? `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicket('🖨️ Precuenta impresa')">🖨️ Imprimir</button>
+       ${(typeof _puedeCobrar==='function'&&_puedeCobrar())?`<button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint();openPay('${target}')">💵 Cobrar ahora</button>`:''}`
+    : `<button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicket('🖨️ Comanda impresa')">🖨️ Imprimir</button>
+       <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicket('🔁 Reimpresa')">🔁 Reimprimir</button>
        <button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint();enviarProduccion('${target}')">🔥 Enviar a Producción</button>`;
   const m=document.getElementById('printModal');
   m.innerHTML=`<div class="modal" style="width:520px">
@@ -2867,7 +2913,8 @@ function pedirCuenta(target){
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
     toastT('🧾 Cuenta solicitada · el cajero/admin la verá para facturar');
   }
-  printComanda(target,'precuenta');
+  // La tirilla con precios solo la ve quien puede cobrar (admin/cajero). El mesero ya avisó arriba y ahí termina su parte.
+  if(typeof _puedeCobrar==='function' && _puedeCobrar()) printComanda(target,'precuenta');
 }
 function closePrint(){document.getElementById('printModal').classList.remove('on');}
 document.getElementById('printModal').addEventListener('click',e=>{if(e.target.id==='printModal')closePrint();});
@@ -2891,22 +2938,35 @@ function printCocina(target,items){
       ${rows}
       <div class="tk-foot">Sin precios · Área de producción</div>
     </div>`;}).join('');
+  window._ultimosTicketsCocina=areas.map(area=>({
+    titulo:'IMPRESORA '+area, subtitulo:(meta.num||'')+' · '+hora, esComanda:true,
+    cliente:'', mesero:DYN[target].title.toUpperCase()+(mesaObj?(': '+mesaObj.piso.toUpperCase()):''), hora, orden:meta.num||'',
+    items:items.filter(l=>l.area===area).map(l=>({qty:l.qty, nombre:l.n+(l.llevar?' PARA LLEVAR':''), importe:'', nota:[(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'',noteStr(l)].filter(Boolean).join(' · ')})),
+    total:'', pie:'Sin precios · Área de producción'
+  }));
   const m=document.getElementById('printModal');
   m.innerHTML=`<div class="modal" style="width:560px">
     <div class="modal-h"><b>🔥 Enviado a Producción</b><div class="mx" onclick="closePrint()">✕</div></div>
     <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Se imprime un ticket por cada área de producción involucrada (${areas.join(', ')}).</div>
       <div class="ticket-wrap">${tickets}</div></div>
     <div class="modal-f"><div class="print-actions">
-      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpreso a cocina')">🔁 Reimprimir</button>
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicketsCocina('🖨️ Reimpreso a cocina')">🔁 Reimprimir</button>
       <button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint()">✓ Listo</button>
     </div></div></div>`;
   m.classList.add('on');
+  imprimirTicketsCocina('🖨️ Enviado a impresora de cocina');
 }
 
 /* ── cobro / facturación ── */
 function openPay(target){
   const lines=ORD[target]; if(!lines.length){toastT('La comanda está vacía');return;}
-  payTarget=target; pay={m:null,tip:0,disc:0,fe:false,feData:{tipo:'CC',num:'',nombre:'',email:''}};
+  const pendientes=lines.filter(l=>!l.served&&!l.held);   // no entregados aún al cliente (sin importar si ya están listos en cocina)
+  if(pendientes.length){
+    const n=pendientes.reduce((s,l)=>s+l.qty,0);
+    toastT(`⚠️ Aún hay ${n} producto(s) sin despachar/servir — no se puede facturar todavía`);
+    return;
+  }
+  payTarget=target; pay={m:null,tip:0,disc:0,fe:false,feData:{tipo:'CC',num:'',nombre:'',email:''},efv:{}};
   renderPay();
   document.getElementById('payModal').classList.add('on');
 }
@@ -2937,6 +2997,7 @@ function renderPay(){
         ${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}
         <div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>
       </div>
+      ${pay.m==='efectivo'?renderEfvCalc(t.total):''}
       <label class="fe-toggle"><input type="checkbox" ${pay.fe?'checked':''} onchange="payToggleFE(this.checked)"> 📄 El cliente solicita factura electrónica (DIAN)</label>
       ${pay.fe?`<div class="fe-fields">
         <div class="pf-row2">
@@ -2951,10 +3012,54 @@ function renderPay(){
     <div class="modal-f"><button class="btn primary" id="payConfirm" ${pay.m?'':'disabled'} onclick="confirmPay()">${pay.fe?'📄 Cobrar y generar factura electrónica':'🧾 Cobrar y generar comprobante'}</button></div></div>`;
 }
 function payMethod(m){pay.m=m;renderPay();}
+/* Calculadora de cambio con denominaciones reales de Colombia. Tocar suma 1;
+   tocar la burbuja con el número resta 1. No afecta el cobro en sí (eso lo
+   sigue definiendo el medio de pago elegido), es solo una ayuda visual para
+   el cajero al recibir y devolver efectivo. */
+const EFV_MONEDAS=[100,200,500,1000];
+const EFV_BILLETES=[2000,5000,10000,20000,50000,100000];
+function _efvTotal(){ return Object.entries(pay.efv||{}).reduce((s,[d,c])=>s+(+d)*(c||0),0); }
+function renderEfvCalc(total){
+  const recibido=_efvTotal();
+  const cambio=recibido-total;
+  const chip=(d,cls)=>{ const n=(pay.efv||{})[d]||0; return `${n?`<span class="efv-badge" title="Quitar uno" onclick="event.stopPropagation();efvTap(${d},-1)">${n}</span>`:''}`; };
+  return `<div class="efv-wrap">
+    <div class="efv-grp-lb">Monedas</div>
+    <div class="efv-coins">${EFV_MONEDAS.map(d=>`<div class="efv-coin efv-c${d}" onclick="efvTap(${d},1)" title="Sumar $${d.toLocaleString('es-CO')}">${chip(d)}$${d}</div>`).join('')}</div>
+    <div class="efv-grp-lb">Billetes</div>
+    <div class="efv-bills">${EFV_BILLETES.map(d=>`<div class="efv-bill efv-b${d}" onclick="efvTap(${d},1)" title="Sumar $${d.toLocaleString('es-CO')}">${chip(d)}$${(d/1000)}.000</div>`).join('')}</div>
+    <div class="efv-sum">
+      <div class="efv-row"><span>Recibido</span><b>${COP(recibido)}</b></div>
+      <div class="efv-row"><span>${cambio>=0?'Cambio a devolver':'Aún falta'}</span><span class="efv-cambio ${cambio>=0?'ok':'bad'}">${COP(Math.abs(cambio))}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+        <span class="efv-clear" onclick="efvClear()">Limpiar</span>
+        <span class="efv-exacto" onclick="efvExacto(${total})">💰 Recibido exacto</span>
+      </div>
+    </div>
+  </div>`;
+}
+function efvTap(d,delta){
+  pay.efv=pay.efv||{};
+  const cur=(pay.efv[d]||0)+(delta||1);
+  if(cur<=0) delete pay.efv[d]; else pay.efv[d]=cur;
+  _efvRefresh();
+}
+function efvClear(){ pay.efv={}; _efvRefresh(); }
+function efvExacto(total){
+  pay.efv={}; let rest=Math.round(total);
+  EFV_BILLETES.concat(EFV_MONEDAS).sort((a,b)=>b-a).forEach(d=>{ const n=Math.floor(rest/d); if(n>0){ pay.efv[d]=n; rest-=n*d; } });
+  _efvRefresh();
+}
+function _efvRefresh(){
+  const t=payTotals();
+  const el=document.querySelector('#payModal .efv-wrap');
+  if(el) el.outerHTML=renderEfvCalc(t.total);
+}
 function payToggleFE(v){pay.fe=v;renderPay();}
 function setTip(p){pay.tip=p;renderPay();}
 function setDisc(v){pay.disc=parseInt((v+'').replace(/\D/g,''))||0;const t=payTotals();
   const el=document.querySelector('#payModal .pay-sum');if(el){el.innerHTML=`<div class="trow"><span>Subtotal</span><span>${COP(t.subtotal)}</span></div>${t.tipAmt?`<div class="trow"><span>Propina (${pay.tip}%)</span><span>+ ${COP(t.tipAmt)}</span></div>`:''}${t.disc?`<div class="trow"><span>Descuento</span><span>− ${COP(t.disc)}</span></div>`:''}<div class="trow tot"><span>TOTAL A COBRAR</span><span class="tv">${COP(t.total)}</span></div>`;}
+  if(pay.m==='efectivo')_efvRefresh();
 }
 function confirmPay(){
   if(!pay.m){toastT('Elige un medio de pago');return;}
@@ -2973,8 +3078,67 @@ function confirmPay(){
     nItems: lines.reduce((s,l)=>s+l.qty,0),
     subtotal: t.subtotal, propina: t.tipAmt, descuento: t.disc, total: t.total,
     medio: pay.m, medioLabel: label, split: meta.split||null,
-    tipo: pay.fe?'electronica':'pos', dian: !!pay.fe, clienteFE: pay.fe?{...pay.feData}:null
+    tipo: pay.fe?'electronica':'pos', dian: !!pay.fe, clienteFE: pay.fe?{...pay.feData}:null,
+    efectivo: (pay.m==='efectivo' && _efvTotal()>0)?{recibido:_efvTotal(),cambio:_efvTotal()-t.total}:null
   };
+  window._facturaPendiente=factura;
+  mostrarPreviaFactura(factura);
+}
+/* Tirilla de revisión ANTES de facturar/imprimir. Nada se guarda ni se
+   manda a la impresora todavía — solo cuando la persona da "Confirmar". */
+function mostrarPreviaFactura(f){
+  const fiscal=window._tenantFiscal||{};
+  const fe=new Date(f.ts);
+  const fechaStr=fe.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const horaStr=fe.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const rows=f.items.map(it=>`<div class="tk-row"><span>${it.qty}  ${it.n}${it.cort?' (cortesía)':''}</span><span>${it.cort?'0':COP(it.unit*it.qty)}</span></div>`).join('');
+  const encabezado=[
+    fiscal.nit?('NIT '+fiscal.nit):'',
+    fiscal.direccion||'',
+    fiscal.telefono?('Tel. '+fiscal.telefono):''
+  ].filter(Boolean).map(l=>`<div class="tk-c">${l}</div>`).join('');
+  const ticket=`<div class="ticket">
+    <div class="tk-c tk-big">${_marcaNegocio().toUpperCase()}</div>
+    ${fiscal.razon_social?`<div class="tk-c">${fiscal.razon_social}</div>`:''}
+    ${encabezado}
+    <div class="tk-c">${f.tipo==='electronica'?'FACTURA ELECTRÓNICA (previa)':'COMPROBANTE DE VENTA'}</div>
+    <div class="tk-hr"></div>
+    <div>N° ${f.num}</div>
+    <div>Fecha: ${fechaStr}  Hora: ${horaStr}</div>
+    <div>${f.origen}</div>
+    ${f.mesero?`<div>Mesero: ${f.mesero}</div>`:''}
+    ${f.cliente?`<div>Cliente: ${f.cliente}</div>`:''}
+    <div class="tk-hr"></div>
+    ${rows}
+    <div class="tk-hr"></div>
+    <div class="tk-row"><span>Subtotal</span><span>${COP(f.subtotal)}</span></div>
+    ${f.propina?`<div class="tk-row"><span>Propina</span><span>${COP(f.propina)}</span></div>`:''}
+    ${f.descuento?`<div class="tk-row"><span>Descuento</span><span>- ${COP(f.descuento)}</span></div>`:''}
+    <div class="tk-row tk-big"><span>TOTAL</span><span>${COP(f.total)}</span></div>
+    <div class="tk-row"><span>Pago</span><span>${f.medioLabel}</span></div>
+    ${f.efectivo?`<div class="tk-row"><span>Recibido</span><span>${COP(f.efectivo.recibido)}</span></div><div class="tk-row"><span>Cambio</span><span>${COP(f.efectivo.cambio)}</span></div>`:''}
+    <div class="tk-foot">Precios incluyen IVA cuando aplica · FENLORA CLOUD</div>
+  </div>`;
+  const m=document.getElementById('printModal');
+  m.innerHTML=`<div class="modal" style="width:420px">
+    <div class="modal-h"><b>🧾 Revisa antes de confirmar</b><div class="mx" onclick="cancelarPreviaFactura()">✕</div></div>
+    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Verifica los productos y el total. Nada se ha impreso ni guardado todavía.</div>
+      <div class="ticket-wrap">${ticket}</div></div>
+    <div class="modal-f"><div class="print-actions">
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="cancelarPreviaFactura()">← Revisar pedido</button>
+      <button class="btn primary" style="width:auto;padding:11px 18px" onclick="confirmarFacturaFinal()">✅ Confirmar e imprimir</button>
+    </div></div></div>`;
+  m.classList.add('on');
+}
+function cancelarPreviaFactura(){
+  document.getElementById('printModal').classList.remove('on');
+  window._facturaPendiente=null;
+  // el modal de cobro (payModal) sigue abierto detrás, así se puede ajustar medio/propina/descuento
+}
+function confirmarFacturaFinal(){
+  const factura=window._facturaPendiente; if(!factura) return;
+  document.getElementById('printModal').classList.remove('on');
+  const target=payTarget;const t=payTotals();
   addFactura(factura);
   closePay();
   if(target.startsWith('mesa_')){
@@ -2987,15 +3151,26 @@ function confirmPay(){
     if(document.getElementById('comContent'))renderComContent();
     if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
     saveState();
-    toastT(`${pay.fe?'📄 Factura':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} · falta CONFIRMAR PAGO para liberar la mesa`);
+    toastT(`${factura.tipo==='electronica'?'📄 Factura':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} · falta CONFIRMAR PAGO para liberar la mesa`);
   } else {
     // Pedidos sin mesa (llevar / domicilio / online): no hay mesa que retener → se cierra de una.
-    toastT(`${pay.fe?'📄 Factura electrónica':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} en ${label}`);
+    toastT(`${factura.tipo==='electronica'?'📄 Factura electrónica':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} en ${factura.medioLabel}`);
     delete ORD[target];delete ORDMETA[target];delete ORDCAT[target];if(typeof closeComandaCloud==='function')closeComandaCloud(target);
     closeTab(target);
     if(document.getElementById('comContent'))renderComContent();
     saveState();
   }
+  window._ultimaFactura={
+    titulo:_marcaNegocio(), subtitulo:'FACTURA '+factura.num, esComanda:false,
+    cliente:factura.cliente||'', mesero:factura.mesero||'-',
+    fecha:new Date(factura.ts).toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}),
+    hora:new Date(factura.ts).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), orden:factura.origen||'',
+    items:factura.items.map(it=>({qty:it.qty, nombre:it.n+(it.cort?' (cortesia)':''), importe:it.cort?'0':COP(it.unit*it.qty), nota:''})),
+    total:COP(factura.total), pie:'FENLORA CLOUD · Pago: '+(factura.medioLabel||factura.medio),
+    recibido:factura.efectivo?COP(factura.efectivo.recibido):null, cambio:factura.efectivo?COP(factura.efectivo.cambio):null
+  };
+  window._facturaPendiente=null;
+  _imprimirBridge(window._ultimaFactura);
 }
 /* Admin/cajero confirma que el cliente YA pagó → libera la mesa en TODOS los dispositivos. */
 function confirmarPago(clave){
@@ -3182,7 +3357,7 @@ function openMesaAct(n){
       ${fase==='facturada'?`<div style="font-size:12px;color:var(--amber);background:var(--amber-dim);border-radius:10px;padding:8px 11px;margin-bottom:8px">💵 Ya facturada${(ORDMETA[key]||{}).facturaNum?(' ('+(ORDMETA[key]||{}).facturaNum+')'):''} · falta confirmar el pago para liberar.</div>`:(fase==='precuenta'?`<div style="font-size:12px;color:#ff8f6b;background:rgba(255,91,91,.12);border-radius:10px;padding:8px 11px;margin-bottom:8px">🧾 El mesero pidió la cuenta. Factúrala.</div>`:'')}
       ${(_puedeCobrar()&&fase==='facturada')?`<div class="act-item" style="color:var(--primary)" onclick="closeMesaAct();confirmarPago('${key}')"><span class="ai">✅</span><b>Confirmar pago y liberar mesa</b></div>`:''}
       <div class="act-item" onclick="closeMesaAct();openOrder('${key}','${label}','${ico}')"><span class="ai">🧾</span>Abrir / seguir comanda</div>
-      <div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>
+      ${(_puedeCobrar())?`<div class="act-item" onclick="closeMesaAct();${has?`printComanda('${key}','precuenta')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">🧮</span>Imprimir precuenta</div>`:''}
       ${(_puedeCobrar()&&fase!=='facturada')?`<div class="act-item" onclick="closeMesaAct();${has?`openPay('${key}')`:`toastT('La mesa no tiene consumo')`}"><span class="ai">💵</span>${fase==='precuenta'?'Facturar (cobrar)':'Cobrar'}</div>`:''}
       ${(mm&&mm.grp)?'':`<div class="act-item" onclick="moverComanda(${n})"><span class="ai">↔</span>Mover comanda a otra mesa</div>`}
       ${has?`<div class="act-item danger" onclick="closeMesaAct();cancelarComanda('${key}')"><span class="ai">🚫</span>Cancelar / anular comanda</div>`:''}
@@ -3384,12 +3559,47 @@ function renderAmbientes(){
       <div class="amb-badge">🍴</div>
       <div class="amb-info"><b>${a.n}</b><span>${c} mesa(s)</span></div>
       <div class="amb-acts">
-        <button class="mi edit" title="Editar ambiente" onclick="toastT('Editar ${a.n} (demo)')">✏️</button>
-        <button class="mi del" title="Eliminar ambiente" onclick="toastT('Eliminar ${a.n} (demo)')">🗑️</button>
-        <button class="amb-cfg" onclick="openMesasLB('${a.n}')">🪑 Configurar mesas</button>
+        <button class="mi edit" title="Editar ambiente" onclick="editarAmbiente('${_q(a.n)}')">✏️</button>
+        <button class="mi del" title="Eliminar ambiente" onclick="eliminarAmbiente('${_q(a.n)}')">🗑️</button>
+        <button class="amb-cfg" onclick="openMesasLB('${_q(a.n)}')">🪑 Configurar mesas</button>
       </div></div>`;
-  }).join('')+`<button class="btn ghost" style="width:auto;padding:9px 15px;margin-top:12px" onclick="toastT('Nuevo ambiente (demo)')">➕ Nuevo ambiente</button>`;
+  }).join('')+`<button class="btn ghost" style="width:auto;padding:9px 15px;margin-top:12px" onclick="nuevoAmbiente()">➕ Nuevo ambiente</button>`;
 }
+/* "Ambiente" es solo texto en cada mesa (no hay tabla aparte): nace con su primera mesa,
+   se renombra actualizando todas sus mesas, y se elimina eliminando todas sus mesas. */
+function nuevoAmbiente(){
+  const presets=['Piso 1','Piso 2','Piso 3','Terraza','Sótano','Salón VIP','Barra'];
+  const disponibles=presets.filter(p=>!AMBIENTES.some(a=>a.n.toLowerCase()===p.toLowerCase()));
+  const m=document.getElementById('qrModal');
+  m.innerHTML=`<div class="modal" style="width:380px"><div class="modal-h"><b>➕ Nuevo ambiente</b><div class="mx" onclick="closeQr()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:10px">Elige un nombre común o escribe el tuyo.</div>
+      ${disponibles.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${disponibles.map(p=>`<button class="btn ghost" style="width:auto;padding:8px 14px" onclick="_crearAmbienteDesde('${_q(p)}')">${p}</button>`).join('')}</div>`:''}
+      <div class="cfg-field"><div class="cl-lb">O escribe un nombre propio</div><input class="cfg-in" id="ambCustom" placeholder="Ej: Zona bar, Segundo nivel..."></div>
+    </div>
+    <div class="modal-f"><button class="btn primary" style="width:100%" onclick="_crearAmbienteDesde(document.getElementById('ambCustom').value)">Crear ambiente</button></div></div>`;
+  m.classList.add('on');
+}
+async function _crearAmbienteDesde(nombre){
+  nombre=(nombre||'').trim();
+  if(!nombre){ toastT('Escribe o elige un nombre'); return; }
+  if(AMBIENTES.some(a=>a.n.toLowerCase()===nombre.toLowerCase())){ toastT('Ya existe un ambiente con ese nombre'); closeQr(); return; }
+  closeQr();
+  await addMesa(nombre);
+}
+async function editarAmbiente(nombreViejo){
+  const nombreNuevo=(prompt('Nuevo nombre para "'+nombreViejo+'":',nombreViejo)||'').trim();
+  if(!nombreNuevo||nombreNuevo===nombreViejo) return;
+  if(!window._tenantNeg||!sb){ toastT('Sin conexión, no se pudo renombrar'); return; }
+  try{
+    const {error}=await sb.from('mesas').update({ambiente:nombreNuevo}).eq('negocio_id',window._tenantNeg.id).eq('ambiente',nombreViejo);
+    if(error) throw error;
+    MESAS.forEach(m=>{ if(m.piso===nombreViejo) m.piso=nombreNuevo; });
+    await _cargarSedeYMesas();
+    toastT('Ambiente renombrado a '+nombreNuevo);
+  }catch(e){ toastT('No se pudo renombrar: '+(e.message||e)); }
+}
+async function eliminarAmbiente(nombre){ await delAllMesas(nombre); }
 
 /* ── lightbox: lista de mesas de un ambiente (estilo ApiWorking) ── */
 function openMesasLB(amb){
@@ -3423,13 +3633,33 @@ function renderMesasLB(amb){
     </div>`).join(''):`<div class="empty" style="padding:26px">Sin mesas en ${amb}. Crea una con “Nueva mesa”.</div>`;
 }
 function nextMesaN(){return MESAS.reduce((mx,m)=>Math.max(mx,m.n),0)+1;}
-function addMesa(amb){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});if(typeof saveState==='function')saveState();toastT('Mesa '+pad(n)+' creada en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();}
-function genMasivo(amb){
-  const v=prompt('¿Cuántas mesas quieres generar en '+amb+'?','4');const c=parseInt(v);if(!c||c<1)return;
-  for(let i=0;i<c;i++){const n=nextMesaN();MESAS.push({n,est:'libre',piso:amb,cap:4});}
-  if(typeof saveState==='function')saveState();toastT(c+' mesas generadas en '+amb);renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+async function addMesa(amb){
+  const n=nextMesaN();
+  if(!window._tenantNeg||!sb){ toastT('Sin conexión, no se pudo crear la mesa'); return; }
+  if(!window._sedeId) await _cargarSedeYMesas();
+  try{
+    const {error}=await sb.from('mesas').insert({negocio_id:window._tenantNeg.id,sede_id:window._sedeId,numero:n,ambiente:amb,estado:'libre'});
+    if(error) throw error;
+    await _cargarSedeYMesas();
+    toastT('Mesa '+pad(n)+' creada en '+amb);
+    renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+  }catch(e){ toastT('No se pudo crear la mesa: '+(e.message||e)); }
 }
-function delMesa(n){
+async function genMasivo(amb){
+  const v=prompt('¿Cuántas mesas quieres generar en '+amb+'?','4');const c=parseInt(v);if(!c||c<1)return;
+  if(!window._tenantNeg||!sb){ toastT('Sin conexión, no se pudo generar'); return; }
+  if(!window._sedeId) await _cargarSedeYMesas();
+  const nuevas=[];let n0=nextMesaN();
+  for(let i=0;i<c;i++){ nuevas.push({negocio_id:window._tenantNeg.id,sede_id:window._sedeId,numero:n0+i,ambiente:amb,estado:'libre'}); }
+  try{
+    const {error}=await sb.from('mesas').insert(nuevas);
+    if(error) throw error;
+    await _cargarSedeYMesas();
+    toastT(c+' mesas generadas en '+amb);
+    renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
+  }catch(e){ toastT('No se pudo generar: '+(e.message||e)); }
+}
+async function delMesa(n){
   const mm=getMesa(n);if(!mm)return;const amb=mm.piso;
   const clave=(mm.grp)||('mesa_'+n);
   const tieneComanda=(ORD[clave]&&ORD[clave].length)||mm.est!=='libre';
@@ -3442,16 +3672,24 @@ function delMesa(n){
     if(typeof closeComandaCloud==='function')closeComandaCloud(clave);
     if(typeof openTabs!=='undefined'&&openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
   }
+  if(window._tenantNeg&&sb){
+    try{ const {error}=await sb.from('mesas').delete().eq('negocio_id',window._tenantNeg.id).eq('numero',n); if(error) throw error; }
+    catch(e){ toastT('No se pudo eliminar en el servidor: '+(e.message||e)); return; }
+  }
   const i=MESAS.findIndex(m=>m.n===n);if(i>=0)MESAS.splice(i,1);
   if(typeof saveState==='function')saveState();
   toastT('Mesa '+pad(n)+' eliminada');
   if(document.getElementById('mesasLB'))renderMesasLB(amb);
   renderAmbientes();if(document.getElementById('comContent'))renderComContent();
 }
-function delAllMesas(amb){
+async function delAllMesas(amb){
   const ocupadas=MESAS.filter(m=>m.piso===amb&&(m.est!=='libre'||(ORD[(m.grp)||('mesa_'+m.n)]))).length;
   if(!confirm('¿Eliminar TODAS las mesas de '+amb+'?'+(ocupadas?(' '+ocupadas+' tiene(n) pedido activo, que se ANULARÁ.'):'')+' Esta acción no se puede deshacer.'))return;
   MESAS.filter(m=>m.piso===amb).forEach(m=>{ const clave=(m.grp)||('mesa_'+m.n); if(ORD[clave]){ delete ORD[clave];delete ORDMETA[clave];delete ORDCAT[clave]; if(typeof closeComandaCloud==='function')closeComandaCloud(clave); if(typeof openTabs!=='undefined'&&openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave); } });
+  if(window._tenantNeg&&sb){
+    try{ const {error}=await sb.from('mesas').delete().eq('negocio_id',window._tenantNeg.id).eq('ambiente',amb); if(error) throw error; }
+    catch(e){ toastT('No se pudo eliminar en el servidor: '+(e.message||e)); return; }
+  }
   for(let i=MESAS.length-1;i>=0;i--){if(MESAS[i].piso===amb)MESAS.splice(i,1);}
   if(typeof saveState==='function')saveState();
   toastT('Mesas de '+amb+' eliminadas');renderMesasLB(amb);renderAmbientes();if(document.getElementById('comContent'))renderComContent();
@@ -3487,11 +3725,16 @@ function openMesaCfg(n){
     </div></div></div>`;
   m.classList.add('on');
 }
-function saveMesaCfg(n){
+async function saveMesaCfg(n){
   const mm=getMesa(n);if(!mm)return;
   const cap=parseInt((document.getElementById('cfgCap')||{}).value)||mm.cap||4;
   const piso=(document.getElementById('cfgPiso')||{}).value||mm.piso;
+  const pisoViejo=mm.piso;
   mm.cap=cap;mm.piso=piso;
+  if(piso!==pisoViejo && window._tenantNeg && sb){
+    try{ const {error}=await sb.from('mesas').update({ambiente:piso}).eq('negocio_id',window._tenantNeg.id).eq('numero',n); if(error) throw error; }
+    catch(e){ toastT('No se pudo guardar en el servidor: '+(e.message||e)); mm.piso=pisoViejo; return; }
+  }
   toastT('Mesa '+pad(n)+' guardada');closeQr();
   if(document.getElementById('mesasLB'))renderMesasLB(document.getElementById('mesasLB').dataset.amb);
   renderAmbientes();if(document.getElementById('comContent'))renderComContent();
@@ -3575,7 +3818,7 @@ function verFactura(num){
   const f=FACTURAS.find(x=>x.num===num);if(!f)return;
   const rows=f.items.map(it=>`<div class="tk-row"><span>${it.qty}  ${it.n}${it.cort?' (cortesía)':''}</span><span>${it.cort?'0':COP(it.unit*it.qty)}</span></div>`).join('');
   const ticket=`<div class="ticket">
-    <div class="tk-c tk-big">DULCE CAFÉ</div><div class="tk-c">FACTURA ${f.num}</div><div class="tk-hr"></div>
+    <div class="tk-c tk-big">${_marcaNegocio().toUpperCase()}</div><div class="tk-c">FACTURA ${f.num}</div><div class="tk-hr"></div>
     <div>${f.origen}</div><div>${new Date(f.ts).toLocaleString('es-CO')}</div>
     <div>Mesero: ${f.mesero||'—'}${f.cliente?' · Cliente: '+f.cliente:''}</div><div class="tk-hr"></div>
     ${rows}<div class="tk-hr"></div>
@@ -3586,10 +3829,18 @@ function verFactura(num){
     ${f.split?`<div class="tk-row tk-b"><span>Dividida en ${f.split.n}</span><span>${COP(f.split.per)} c/u</span></div>`:''}
     <div class="tk-row"><span>Pago</span><span>${f.medioLabel||f.medio}</span></div>
     <div class="tk-foot">FENLORA CLOUD</div></div>`;
+  window._ultimaFactura={
+    titulo:_marcaNegocio(), subtitulo:'FACTURA '+f.num, esComanda:false,
+    cliente:f.cliente||'', mesero:f.mesero||'-',
+    fecha:new Date(f.ts).toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}),
+    hora:new Date(f.ts).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), orden:f.origen||'',
+    items:f.items.map(it=>({qty:it.qty, nombre:it.n+(it.cort?' (cortesia)':''), importe:it.cort?'0':COP(it.unit*it.qty), nota:''})),
+    total:COP(f.total), pie:'FENLORA CLOUD · Pago: '+(f.medioLabel||f.medio)
+  };
   const m=document.getElementById('printModal');
   m.innerHTML=`<div class="modal" style="width:420px"><div class="modal-h"><b>🧾 Factura ${f.num}</b><div class="mx" onclick="closePrint()">✕</div></div>
     <div class="modal-b"><div class="ticket-wrap">${ticket}</div></div>
-    <div class="modal-f"><div class="print-actions"><button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('🖨️ Reimpresa')">🖨️ Reimprimir</button><button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint()">Cerrar</button></div></div></div>`;
+    <div class="modal-f"><div class="print-actions"><button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirFactura('🖨️ Reimpresa')">🖨️ Reimprimir</button><button class="btn primary" style="width:auto;padding:11px 16px" onclick="closePrint()">Cerrar</button></div></div></div>`;
   m.classList.add('on');
 }
 /* ── Persistencia del ESTADO OPERATIVO (comandas, mesas, contadores) ── */
@@ -4155,7 +4406,7 @@ if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(_clou
 if(typeof window!=='undefined'){
   try{
     setInterval(()=>{ if(document.hidden)return; if(_cloudReady()&&typeof pullComandas==='function'){ pullComandas(); if(typeof pullCaja==='function')pullCaja(); } }, 20000);
-    document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _cloudReady()){ if(typeof pullComandas==='function')pullComandas(); if(typeof pullCaja==='function')pullCaja(); if(typeof subscribeComandas==='function')subscribeComandas(); } });
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _cloudReady()){ if(typeof pullComandas==='function')pullComandas(); if(typeof pullCaja==='function')pullCaja(); if(typeof subscribeComandas==='function')subscribeComandas(); if(typeof _cargarSedeYMesas==='function')_cargarSedeYMesas(); } });
   }catch(e){}
 }
 
@@ -4167,7 +4418,7 @@ function _pedirPermisoAvisos(){
   try{
     if(!('Notification' in window))return;
     const rol=window.ROL||'admin';
-    if(rol!=='mesero' && !(typeof _puedeCobrar==='function'&&_puedeCobrar()))return;  // avisos: meseros (pedido listo) y admin/cajero (piden cuenta)
+    if(rol!=='mesero' && rol!=='cocina' && !(typeof _puedeCobrar==='function'&&_puedeCobrar()))return;  // avisos: meseros (pedido listo), cocina (pedido nuevo) y admin/cajero (piden cuenta)
     if(Notification.permission==='default' && !_notifAsked){ _notifAsked=true; Notification.requestPermission().catch(()=>{}); }
   }catch(e){}
 }
@@ -4205,6 +4456,9 @@ function _chequearListoParaMesero(clave){
   const st=(typeof mesaKitchen==='function')?mesaKitchen({grp:clave}):null;
   _kdsPrevState[clave]=st;
   if(!_readyBaseline)return;                                    // primera carga: solo foto, sin avisar
+  if(st==='cocina' && prev!=='cocina'){                          // pedido recién enviado a producción → avisa SOLO a cocina
+    if((window.ROL||'admin')==='cocina') _avisoNuevoPedidoCocina(clave);
+  }
   if(st==='listo' && prev!=='listo'){
     const rol=window.ROL||'admin';
     if(rol==='mesero' && _esMiComanda(clave)) _avisoListo(clave,true);   // mesero dueño → aviso CON botón "Voy por él"
@@ -4221,6 +4475,23 @@ function _beepListo(){
       o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.4);};
     beep(0,880);beep(0.42,1175);
   }catch(e){}
+}
+/* Aviso a COCINA cuando un mesero manda un pedido nuevo a producción (solo cocina, no admin) */
+function _avisoNuevoPedidoCocina(clave){
+  const meta=ORDMETA[clave]||{};
+  const titulo=meta.title||('Mesa '+clave.replace('mesa_','').split('_').join(' + '));
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([220,110,220]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const body='Llegó un pedido nuevo de '+titulo+'.';
+      const opt={body,tag:'nuevo-'+clave,renotify:true,requireInteraction:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){
+        navigator.serviceWorker.ready.then(reg=>reg.showNotification('👨‍🍳 ¡Pedido nuevo!',opt)).catch(()=>{ try{new Notification('👨‍🍳 ¡Pedido nuevo!',{body});}catch(_){} });
+      } else { try{new Notification('👨‍🍳 ¡Pedido nuevo!',{body});}catch(_){} }
+    }
+  }catch(e){}
+  _overlayAviso('nuevopedido',titulo);
 }
 function _avisoListo(clave,actionable){
   const meta=ORDMETA[clave]||{};
@@ -4243,6 +4514,8 @@ function _overlayAviso(kind,titulo,opts){
   opts=opts||{}; const actionable = opts.actionable!==false;
   const K = (kind==='cuenta')
     ? {cls:'cuenta',emoji:'🧾',t:'¡PIDEN LA CUENTA!',sub:'Ve a la mesa y factúrala.',btn:'✅ Voy a facturar'}
+    : (kind==='nuevopedido')
+    ? {cls:'',emoji:'👨‍🍳',t:'¡PEDIDO NUEVO!',sub:'Entró un pedido a producción.',btn:'✅ Recibido'}
     : {cls:'',emoji:'🔔',t:'¡PEDIDO LISTO!',sub:(actionable?'Reclámalo en cocina y entrégalo a la mesa.':'El mesero va a reclamarlo. (Aviso de control para el admin)'),btn:'✅ Voy por él'};
   let el=document.getElementById('listoOverlay');
   if(!el){ el=document.createElement('div'); el.id='listoOverlay'; el.className='listo-ov'; document.body.appendChild(el); }
@@ -4556,6 +4829,51 @@ async function resolveTenant(){
   try{ const {data,error}=await sb.rpc('negocio_por_subdominio',{p_sub:window._tenant}); if(error)throw error;
     if(data&&data.length){ window._tenantNeg={id:data[0].id,nombre:data[0].nombre,sub:window._tenant}; if(typeof _buildManifest==='function')_buildManifest(); }
   }catch(e){ console.warn('resolveTenant:',e.message||e); }
+  _cargarDatosFiscales();
+  _cargarSedeYMesas();
+}
+/* Mesas y ambientes reales (tabla mesas en Supabase; ambiente es solo texto en cada mesa,
+   no hay tabla aparte). Conserva el estado EN VIVO de mesas que ya existen localmente
+   (ocupada, monto, grupo, etc.) y solo actualiza ambiente/aforo — para no pisar una mesa
+   que esté siendo usada justo cuando llega esta actualización. */
+async function _cargarSedeYMesas(){
+  if(!window._tenantNeg||!window._tenantNeg.id||!sb) return;
+  try{
+    if(!window._sedeId){
+      const {data:sedes,error:e1}=await sb.from('sedes').select('id').eq('negocio_id',window._tenantNeg.id).limit(1);
+      if(e1) throw e1;
+      if(sedes&&sedes.length) window._sedeId=sedes[0].id;
+    }
+    const {data:rows,error:e2}=await sb.from('mesas').select('numero,ambiente,estado').eq('negocio_id',window._tenantNeg.id).order('numero',{ascending:true});
+    if(e2) throw e2;
+    if(rows){
+      const vistos=new Set();
+      rows.forEach(r=>{
+        vistos.add(r.numero);
+        let mm=MESAS.find(m=>m.n===r.numero);
+        if(mm){ mm.piso=r.ambiente; }
+        else { MESAS.push({n:r.numero,est:'libre',piso:r.ambiente,cap:4}); }
+      });
+      for(let i=MESAS.length-1;i>=0;i--){ if(!vistos.has(MESAS[i].n)) MESAS.splice(i,1); }
+    }
+    const vistosAmb=[]; MESAS.forEach(m=>{ if(m.piso && vistosAmb.indexOf(m.piso)<0) vistosAmb.push(m.piso); });
+    AMBIENTES.length=0; vistosAmb.forEach(n=>AMBIENTES.push({n}));
+    if(typeof renderAmbientes==='function')renderAmbientes();
+    if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
+  }catch(e){ console.warn('mesas/sede:',e.message||e); }
+}
+/* Datos fiscales (NIT, dirección, teléfono) para el encabezado de la tirilla.
+   Función aparte, no toca resolveTenant ni negocio_por_subdominio. Si la
+   función/columnas todavía no existen en Supabase, falla en silencio y el
+   ticket simplemente sale sin esos datos (no rompe nada). */
+window._tenantFiscal=null;
+async function _cargarDatosFiscales(){
+  if(!window._tenant||!sb) return;
+  try{
+    const {data,error}=await sb.rpc('negocio_datos_fiscales',{p_sub:window._tenant});
+    if(error)throw error;
+    if(data&&data.length) window._tenantFiscal=data[0];
+  }catch(e){ /* silencioso: si aún no corriste el script SQL, no pasa nada */ }
 }
 async function initAuth(){
   if(!sb){showAuth('offline');return;}
