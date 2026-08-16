@@ -453,6 +453,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .efv-full-acts{display:flex;gap:10px;flex-shrink:0}
 .efv-full-acts button{flex:1;padding:13px 8px;font-size:13px}
 /* Colores de respaldo si alguna imagen no carga */
+.efv-c50{background:linear-gradient(145deg,#dcdcdc,#a3a3a3)}
 .efv-c100{background:linear-gradient(145deg,#e3caa0,#a9784a)}
 .efv-c200{background:linear-gradient(145deg,#f0d27a,#c79a2e)}
 .efv-c500{background:linear-gradient(145deg,#f3e2a9,#b8b8b8)}
@@ -3041,9 +3042,9 @@ function payMethod(m){pay.m=m;renderPay();if(m==='efectivo')abrirEfvFull();}
    tocar la burbuja con el número resta 1. No afecta el cobro en sí (eso lo
    sigue definiendo el medio de pago elegido), es solo una ayuda visual para
    el cajero al recibir y devolver efectivo. */
-const EFV_MONEDAS=[100,200,500,1000];
+const EFV_MONEDAS=[50,100,200,500,1000];
 const EFV_BILLETES=[2000,5000,10000,20000,50000,100000];
-const EFV_IMG={100:'./billetes/moneda-100.jpg',200:'./billetes/moneda-200.jpg',500:'./billetes/moneda-500.jpg',1000:'./billetes/moneda-1000.jpg',
+const EFV_IMG={50:'./billetes/moneda-50.jpg',100:'./billetes/moneda-100.jpg',200:'./billetes/moneda-200.jpg',500:'./billetes/moneda-500.jpg',1000:'./billetes/moneda-1000.jpg',
   2000:'./billetes/billete-2000.jpg',5000:'./billetes/billete-5000.jpg',10000:'./billetes/billete-10000.jpg',20000:'./billetes/billete-20000.jpg',50000:'./billetes/billete-50000.jpg',100000:'./billetes/billete-100000.jpg'};
 function _efvTotal(){ return parseInt(pay.efvInput||'0')||0; }
 /* Resumen chiquito dentro del modal de cobro normal: solo un vistazo + botón para abrir la calculadora grande.
