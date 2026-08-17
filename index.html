@@ -331,8 +331,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 
 /* línea rica */
 .cl-head{display:flex;gap:9px;align-items:flex-start}
-.cl-acc{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.accb{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12.5px;display:flex;align-items:center;justify-content:center;padding:0;line-height:0}
+.cl-acc{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.accb{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;line-height:0}
 .accb.b1{color:var(--blue)}.accb.b1:hover{background:var(--blue-dim);border-color:var(--blue)}
 .accb.b2{color:var(--red)}.accb.b2:hover{background:var(--red-dim);border-color:var(--red)}
 .accb.b3{color:var(--primary)}.accb.b3:hover{background:var(--primary-dim);border-color:var(--primary)}
@@ -767,6 +767,20 @@ body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50
 
 /* ── Cocina (KDS) ── */
 .kds-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.pedidos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.ped-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px}
+.ped-card.ped-en_camino{border-color:rgba(255,183,77,.5)}
+.ped-card.ped-entregado{opacity:.6}
+.ped-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ped-h b{font-size:14.5px}
+.ped-badge{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.ped-badge.pendiente{background:rgba(94,236,164,.14);color:var(--accent)}
+.ped-badge.en_camino{background:rgba(255,183,77,.16);color:#ffb74d}
+.ped-badge.entregado{background:rgba(139,147,161,.16);color:var(--txt3)}
+.ped-line{font-size:12.5px;color:var(--txt2);margin-bottom:4px}
+.ped-line.pago-ok{color:var(--accent);font-weight:700}
+.ped-line.pago-bad{color:var(--danger);font-weight:700}
+.ped-acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .kds-areas{display:flex;gap:8px;flex-wrap:wrap}
 .kds-atab{background:var(--card2);border:1px solid var(--border);color:var(--txt);font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:9px;cursor:pointer;font-family:inherit}
 .kds-atab.on{background:var(--primary);color:#052e21;border-color:var(--primary)}
@@ -1058,7 +1072,7 @@ const S = {
   mesas:      {g:'Operación', n:'Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El centro de todos los pedidos: mesas del salón, para llevar, domicilio, Rappi/PedidosYa y online. En "Mesas" tocas una mesa para abrir su comanda.', feat:['Filtros: mesas, llevar, delivery, online','Mapa de mesas con semáforo','Unir mesas para grupos','Tocar mesa → abre su comanda','Cada comanda en su pestaña','Cambiar de mesero']},
   cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'activo', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'activo', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
-  online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'pronto', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: para llevar, domicilio propio, y los que entran por Rappi, PedidosYa o WhatsApp.', feat:['Pedidos para llevar y domicilio','Integración con Rappi y PedidosYa','Pedidos por WhatsApp','Seguimiento del repartidor','QR de ubicación (Google Maps)','Tiempo estimado de despacho']},
+  online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'activo', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: domicilio propio y los que entran por Rappi, PedidosYa, iFood o el menú digital. Pago confirmado por adelantado, con estado de entrega.', feat:['Domicilio propio con dirección y teléfono','Pedidos de Rappi / iFood / PedidosYa (registro manual, listo para conectar API)','Pago anticipado obligatorio antes de crear el pedido','Estado de entrega: pendiente → en camino → entregado','Pendiente: integración directa por API con cada plataforma cuando el negocio la tenga']},
   // CATÁLOGO
   productos:  {g:'Catálogo', n:'Productos', ico:'🍔', st:'activo', fase:'Fase 3', desc:'Tu catálogo: crear productos con foto, precio, categoría, área de producción, y definir sus adicionales, variantes y combos.', feat:['Producto con foto y descripción','Variantes (tamaños, presentaciones)','Adicionales y toppings con precio','Combos con selector de opciones','Precio por sede','Importar productos desde Excel']},
   carta:      {g:'Catálogo', n:'Carta / Menú QR', ico:'📱', st:'activo', fase:'Fase 4', desc:'El editor de tu carta digital QR — la que ve el cliente al escanear en la mesa. Aquí decides qué se muestra, el diseño y las fotos.', feat:['Editor visual de la carta','Fotos grandes por plato','Recomendados y "más pedido"','Promos y combos del día','Juegos de espera (diferenciador)','Captura de Club VIP por WhatsApp']},
@@ -1153,10 +1167,11 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
+  else if(k==='online') renderPedidosBoard();
   else if(k==='caja') initCaja();
   else if(k==='categorias') initCategorias();
   else if(k==='empleados') initEmpleados();
@@ -1520,6 +1535,57 @@ const COMTYPES=[['mesas','🍽️','Mesas',6],['llevar','🥡','Llevar',2],['del
 
 /* ═══ COCINA (KDS) ═══ */
 let kdsArea='all';
+/* ═══ PEDIDOS ONLINE / DELIVERY — vista unificada con estado de entrega ═══ */
+function pedidosView(){
+  return `
+  <div class="page-head"><h1>🛵 Pedidos Online / Delivery <span class="status-pill activo">En vivo</span></h1>
+    <div class="sub">Domicilios, pedidos de plataformas (Rappi, iFood, PedidosYa) y del menú digital, todos aquí con su estado de entrega. El pago se confirma por adelantado al crear el pedido.</div></div>
+  <div id="pedidosBoard"></div>`;
+}
+const PED_ETAPAS=[['pendiente','🕐 Pendiente'],['en_camino','🛵 En camino'],['entregado','✅ Entregado']];
+function renderPedidosBoard(){
+  const el=document.getElementById('pedidosBoard'); if(!el) return;
+  const claves=Object.keys(ORDMETA).filter(k=>/^(delivery|dext|online)_/.test(k));
+  if(!claves.length){
+    el.innerHTML=`<div class="empty-type" style="margin-top:24px"><div class="et-ic">🛵</div>
+      <div class="et-t">No hay pedidos activos</div>
+      <div class="et-d">Los domicilios y pedidos de plataformas aparecen aquí apenas se crean desde Comandas.</div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="pedidos-grid">${claves.map(k=>{
+    const meta=ORDMETA[k]||{}; const lines=ORD[k]||[];
+    const total=lines.reduce((s,l)=>s+(l.cort?0:l.unit*l.qty-(l.desc||0)),0);
+    const est=meta.estadoEntrega||'pendiente';
+    const idxEst=Math.max(0,PED_ETAPAS.findIndex(e=>e[0]===est));
+    const sig=PED_ETAPAS[idxEst+1];
+    const infoExtra = k.startsWith('delivery_')
+      ? `<div class="ped-line">📍 ${meta.address||'-'}</div>${meta.phone?`<div class="ped-line">📱 ${meta.phone}</div>`:''}${meta.cliente?`<div class="ped-line">👤 ${meta.cliente}</div>`:''}`
+      : k.startsWith('dext_')
+      ? `<div class="ped-line">🛴 ${meta.canalExtLabel||'Plataforma externa'}${meta.numExt?' · '+meta.numExt:''}</div>`
+      : `<div class="ped-line">🌐 Pedido del menú digital</div>`;
+    return `<div class="ped-card ped-${est}">
+      <div class="ped-h"><b>${meta.title||k}</b><span class="ped-badge ${est}">${PED_ETAPAS[idxEst][1]}</span></div>
+      ${infoExtra}
+      <div class="ped-line">🧾 ${lines.reduce((s,l)=>s+l.qty,0)} ítem(s) · ${COP(total)}</div>
+      ${meta.pagoAnt?`<div class="ped-line pago-ok">✅ Pagado anticipado · ${meta.pagoAnt.medioLabel}</div>`:`<div class="ped-line pago-bad">⚠️ Sin pago anticipado confirmado</div>`}
+      <div class="ped-acts">
+        <button class="btn ghost" style="width:auto;padding:9px 12px" onclick="openTab('${k}')">✏️ Ver pedido</button>
+        ${sig?`<button class="btn primary" style="width:auto;padding:9px 12px" onclick="avanzarEntrega('${k}')">${sig[1]} →</button>`:''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function avanzarEntrega(target){
+  const meta=ORDMETA[target]; if(!meta) return;
+  const idx=PED_ETAPAS.findIndex(e=>e[0]===(meta.estadoEntrega||'pendiente'));
+  if(idx>=PED_ETAPAS.length-1) return;
+  meta.estadoEntrega=PED_ETAPAS[idx+1][0];
+  if(meta.estadoEntrega==='entregado') toastT('✅ Pedido marcado como entregado');
+  if(typeof syncMesa==='function')syncMesa(target);
+  if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
+  saveState();
+  renderPedidosBoard();
+}
 function kdsView(){
   return `
   <div class="page-head"><h1>👨‍🍳 Cocina (KDS) <span class="status-pill activo">En vivo</span></h1>
@@ -2475,6 +2541,7 @@ function clickMesa(n,est){
 function newOrder(type){
   if(typeof _exigirCaja==='function' && !_exigirCaja()){ return; }   // BLOQUEA: sin caja abierta no hay pedido
   if(type==='delivery'){askAddress();return;}
+  if(type==='dext'){askDextInfo();return;}
   const map={llevar:['🥡','Para llevar'],dext:['🛴','Rappi/PYA'],online:['🌐','Online']};
   const id=type+'_'+(ordSeq++);
   openOrder(id, map[type][1]+' #'+id.split('_')[1], map[type][0]);
@@ -2512,7 +2579,12 @@ function askAddress(){
       <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Dirección de entrega</div>
       <input id="addrInput" placeholder="Cra 5 # 10-20, Barrio Centro" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:12px">
       <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Teléfono / WhatsApp</div>
-      <input id="addrPhone" inputmode="numeric" placeholder="300 123 4567" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none">
+      <input id="addrPhone" inputmode="numeric" placeholder="300 123 4567" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Pago anticipado</div>
+      <select id="addrPagoMedio" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:10px">${PAGOS.map(p=>`<option value="${p[0]}">${p[2]}</option>`).join('')}</select>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--txt2);cursor:pointer">
+        <input type="checkbox" id="addrPagado" style="width:18px;height:18px"> El cliente ya pagó por adelantado
+      </label>
     </div>
     <div class="modal-f"><button class="btn primary" onclick="startDelivery()">Crear domicilio</button></div></div>`;
   m.classList.add('on');
@@ -2521,10 +2593,42 @@ function startDelivery(){
   const addr=(document.getElementById('addrInput').value||'').trim();
   const phone=(document.getElementById('addrPhone').value||'').trim();
   const name=(document.getElementById('addrName').value||'').trim();
+  const medio=document.getElementById('addrPagoMedio').value;
+  const pagado=document.getElementById('addrPagado').checked;
   if(!addr){ toastT('📍 Escribe la dirección de entrega'); const e=document.getElementById('addrInput'); if(e)e.focus(); return; }   // domicilio sin dirección no sirve
+  if(!pagado){ toastT('⚠️ Confirma que el pago anticipado ya se recibió antes de crear el domicilio'); return; }
   closeCom();
   const id='delivery_'+(ordSeq++);
-  openOrder(id,'Domicilio #'+id.split('_')[1],'🛵',{address:addr,phone,cliente:name});
+  openOrder(id,'Domicilio #'+id.split('_')[1],'🛵',{address:addr,phone,cliente:name,pagoAnt:{medio,medioLabel:(PAGOS.find(p=>p[0]===medio)||[])[2],confirmado:true,ts:Date.now()},estadoEntrega:'pendiente'});
+}
+/* pedido externo (Rappi / iFood / PedidosYa) — se digita manualmente hasta que haya integración por API */
+function askDextInfo(){
+  const m=document.getElementById('comModal');
+  m.innerHTML=`<div class="modal" style="width:400px">
+    <div class="modal-h"><b>🛴 Nuevo pedido de plataforma</b><div class="mx" onclick="closeCom()">✕</div></div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Plataforma</div>
+      <select id="dextPlat" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:12px">
+        <option value="rappi">Rappi</option><option value="ifood">iFood</option><option value="pedidosya">PedidosYa</option><option value="otro">Otra plataforma</option>
+      </select>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">N° de pedido en la plataforma (opcional)</div>
+      <input id="dextNum" placeholder="Ej: RP-48213" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:14px">
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--txt2);cursor:pointer">
+        <input type="checkbox" id="dextPagado" style="width:18px;height:18px"> Pago ya confirmado por la plataforma
+      </label>
+    </div>
+    <div class="modal-f"><button class="btn primary" onclick="startDext()">Crear pedido</button></div></div>`;
+  m.classList.add('on');
+}
+function startDext(){
+  const plat=document.getElementById('dextPlat').value;
+  const platLbl={rappi:'Rappi',ifood:'iFood',pedidosya:'PedidosYa',otro:'Otra plataforma'}[plat];
+  const num=(document.getElementById('dextNum').value||'').trim();
+  const pagado=document.getElementById('dextPagado').checked;
+  if(!pagado){ toastT('⚠️ Confirma que la plataforma ya reportó el pago antes de crear el pedido'); return; }
+  closeCom();
+  const id='dext_'+(ordSeq++);
+  openOrder(id,platLbl+(num?' · '+num:'')+' #'+id.split('_')[1],'🛴',{canalExt:plat,canalExtLabel:platLbl,numExt:num,pagoAnt:{medio:'plataforma',medioLabel:platLbl,confirmado:true,ts:Date.now()},estadoEntrega:'pendiente'});
 }
 
 /* order taking per target */
@@ -2740,13 +2844,14 @@ function comandaBody(target){
     const hold=l.sent?'':`<span class="cl-hold" onclick="toggleHold('${target}',${l.lid})">${l.held?'▶ enviar':'⏸ retener'}</span>`;
     const impHTML=(desc&&!l.cort)?`<div class="cl-imp"><span class="cl-imp-old">${COP(gross)}</span> ${COP(net)}</div>`:`<div class="cl-imp">${COP(l.cort?0:gross)}</div>`;
     return `<div class="cl${l.sent?' sent':''}${l.held?' held':''}${l.cort?' cort':''}">
-      <div class="cl-head">${acc}
+      <div class="cl-head">
         <div class="cl-info">
           <div class="cl-name">${l.n}${tags}</div>
           ${o?`<div class="cl-opts" onclick="openEditOpts('${target}',${l.lid})">${o} <span class="edit-note">editar</span></div>`:''}
           ${ns?`<div class="cl-notes" onclick="openNotes('${target}',${l.lid})">📝 ${ns} <span class="edit-note">editar</span></div>`:`<div class="cl-addnote" onclick="openNotes('${target}',${l.lid})">📝 Agregar observación (sin ají, término medio…)</div>`}
           <span class="cl-area">🍳 ${l.area}</span>
         </div></div>
+      ${acc}
       <div class="cl-ctrl">${qty}${price}${impHTML}${posSel}${hold}</div></div>`;
   }).join('');
 }
@@ -4045,7 +4150,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.topmenu')&&!e.targ
 _loadTheme();
 setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
 
-try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden){saveState();if(typeof pushComandasSoon==='function')pushComandasSoon(true);}}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); },30000); }catch(e){}
+try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden){saveState();if(typeof pushComandasSoon==='function')pushComandasSoon(true);}}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); if(document.getElementById('pedidosBoard'))renderPedidosBoard(); },30000); }catch(e){}
 
 /* ═══════════ SINCRONIZACIÓN DEL CATÁLOGO (offline-first) ═══════════ */
 function newId(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);}); }
