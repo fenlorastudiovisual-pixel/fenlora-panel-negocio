@@ -1101,8 +1101,8 @@ const S = {
   // CONFIGURACIÓN
   local:      {g:'Configuración', n:'Local y Sucursales', ico:'🏬', st:'construccion', fase:'Fase 1', desc:'Datos del negocio, logo, y gestión de varias sedes si tienes más de un local.', feat:['Datos y logo del negocio','Varias sedes/sucursales','Precios por sede','Horarios de atención']},
   ambientes:  {g:'Configuración', n:'Mesas, QR y NFC', ico:'🪑', st:'activo', fase:'Fase 1', desc:'Configura pisos, zonas y mesas con su capacidad. Cada mesa genera su código QR y su enlace NFC para que el cliente abra la carta acercando el celular o escaneando.', feat:['Pisos y ambientes (terraza, salón…)','Mesas con capacidad','Generar mesas en masa','QR por mesa','Enlace NFC por mesa (tocar con el celular)','Descargar/imprimir QR y stickers NFC']},
-  impresoras: {g:'Configuración', n:'Impresoras y Ticketeras', ico:'🖨️', st:'pronto', fase:'Fase 2', desc:'Configura las impresoras térmicas de cocina, barra y caja, y personaliza el ticket de comanda.', feat:['Impresoras por área','Personalizar ticket de comanda','Logo en comprobantes','Impresión térmica 58/80mm']},
-  pagos:      {g:'Configuración', n:'Métodos de Pago', ico:'💳', st:'pronto', fase:'Fase 2', desc:'Define cómo cobra el negocio: efectivo, tarjeta, Nequi, Daviplata, y pago con QR.', feat:['Efectivo y tarjeta','Nequi y Daviplata','Pago con QR','Propinas','Redondeo']},
+  impresoras: {g:'Configuración', n:'Impresoras y Ticketeras', ico:'🖨️', st:'activo', fase:'Fase 2', desc:'Configura las impresoras térmicas de cocina, barra y caja, y personaliza el ticket de comanda.', feat:['Probar conexión con el bridge desde este dispositivo','Ticket de prueba con un clic','Pie de página personalizado en cada comprobante','Impresión térmica 58/80mm vía bridge local']},
+  pagos:      {g:'Configuración', n:'Métodos de Pago', ico:'💳', st:'activo', fase:'Fase 2', desc:'Define cómo cobra el negocio: efectivo, tarjeta, Nequi, Daviplata, y pago con QR.', feat:['Activar o desactivar cada medio de pago','Porcentajes de propina personalizados','Se aplica al instante en la pantalla de cobro']},
   integ:      {g:'Configuración', n:'Integraciones', ico:'🔌', st:'pronto', fase:'Fase 5', desc:'Conexiones con plataformas externas: apps de delivery, WhatsApp Business y más.', feat:['Rappi y PedidosYa','WhatsApp Business','Pasarelas de pago','Webhooks']},
   seguridad:  {g:'Configuración', n:'Seguridad y Auditoría', ico:'🛡️', st:'pronto', fase:'Fase 2', desc:'Medidas antirrobo y trazabilidad: alertas por correo cuando se abre caja, se anula una comanda o se cambia un precio.', feat:['Auditoría de acciones sensibles','Alertas por correo al dueño','Bloqueo de precios desde el celular','Bloqueo de montos por cajero','Registro de anulaciones']},
 };
@@ -1167,7 +1167,7 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
@@ -1585,6 +1585,82 @@ function avanzarEntrega(target){
   if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
   saveState();
   renderPedidosBoard();
+}
+/* ═══ MÉTODOS DE PAGO — activar/desactivar y propinas, guardado real en Supabase ═══ */
+function _cfgMetodos(){ return (window._tenantFiscal&&window._tenantFiscal.metodos_pago)||['efectivo','tarjeta','nequi','daviplata','qr']; }
+function _cfgPropinas(){ return (window._tenantFiscal&&window._tenantFiscal.propina_pcts)||[5,10,15]; }
+function pagosView(){
+  const activos=_cfgMetodos();
+  const rows=PAGOS.map(p=>`<div class="cfg-row">
+      <div class="cfg-row-l"><span class="cfg-ico">${p[1]}</span>${p[2]}</div>
+      <label class="switch"><input type="checkbox" id="pm_${p[0]}" ${activos.includes(p[0])?'checked':''}><span class="slider"></span></label>
+    </div>`).join('');
+  return `
+  <div class="page-head"><h1>💳 Métodos de Pago <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Elige qué formas de pago ofrece este negocio. Las que desactives no van a aparecer al cobrar.</div></div>
+  <div class="ph-card" style="max-width:520px">
+    <div class="ph-feat-title">Formas de pago</div>
+    ${rows}
+    <div class="ph-feat-title" style="margin-top:22px">Porcentajes de propina sugeridos</div>
+    <div style="display:flex;gap:10px;margin:10px 0">
+      ${[0,1,2].map(i=>`<input class="cfg-in" style="width:80px;text-align:center" inputmode="numeric" id="prop_${i}" value="${_cfgPropinas()[i]||''}" placeholder="%">`).join('')}
+    </div>
+    <div style="font-size:11.5px;color:var(--txt2);margin-bottom:16px">Deja alguno en blanco si quieres menos de 3 opciones.</div>
+    <button class="btn primary" style="width:auto;padding:12px 20px" onclick="guardarConfigPagos()">💾 Guardar cambios</button>
+  </div>`;
+}
+async function guardarConfigPagos(){
+  const metodos=PAGOS.map(p=>p[0]).filter(k=>document.getElementById('pm_'+k).checked);
+  if(!metodos.length){ toastT('⚠️ Debes dejar al menos un método de pago activo'); return; }
+  const propinas=[0,1,2].map(i=>parseInt((document.getElementById('prop_'+i)||{}).value)||null).filter(Boolean);
+  await _guardarConfigNegocio(metodos, propinas.length?propinas:[5,10,15], (window._tenantFiscal&&window._tenantFiscal.ticket_pie)||null);
+}
+/* ═══ IMPRESORAS Y TICKETERAS — probar conexión con el bridge, ticket de prueba, pie del ticket ═══ */
+function impresorasView(){
+  return `
+  <div class="page-head"><h1>🖨️ Impresoras y Ticketeras <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">La impresión funciona a través del bridge local instalado en el equipo conectado a la impresora térmica. Esta pantalla prueba la conexión desde ESTE dispositivo.</div></div>
+  <div class="ph-card" style="max-width:520px">
+    <div class="ph-feat-title">Conexión con este dispositivo</div>
+    <div id="impStatus" style="font-size:13px;color:var(--txt2);margin:10px 0 14px">Sin probar todavía.</div>
+    <div style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap">
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="probarBridge()">🔌 Probar conexión</button>
+      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicketPrueba()">🖨️ Imprimir ticket de prueba</button>
+    </div>
+    <div class="ph-feat-title">Pie de página del ticket</div>
+    <div style="font-size:11.5px;color:var(--txt2);margin:6px 0 10px">Este texto sale al final de cada comprobante impreso, en vez de "FENLORA CLOUD".</div>
+    <input class="cfg-in" style="width:100%;margin-bottom:16px" id="ticketPieIn" value="${(window._tenantFiscal&&window._tenantFiscal.ticket_pie)||''}" placeholder="Ej: ¡Gracias por su compra! · Dulce Café">
+    <button class="btn primary" style="width:auto;padding:12px 20px" onclick="guardarConfigImpresoras()">💾 Guardar cambios</button>
+  </div>`;
+}
+async function probarBridge(){
+  const el=document.getElementById('impStatus'); if(el)el.textContent='Probando...';
+  try{
+    const r=await fetch('http://localhost:4321/ping');
+    if(!r.ok)throw new Error('sin respuesta');
+    const data=await r.json();
+    if(el)el.innerHTML=`<span style="color:var(--accent);font-weight:700">✅ Bridge conectado</span> · puerto configurado: ${data.puerto||'-'}`;
+  }catch(e){
+    if(el)el.innerHTML=`<span style="color:var(--danger);font-weight:700">❌ No responde</span> · revisa que el bridge esté corriendo en este mismo equipo (doble clic en iniciar.bat)`;
+  }
+}
+function imprimirTicketPrueba(){
+  _imprimirBridge({titulo:_marcaNegocio(), subtitulo:'TICKET DE PRUEBA', esComanda:true, hora:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), items:[{qty:1,nombre:'Prueba de impresión',importe:''}], pie:(window._tenantFiscal&&window._tenantFiscal.ticket_pie)||'FENLORA CLOUD'});
+  toastT('🖨️ Ticket de prueba enviado');
+}
+async function guardarConfigImpresoras(){
+  const pie=(document.getElementById('ticketPieIn').value||'').trim();
+  await _guardarConfigNegocio(_cfgMetodos(), _cfgPropinas(), pie||null);
+}
+async function _guardarConfigNegocio(metodos,propinas,pie){
+  if(!window._tenantNeg||!sb){ toastT('Sin conexión'); return; }
+  try{
+    const {error}=await sb.rpc('actualizar_config_negocio',{p_negocio_id:window._tenantNeg.id,p_metodos:metodos,p_propinas:propinas,p_pie:pie});
+    if(error)throw error;
+    window._tenantFiscal=window._tenantFiscal||{};
+    window._tenantFiscal.metodos_pago=metodos; window._tenantFiscal.propina_pcts=propinas; window._tenantFiscal.ticket_pie=pie;
+    toastT('✅ Cambios guardados');
+  }catch(e){ toastT('No se pudo guardar: '+(e.message||e)); }
 }
 function kdsView(){
   return `
@@ -2581,7 +2657,7 @@ function askAddress(){
       <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Teléfono / WhatsApp</div>
       <input id="addrPhone" inputmode="numeric" placeholder="300 123 4567" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:14px">
       <div style="font-size:12px;color:var(--txt2);margin-bottom:6px">Pago anticipado</div>
-      <select id="addrPagoMedio" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:10px">${PAGOS.map(p=>`<option value="${p[0]}">${p[2]}</option>`).join('')}</select>
+      <select id="addrPagoMedio" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;margin-bottom:10px">${PAGOS.filter(p=>_cfgMetodos().includes(p[0])).map(p=>`<option value="${p[0]}">${p[2]}</option>`).join('')}</select>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--txt2);cursor:pointer">
         <input type="checkbox" id="addrPagado" style="width:18px;height:18px"> El cliente ya pagó por adelantado
       </label>
@@ -3120,7 +3196,7 @@ function renderPay(){
     <div class="modal-b">
       ${(ORDMETA[payTarget]&&ORDMETA[payTarget].split)?`<div class="split-banner">✂️ Cuenta dividida en ${ORDMETA[payTarget].split.n} · ${COP(ORDMETA[payTarget].split.per)} por persona</div>`:''}
       <div class="pay-sec">Medio de pago</div>
-      <div class="pay-grid">${PAGOS.map(p=>`<div class="pay-m ${pay.m===p[0]?'on':''}" onclick="payMethod('${p[0]}')"><div class="pmi">${p[1]}</div><div class="pml">${p[2]}</div></div>`).join('')}</div>
+      <div class="pay-grid">${PAGOS.filter(p=>_cfgMetodos().includes(p[0])).map(p=>`<div class="pay-m ${pay.m===p[0]?'on':''}" onclick="payMethod('${p[0]}')"><div class="pmi">${p[1]}</div><div class="pml">${p[2]}</div></div>`).join('')}</div>
       <div class="pay-sec">Propina</div>
       <div class="tip-row">${TIPS.map(pc=>`<div class="tip-b ${pay.tip===pc?'on':''}" onclick="setTip(${pc})">${pc===0?'Sin propina':pc+'%'}</div>`).join('')}</div>
       <div class="pay-sec">Descuento (COP)</div>
@@ -3438,7 +3514,7 @@ function renderSplitCheckout(){
     return `<div class="sc-row">
       <div class="sc-i">${i+1}</div>
       <input class="sc-amt" data-money inputmode="numeric" value="${p.amount?p.amount.toLocaleString('es-CO'):''}" placeholder="Monto" oninput="scAmt(${i},this.value)" onblur="renderSplitCheckout()">
-      <select class="sc-med" onchange="scMed(${i},this.value)">${PAGOS.map(pg=>`<option value="${pg[0]}" ${p.medio===pg[0]?'selected':''}>${pg[2]}</option>`).join('')}</select>
+      <select class="sc-med" onchange="scMed(${i},this.value)">${PAGOS.filter(pg=>_cfgMetodos().includes(pg[0])).map(pg=>`<option value="${pg[0]}" ${p.medio===pg[0]?'selected':''}>${pg[2]}</option>`).join('')}</select>
       ${efvBtn}
       ${parts.length>2?`<button class="sc-x" onclick="scDel(${i})">✕</button>`:''}
     </div>`;
