@@ -664,6 +664,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .sc-amt:focus{border-color:var(--primary)}
 .sc-med{background:var(--card2);border:1px solid var(--border);border-radius:9px;color:var(--txt);font-family:inherit;font-size:12px;padding:9px;outline:none;cursor:pointer;flex-shrink:0}
 .sc-x{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--red);cursor:pointer;flex-shrink:0;font-size:12px}
+.sc-efv{flex-shrink:0;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:700;padding:9px 10px;cursor:pointer;white-space:nowrap}
+.sc-efv.bad{background:rgba(242,85,90,.14);color:var(--danger);border-color:rgba(242,85,90,.4)}
+.sc-efv.ok{background:rgba(94,236,164,.12);color:var(--accent);border-color:rgba(94,236,164,.35)}
 .sc-x:hover{border-color:var(--red);background:var(--red-dim)}
 
 /* ── Tarjetas de pedidos no-mesa (llevar/domicilio/online) reabribles ── */
@@ -3046,34 +3049,53 @@ const EFV_MONEDAS=[50,100,200,500,1000];
 const EFV_BILLETES=[2000,5000,10000,20000,50000,100000];
 const EFV_IMG={50:'./billetes/moneda-50.jpg',100:'./billetes/moneda-100.jpg',200:'./billetes/moneda-200.jpg',500:'./billetes/moneda-500.jpg',1000:'./billetes/moneda-1000.jpg',
   2000:'./billetes/billete-2000.jpg',5000:'./billetes/billete-5000.jpg',10000:'./billetes/billete-10000.jpg',20000:'./billetes/billete-20000.jpg',50000:'./billetes/billete-50000.jpg',100000:'./billetes/billete-100000.jpg'};
-function _efvTotal(){ return parseInt(pay.efvInput||'0')||0; }
+/* ── Motor de la calculadora de efectivo, con "contexto": puede contar para
+   el cobro normal (pay) o para UNA parte puntual de un cobro dividido (split).
+   window._efvCtx = {type:'pay'} o {type:'split', idx:N} */
+window._efvCtx={type:'pay'};
+function _efvCtxTotal(){
+  if(window._efvCtx.type==='split'){ const p=(window._sc&&window._sc.parts[window._efvCtx.idx])||{}; return p.amount||0; }
+  return payTotals().total;
+}
+function _efvCtxInput(){
+  if(window._efvCtx.type==='split'){ const p=(window._sc&&window._sc.parts[window._efvCtx.idx])||{}; return p.efvInput||''; }
+  return pay.efvInput||'';
+}
+function _efvCtxSetInput(v){
+  if(window._efvCtx.type==='split'){ if(window._sc&&window._sc.parts[window._efvCtx.idx]) window._sc.parts[window._efvCtx.idx].efvInput=v; }
+  else pay.efvInput=v;
+}
+function _efvTotal(){ return parseInt(_efvCtxInput()||'0')||0; }
 /* Resumen chiquito dentro del modal de cobro normal: solo un vistazo + botón para abrir la calculadora grande.
    IMPORTANTE: esto es solo una AYUDA VISUAL para el cajero. Cerrar la calculadora (o el cobro completo)
    en cualquier momento NO factura nada y NO toca el estado de la mesa — eso solo pasa cuando se
-   completan los dos pasos: "Cobrar y generar comprobante" y luego "✅ Confirmar e imprimir". */
+   completan los dos pasos: "Cobrar y generar comprobante" y luego "✅ Confirmar e imprimir". Y desde la
+   versión con bloqueo: en Efectivo no se puede avanzar si lo contado no cubre el total. */
 function renderEfvMini(total){
+  window._efvCtx={type:'pay'};
   const recibido=_efvTotal();const cambio=recibido-total;
   const listo=recibido>0;
   return `<div class="efv-mini">
     <div class="efv-mini-txt">${listo?(cambio>=0?'Cambio a devolver':'Aún falta'):'Efectivo: sin contar todavía'}
       ${listo?`<b class="${cambio>=0?'':'bad'}">${COP(Math.abs(cambio))}</b>`:''}
     </div>
-    <button class="efv-mini-btn" onclick="abrirEfvFull()">🧮 ${listo?'Editar':'Abrir'} calculadora</button>
+    <button class="efv-mini-btn" onclick="abrirEfvFull({type:'pay'})">🧮 ${listo?'Editar':'Abrir'} calculadora</button>
   </div>`;
 }
 /* Calculadora de cambio en PANTALLA COMPLETA, con las fotos reales de billetes/monedas
    de Colombia y un teclado numérico (igual que una calculadora física) para escribir el
    monto exacto con el mouse o el teclado. Tocar un billete SUMA su valor a lo ya escrito. */
-function abrirEfvFull(){
-  const t=payTotals();
-  document.getElementById('efvModal').innerHTML=_efvFullHtml(t.total);
+function abrirEfvFull(ctx){
+  window._efvCtx=ctx||{type:'pay'};
+  document.getElementById('efvModal').innerHTML=_efvFullHtml(_efvCtxTotal());
   document.getElementById('efvModal').classList.add('efv-full','on');
   document.addEventListener('keydown',_efvKeyHandler);
 }
 function cerrarEfvFull(){
   document.getElementById('efvModal').classList.remove('on');
   document.removeEventListener('keydown',_efvKeyHandler);
-  renderPay();
+  if(window._efvCtx.type==='split'){ if(typeof renderSplitCheckout==='function')renderSplitCheckout(); }
+  else renderPay();
 }
 function _efvKeyHandler(e){
   if(!document.getElementById('efvModal').classList.contains('on'))return;
@@ -3085,9 +3107,10 @@ function _efvKeyHandler(e){
 function _efvFullHtml(total){
   const recibido=_efvTotal();const cambio=recibido-total;
   const img=d=>`<div class="efv-nota ${d<2000?'efv-moneda':''} efv-${d<2000?'c':'b'}${d}" onclick="efvAdd(${d})"><img src="${EFV_IMG[d]}" alt="$${d}" onerror="this.parentElement.classList.add('efv-fallback')"><div class="efv-nota-lb">$${d.toLocaleString('es-CO')}</div></div>`;
+  const parteTxt=window._efvCtx.type==='split'?`<div class="efv-full-lb" style="margin-top:-8px;color:var(--accent)">Contando la parte ${window._efvCtx.idx+1}</div>`:'';
   return `
     <div class="efv-full-h">
-      <div class="efv-full-tot">TOTAL A COBRAR<b>${COP(total)}</b></div>
+      <div class="efv-full-tot">TOTAL A COBRAR<b>${COP(total)}</b>${parteTxt}</div>
       <div class="efv-full-x" onclick="cerrarEfvFull()">✕</div>
     </div>
     <div class="efv-full-body">
@@ -3111,20 +3134,19 @@ function _efvFullHtml(total){
         </div>
         <div class="efv-full-acts">
           <button class="btn ghost" onclick="efvExacto(${total})">💰 Exacto</button>
-          <button class="btn primary" onclick="cerrarEfvFull()">✅ Listo, volver al cobro</button>
+          <button class="btn primary" ${recibido<total?'disabled title="Falta contar el efectivo"':''} onclick="cerrarEfvFull()">✅ Listo, volver al cobro</button>
         </div>
       </div>
     </div>`;
 }
-function efvAdd(v){ pay.efvInput=String((parseInt(pay.efvInput||'0')||0)+v); _efvRefresh(); }
-function efvDigit(d){ pay.efvInput=((pay.efvInput||'')+d).replace(/^0+(?=\d)/,'').slice(0,9); _efvRefresh(); }
-function efvBack(){ pay.efvInput=(pay.efvInput||'').slice(0,-1); _efvRefresh(); }
-function efvClear(){ pay.efvInput=''; _efvRefresh(); }
-function efvExacto(total){ pay.efvInput=String(Math.round(total)); _efvRefresh(); }
+function efvAdd(v){ _efvCtxSetInput(String((parseInt(_efvCtxInput()||'0')||0)+v)); _efvRefresh(); }
+function efvDigit(d){ _efvCtxSetInput((( _efvCtxInput()||'')+d).replace(/^0+(?=\d)/,'').slice(0,9)); _efvRefresh(); }
+function efvBack(){ _efvCtxSetInput((_efvCtxInput()||'').slice(0,-1)); _efvRefresh(); }
+function efvClear(){ _efvCtxSetInput(''); _efvRefresh(); }
+function efvExacto(total){ _efvCtxSetInput(String(Math.round(total))); _efvRefresh(); }
 function _efvRefresh(){
-  const t=payTotals();
   const full=document.getElementById('efvModal');
-  if(full&&full.classList.contains('on')) full.innerHTML=_efvFullHtml(t.total);
+  if(full&&full.classList.contains('on')) full.innerHTML=_efvFullHtml(_efvCtxTotal());
 }
 function payToggleFE(v){pay.fe=v;renderPay();}
 function setTip(p){pay.tip=p;renderPay();}
@@ -3136,6 +3158,7 @@ function confirmPay(){
   if(!pay.m){toastT('Elige un medio de pago');return;}
   if(pay.fe && (!(pay.feData.num||'').trim() || !(pay.feData.nombre||'').trim())){toastT('Para factura electrónica ingresa el documento y el nombre del cliente');return;}
   const t=payTotals();const target=payTarget;const label=(PAGOS.find(p=>p[0]===pay.m)||[])[2];
+  if(pay.m==='efectivo' && _efvTotal()<t.total){ toastT('⚠️ Cuenta el efectivo recibido antes de cobrar'); abrirEfvFull(); return; }  // no se puede facturar en efectivo sin contar lo suficiente
   if(!target||!ORD[target]||!ORD[target].length){ closePay(); return; }                       // nada que cobrar
   if((ORDMETA[target]||{}).fase==='facturada'){ closePay(); toastT('⚠️ Esta cuenta ya fue facturada'); return; }  // evita doble cobro
   const lines=ORD[target]||[];const meta=ORDMETA[target]||{};
@@ -3208,6 +3231,7 @@ function cancelarPreviaFactura(){
 }
 function confirmarFacturaFinal(){
   const factura=window._facturaPendiente; if(!factura) return;
+  if(factura.medio==='efectivo' && (!factura.efectivo || factura.efectivo.recibido<factura.total)){ toastT('⚠️ Falta contar el efectivo recibido'); document.getElementById('printModal').classList.remove('on'); abrirEfvFull(); return; }  // respaldo: no confirmar sin efectivo contado
   document.getElementById('printModal').classList.remove('on');
   const target=payTarget;const t=payTotals();
   addFactura(factura);
@@ -3303,17 +3327,23 @@ function splitCheckout(target,mode,n){
 function renderSplitCheckout(){
   const {target,total,parts}=window._sc;
   const cub=parts.reduce((s,p)=>s+(p.amount||0),0);const falta=total-cub;
-  const rows=parts.map((p,i)=>`<div class="sc-row">
+  const rows=parts.map((p,i)=>{
+    const esEfvOk=p.medio!=='efectivo'||((p.efvInput?parseInt(p.efvInput):0)>=(p.amount||0)&&p.amount>0);
+    const efvBtn=p.medio==='efectivo'?`<button class="sc-efv ${esEfvOk?'ok':'bad'}" onclick="abrirEfvFull({type:'split',idx:${i}})">🧮 ${esEfvOk?'Contado ✓':'Contar'}</button>`:'';
+    return `<div class="sc-row">
       <div class="sc-i">${i+1}</div>
-      <input class="sc-amt" data-money inputmode="numeric" value="${p.amount?p.amount.toLocaleString('es-CO'):''}" placeholder="Monto" oninput="scAmt(${i},this.value)">
+      <input class="sc-amt" data-money inputmode="numeric" value="${p.amount?p.amount.toLocaleString('es-CO'):''}" placeholder="Monto" oninput="scAmt(${i},this.value)" onblur="renderSplitCheckout()">
       <select class="sc-med" onchange="scMed(${i},this.value)">${PAGOS.map(pg=>`<option value="${pg[0]}" ${p.medio===pg[0]?'selected':''}>${pg[2]}</option>`).join('')}</select>
+      ${efvBtn}
       ${parts.length>2?`<button class="sc-x" onclick="scDel(${i})">✕</button>`:''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  const efvPend=parts.some(p=>p.medio==='efectivo'&&!((p.efvInput?parseInt(p.efvInput):0)>=(p.amount||0)&&p.amount>0));
   const m=document.getElementById('splitModal');
-  m.innerHTML=`<div class="modal" style="width:470px">
+  m.innerHTML=`<div class="modal" style="width:520px">
     <div class="modal-h"><b>💵 Cobro dividido · ${COP(total)}</b><div class="mx" onclick="closeSplit()">✕</div></div>
     <div class="modal-b">
-      <div style="font-size:11.5px;color:var(--txt2);margin-bottom:12px">Ajusta el monto y el medio de pago de cada persona. Se genera una factura por cada pago.</div>
+      <div style="font-size:11.5px;color:var(--txt2);margin-bottom:12px">Ajusta el monto y el medio de pago de cada persona. Las partes en efectivo hay que contarlas con 🧮 antes de generar las facturas.</div>
       <div class="sc-list">${rows}</div>
       <button class="btn ghost" style="margin-top:10px;width:auto;padding:9px 14px" onclick="scAdd()">＋ Agregar pago</button>
       <div class="pay-sum" style="margin-top:14px" id="scSum">
@@ -3321,21 +3351,24 @@ function renderSplitCheckout(){
         <div class="trow tot"><span>${falta>0?'Falta':(falta<0?'Sobra':'Completo ✓')}</span><span class="tv">${COP(Math.abs(falta))}</span></div>
       </div>
     </div>
-    <div class="modal-f"><button class="btn primary" id="scBtn" ${Math.abs(falta)<1?'':'disabled'} onclick="confirmSplitCheckout()">🧾 Generar ${parts.length} factura(s)</button></div></div>`;
+    <div class="modal-f"><button class="btn primary" id="scBtn" ${(Math.abs(falta)<1&&!efvPend)?'':'disabled'} onclick="confirmSplitCheckout()">🧾 Generar ${parts.length} factura(s)</button></div></div>`;
   m.classList.add('on');
 }
 function scUpdateSummary(){
   const {total,parts}=window._sc;const cub=parts.reduce((s,p)=>s+(p.amount||0),0);const falta=total-cub;
+  const efvPend=parts.some(p=>p.medio==='efectivo'&&!((p.efvInput?parseInt(p.efvInput):0)>=(p.amount||0)&&p.amount>0));
   const el=document.getElementById('scSum');if(el)el.innerHTML=`<div class="trow"><span>Cubierto</span><span>${COP(cub)}</span></div><div class="trow tot"><span>${falta>0?'Falta':(falta<0?'Sobra':'Completo ✓')}</span><span class="tv">${COP(Math.abs(falta))}</span></div>`;
-  const btn=document.getElementById('scBtn');if(btn)btn.disabled=!(Math.abs(falta)<1);
+  const btn=document.getElementById('scBtn');if(btn)btn.disabled=!(Math.abs(falta)<1&&!efvPend);
 }
-function scAmt(i,v){window._sc.parts[i].amount=parseInt((v+'').replace(/\D/g,''))||0;scUpdateSummary();}
-function scMed(i,v){window._sc.parts[i].medio=v;}
+function scAmt(i,v){window._sc.parts[i].amount=parseInt((v+'').replace(/\D/g,''))||0;window._sc.parts[i].efvInput='';scUpdateSummary();}
+function scMed(i,v){window._sc.parts[i].medio=v;window._sc.parts[i].efvInput='';renderSplitCheckout();}
 function scAdd(){window._sc.parts.push({amount:0,medio:'efectivo'});renderSplitCheckout();}
 function scDel(i){window._sc.parts.splice(i,1);renderSplitCheckout();}
 function confirmSplitCheckout(){
   const {target,parts}=window._sc;const meta=ORDMETA[target]||{};const lines=ORD[target]||[];
   if((ORDMETA[target]||{}).fase==='facturada'){ closeSplit(); toastT('⚠️ Esta cuenta ya fue facturada'); return; }  // evita doble cobro
+  const efvIdx=parts.findIndex(p=>p.medio==='efectivo'&&!((p.efvInput?parseInt(p.efvInput):0)>=(p.amount||0)&&p.amount>0));
+  if(efvIdx>-1){ toastT('⚠️ Falta contar el efectivo de la parte '+(efvIdx+1)); abrirEfvFull({type:'split',idx:efvIdx}); return; }
   const baseNum=meta.num||('F-'+Date.now());
   parts.forEach((p,i)=>{
     addFactura({
@@ -3346,7 +3379,8 @@ function confirmSplitCheckout(){
       nItems: i===0?lines.reduce((s,l)=>s+l.qty,0):0,
       subtotal: p.amount, propina:0, descuento:0, total: p.amount,
       medio: p.medio, medioLabel:(PAGOS.find(x=>x[0]===p.medio)||[])[2],
-      split:{parte:i+1, de:parts.length}
+      split:{parte:i+1, de:parts.length},
+      efectivo: p.medio==='efectivo'?{recibido:parseInt(p.efvInput)||0, cambio:(parseInt(p.efvInput)||0)-p.amount}:null
     });
   });
   toastT(parts.length+' facturas generadas · '+COP(parts.reduce((s,p)=>s+p.amount,0))+' · falta CONFIRMAR PAGO');
