@@ -241,7 +241,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 
 /* HEADER */
 .hdr-left{display:flex;align-items:center;gap:14px}
-.biz-sel{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:7px 13px;cursor:pointer;font-size:13px;font-weight:600}
+.biz-sel{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:7px 13px;cursor:pointer;font-size:13px;font-weight:600;position:relative}
+.sede-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:6px;min-width:200px;box-shadow:0 10px 30px -8px rgba(0,0,0,.6);z-index:400}
+.sede-menu-i{padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.sede-menu-i:hover{background:var(--card)}
+.sede-menu-i.on{color:var(--accent)}
 .biz-sel .bl{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#F5A623,#c9761e);display:flex;align-items:center;justify-content:center;font-size:13px}
 .biz-sel .cv{color:var(--txt3);font-size:11px}
 .search{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 13px;width:280px;color:var(--txt3);font-size:13px}
@@ -1099,7 +1103,7 @@ const S = {
   // ANÁLISIS
   reportes:   {g:'Análisis', n:'Reportes', ico:'📈', st:'activo', fase:'Fase 6', desc:'Todos los reportes del negocio: ventas por día/mes, productos más vendidos, ventas por mesero, movimientos de caja y más.', feat:['Ventas por periodo','Productos más vendidos','Ventas por mesero y por mesa','Movimientos de caja','Ticket promedio y horas pico','Exportar a Excel']},
   // CONFIGURACIÓN
-  local:      {g:'Configuración', n:'Local y Sucursales', ico:'🏬', st:'construccion', fase:'Fase 1', desc:'Datos del negocio, logo, y gestión de varias sedes si tienes más de un local.', feat:['Datos y logo del negocio','Varias sedes/sucursales','Precios por sede','Horarios de atención']},
+  local:      {g:'Configuración', n:'Local y Sucursales', ico:'🏬', st:'activo', fase:'Fase 1', desc:'Datos del negocio y gestión de varias sedes si tienes más de un local. Cada dispositivo elige su sede activa.', feat:['Editar nombre y dirección de cada sede','Agregar más sedes/sucursales','Selector de sede activa por dispositivo','Pendiente: precios por sede y horarios de atención']},
   ambientes:  {g:'Configuración', n:'Mesas, QR y NFC', ico:'🪑', st:'activo', fase:'Fase 1', desc:'Configura pisos, zonas y mesas con su capacidad. Cada mesa genera su código QR y su enlace NFC para que el cliente abra la carta acercando el celular o escaneando.', feat:['Pisos y ambientes (terraza, salón…)','Mesas con capacidad','Generar mesas en masa','QR por mesa','Enlace NFC por mesa (tocar con el celular)','Descargar/imprimir QR y stickers NFC']},
   impresoras: {g:'Configuración', n:'Impresoras y Ticketeras', ico:'🖨️', st:'activo', fase:'Fase 2', desc:'Configura las impresoras térmicas de cocina, barra y caja, y personaliza el ticket de comanda.', feat:['Probar conexión con el bridge desde este dispositivo','Ticket de prueba con un clic','Pie de página personalizado en cada comprobante','Impresión térmica 58/80mm vía bridge local']},
   pagos:      {g:'Configuración', n:'Métodos de Pago', ico:'💳', st:'activo', fase:'Fase 2', desc:'Define cómo cobra el negocio: efectivo, tarjeta, Nequi, Daviplata, y pago con QR.', feat:['Activar o desactivar cada medio de pago','Porcentajes de propina personalizados','Se aplica al instante en la pantalla de cobro']},
@@ -1167,7 +1171,7 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
@@ -1295,7 +1299,7 @@ function dashboard(){
     ['MESA 05','libre','Disponible',''],['MESA 06','ocup','hace 1 h','$120.000'],
   ];
   return `
-  <div class="page-head"><h1>👋 Buen día, ${_saludoNombre()}</h1><div class="sub">Esto es lo que está pasando en Dulce Café · Sede Centro hoy.</div></div>
+  <div class="page-head"><h1>👋 Buen día, ${_saludoNombre()}</h1><div class="sub">Esto es lo que está pasando en ${_marcaNegocio()}${(window._sedeActual&&window._sedeActual.nombre)?(' · '+window._sedeActual.nombre):''} hoy.</div></div>
   <div class="kpi-grid">${kpis.map(k=>`
     <div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}
   </div>
@@ -1309,6 +1313,53 @@ function dashboard(){
   </div>`;
 }
 
+/* ═══ LOCAL Y SUCURSALES — datos del negocio y gestión real de sedes ═══ */
+function localSucursalesView(){
+  const fiscal=window._tenantFiscal||{};
+  const sedes=window._sedesTodas||[];
+  const rows=sedes.map(s=>`<div class="ls-row">
+      <div class="ls-row-h"><b>🏬 ${s.nombre}</b>${s.id===window._sedeId?'<span class="ls-tag">Sede activa en este dispositivo</span>':''}</div>
+      <input class="cfg-in" style="width:100%;margin:8px 0 6px" value="${s.nombre}" placeholder="Nombre de la sede" onblur="guardarSede('${s.id}',this.value,null)">
+      <input class="cfg-in" style="width:100%" value="${s.direccion||''}" placeholder="Dirección de esta sede" onblur="guardarSede('${s.id}',null,this.value)">
+    </div>`).join('');
+  return `
+  <div class="page-head"><h1>🏬 Local y Sucursales <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Datos del negocio y, si tienes más de un local físico, cada sede con su propio nombre y dirección.</div></div>
+  <div class="ph-card" style="max-width:560px">
+    <div class="ph-feat-title">Nombre del negocio</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:16px">${_marcaNegocio()}${fiscal.razon_social?' · '+fiscal.razon_social:''} — esto se edita desde el panel de Negocios de Fenlora, no aquí.</div>
+    <div class="ph-feat-title">Sedes</div>
+    <div id="lsList">${rows||'<div style="font-size:13px;color:var(--txt2)">Sin sedes registradas todavía.</div>'}</div>
+    <button class="btn ghost" style="width:auto;padding:9px 15px;margin-top:6px" onclick="nuevaSede()">➕ Agregar otra sede</button>
+    ${sedes.length>1?`<div style="font-size:11.5px;color:var(--txt3);margin-top:14px">Cada dispositivo (PC/tablet) elige su propia sede activa desde el selector de arriba a la izquierda — así el mismo negocio puede operar varias sedes al tiempo, cada una viendo solo sus propias mesas.</div>`:''}
+  </div>`;
+}
+async function guardarSede(id,nombre,direccion){
+  if(!window._tenantNeg||!sb) return;
+  const s=(window._sedesTodas||[]).find(x=>x.id===id); if(!s) return;
+  const nuevoNombre=nombre!==null?nombre.trim():s.nombre;
+  const nuevaDir=direccion!==null?direccion.trim():s.direccion;
+  if(nombre!==null && !nuevoNombre){ toastT('El nombre de la sede no puede quedar vacío'); return; }
+  try{
+    const {error}=await sb.rpc('actualizar_sede',{p_sede_id:id,p_nombre:nuevoNombre,p_direccion:nuevaDir||null});
+    if(error) throw error;
+    s.nombre=nuevoNombre; s.direccion=nuevaDir;
+    if(id===window._sedeId){ window._sedeActual=s; _actualizarBizSel(); }
+    toastT('✅ Sede actualizada');
+  }catch(e){ toastT('No se pudo guardar: '+(e.message||e)); }
+}
+async function nuevaSede(){
+  const nombre=(prompt('Nombre de la nueva sede (ej: Sede Norte, Sucursal Chapinero):')||'').trim();
+  if(!nombre) return;
+  if(!window._tenantNeg||!sb){ toastT('Sin conexión'); return; }
+  try{
+    const {error}=await sb.rpc('crear_sede',{p_negocio_id:window._tenantNeg.id,p_nombre:nombre});
+    if(error) throw error;
+    toastT('✅ Sede creada');
+    await _cargarSedeYMesas();
+    if(document.getElementById('lsList')) buildPanel('local');
+  }catch(e){ toastT('No se pudo crear: '+(e.message||e)); }
+}
 function moduleView(k){
   const it=S[k];
   const feats=(it.feat||[]).map(f=>`<div class="f"><span class="fc">✓</span>${f}</div>`).join('');
@@ -3820,7 +3871,7 @@ function renderQrPhone(){
     <div class="island"></div>
     <div class="statusbar"><span class="sb-time">${t}</span><span class="sb-icons">${sig}${wifi}${bat}</span></div>
     <div class="scr-body">
-      <div class="scr-hero"><div class="hero-logo">🍖</div><div class="hero-name">Dulce Café</div><div class="hero-sub">📍 Mesa 04 · Sede Centro</div></div>
+      <div class="scr-hero"><div class="hero-logo">🍖</div><div class="hero-name">${_marcaNegocio()}</div><div class="hero-sub">📍 Mesa 04${(window._sedeActual&&window._sedeActual.nombre)?(' · '+window._sedeActual.nombre):''}</div></div>
       ${anyOpt?'<div class="scr-welcome">¿Qué deseas hacer?</div>':''}
       ${btns.map(b=>`<div class="scr-btn ${b[2]?'primary':''}"><div class="sbc">${b[0]}</div><div class="sbt">${b[1]}</div></div>`).join('')}
       ${QROPTS.resena?`<div class="clubvip">
@@ -4078,7 +4129,7 @@ function dashboard(){
   const ult=FACTURAS.slice(0,8);
   const mesas=MESAS.filter(m=>m.piso==='Piso 1');
   return `
-  <div class="page-head"><h1>👋 Hola, ${_saludoNombre()}</h1><div class="sub">Resumen de Dulce Café · Sede Centro. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
+  <div class="page-head"><h1>👋 Hola, ${_saludoNombre()}</h1><div class="sub">Resumen de ${_marcaNegocio()}${(window._sedeActual&&window._sedeActual.nombre)?(' · '+window._sedeActual.nombre):''}. ${FACTURAS.length?'Datos calculados de tus facturas reales.':'Aún no hay ventas: cobra una mesa y verás el panel llenarse.'}</div></div>
   <div class="kpi-grid">${kpis.map(k=>`<div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}</div>
   <div class="section-title">⚡ Accesos directos</div>
   <div class="qa-grid">${qa.map(q=>`<div class="qa" onclick="openTab('${q[0]}')"><div class="qi" style="background:${q[3]};color:${q[4]}">${q[1]}</div><div class="qn">${q[2]}</div></div>`).join('')}</div>
@@ -5125,11 +5176,15 @@ async function resolveTenant(){
 async function _cargarSedeYMesas(){
   if(!window._tenantNeg||!window._tenantNeg.id||!sb) return;
   try{
-    if(!window._sedeId){
-      const {data:sedes,error:e1}=await sb.from('sedes').select('id').eq('negocio_id',window._tenantNeg.id).limit(1);
-      if(e1) throw e1;
-      if(sedes&&sedes.length) window._sedeId=sedes[0].id;
+    const {data:sedes,error:e0}=await sb.from('sedes').select('id,nombre,direccion').eq('negocio_id',window._tenantNeg.id).order('creado',{ascending:true});
+    if(e0) throw e0;
+    window._sedesTodas=sedes||[];
+    if(sedes&&sedes.length){
+      const guardada=localStorage.getItem('fenlora_sede_activa');
+      window._sedeActual=sedes.find(s=>s.id===guardada)||sedes[0];
+      window._sedeId=window._sedeActual.id;
     }
+    if(typeof _actualizarBizSel==='function')_actualizarBizSel();
     const {data:rows,error:e2}=await sb.from('mesas').select('numero,ambiente,estado').eq('negocio_id',window._tenantNeg.id).order('numero',{ascending:true});
     if(e2) throw e2;
     if(rows){
@@ -5153,6 +5208,31 @@ async function _cargarSedeYMesas(){
    función/columnas todavía no existen en Supabase, falla en silencio y el
    ticket simplemente sale sin esos datos (no rompe nada). */
 window._tenantFiscal=null;
+/* Actualiza el selector de negocio/sede del header con datos reales (nace fijo en "Dulce Café · Sede Centro" en el HTML base). Si hay más de una sede, lo vuelve un selector real. */
+function _actualizarBizSel(){
+  const el=document.querySelector('.biz-sel'); if(!el) return;
+  const nombreNeg=_marcaNegocio();
+  const nombreSede=(window._sedeActual&&window._sedeActual.nombre)||'';
+  const multi=(window._sedesTodas||[]).length>1;
+  el.innerHTML=`<span class="bl">🏪</span><div>${nombreNeg}${nombreSede?`<div class="cv">${nombreSede}</div>`:''}</div>${multi?'<span style="color:var(--txt3)">▾</span>':''}`;
+  el.style.cursor=multi?'pointer':'default';
+  el.onclick=multi?((e)=>{e.stopPropagation();_toggleSedeMenu();}):null;
+}
+function _toggleSedeMenu(){
+  let m=document.getElementById('sedeMenu');
+  if(m){ m.remove(); return; }
+  const el=document.querySelector('.biz-sel'); if(!el) return;
+  m=document.createElement('div'); m.id='sedeMenu'; m.className='sede-menu';
+  m.innerHTML=(window._sedesTodas||[]).map(s=>`<div class="sede-menu-i ${s.id===window._sedeId?'on':''}" onclick="_cambiarSedeActiva('${s.id}')">🏬 ${s.nombre}${s.id===window._sedeId?' ✓':''}</div>`).join('');
+  el.appendChild(m);
+  setTimeout(()=>document.addEventListener('click',_cerrarSedeMenuFuera,{once:true}),0);
+}
+function _cerrarSedeMenuFuera(){ const m=document.getElementById('sedeMenu'); if(m)m.remove(); }
+function _cambiarSedeActiva(id){
+  localStorage.setItem('fenlora_sede_activa',id);
+  toastT('🏬 Cambiando de sede…');
+  setTimeout(()=>location.reload(),400);
+}
 async function _cargarDatosFiscales(){
   if(!window._tenant||!sb) return;
   try{
