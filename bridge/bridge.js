@@ -88,11 +88,42 @@ function construirTicket(d) {
 
 function imprimir(buf, cb) {
   const tmp = path.join(os.tmpdir(), 'fenlora_ticket_' + Date.now() + '.prn');
+
+  console.log('🖨️ Preparando impresión...');
+  console.log('   Puerto:', PUERTO_IMPRESORA);
+  console.log('   Archivo temporal:', tmp);
+  console.log('   Tamaño:', buf.length, 'bytes');
+
   fs.writeFile(tmp, buf, (err) => {
-    if (err) return cb(err);
-    exec(`copy /b "${tmp}" "${PUERTO_IMPRESORA}"`, (err2) => {
+    if (err) {
+      console.error('❌ Error creando archivo temporal:', err);
+      return cb(err);
+    }
+
+    console.log('✅ Archivo temporal creado');
+
+    const comando = `copy /b "${tmp}" "${PUERTO_IMPRESORA}"`;
+
+    console.log('📤 Enviando a impresora...');
+    console.log('   Comando:', comando);
+
+    exec(comando, (err2, stdout, stderr) => {
       fs.unlink(tmp, () => {});
-      cb(err2 || null);
+
+      if (err2) {
+        console.error('❌ ERROR AL IMPRIMIR');
+        console.error('   Código:', err2.code);
+        console.error('   Mensaje:', err2.message);
+        console.error('   stdout:', stdout);
+        console.error('   stderr:', stderr);
+        return cb(err2);
+      }
+
+      console.log('✅ IMPRESIÓN ENVIADA CORRECTAMENTE');
+      console.log('   stdout:', stdout || '(sin mensaje)');
+      console.log('   stderr:', stderr || '(sin mensaje)');
+
+      cb(null);
     });
   });
 }
