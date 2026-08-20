@@ -1640,6 +1640,9 @@ function avanzarEntrega(target){
 /* ═══ MÉTODOS DE PAGO — activar/desactivar y propinas, guardado real en Supabase ═══ */
 function _cfgMetodos(){ return (window._tenantFiscal&&window._tenantFiscal.metodos_pago)||['efectivo','tarjeta','nequi','daviplata','qr']; }
 function _cfgPropinas(){ return (window._tenantFiscal&&window._tenantFiscal.propina_pcts)||[5,10,15]; }
+/* ¿Este negocio imprime las comandas de cocina/barra? Lo controla Fenlora (superadmin) por negocio.
+   Por defecto SÍ (comportamiento actual). Si está apagado, el pedido igual va a las pantallas/KDS, solo NO se imprime. */
+function _imprimeProduccion(){ return (window._tenantFiscal && window._tenantFiscal.imprimir_produccion===false) ? false : true; }
 function pagosView(){
   const activos=_cfgMetodos();
   const rows=PAGOS.map(p=>`<div class="cfg-row">
@@ -3208,14 +3211,15 @@ function printCocina(target,items){
   const m=document.getElementById('printModal');
   m.innerHTML=`<div class="modal" style="width:560px">
     <div class="modal-h"><b>🔥 Enviado a Producción</b><div class="mx" onclick="closePrint()">✕</div></div>
-    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Se imprime un ticket por cada área de producción involucrada (${areas.join(', ')}).</div>
+    <div class="modal-b"><div style="font-size:12px;color:var(--txt2);margin-bottom:12px">✅ El pedido ya llegó a ${areas.length>1?'las áreas':'el área'} de <b>${areas.join(', ')}</b>. ${_imprimeProduccion()?'Si quieres, imprime la comanda con el botón de abajo.':'(Este negocio trabaja con pantallas: no necesita imprimir.)'}</div>
       <div class="ticket-wrap">${tickets}</div></div>
     <div class="modal-f"><div class="print-actions">
-      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="imprimirTicketsCocina('🖨️ Reimpreso a cocina')">🔁 Reimprimir</button>
+      ${_imprimeProduccion()?`<button class="btn ghost" style="width:auto;padding:11px 20px" onclick="imprimirTicketsCocina('🖨️ Comanda impresa')">🖨️ Imprimir comanda</button>`:`<span style="font-size:12px;color:var(--txt3);align-self:center">🖥️ El pedido va a las pantallas</span>`}
       <button class="btn primary" style="width:auto;padding:11px 18px" onclick="closePrint()">✓ Listo</button>
     </div></div></div>`;
   m.classList.add('on');
-  imprimirTicketsCocina('🖨️ Enviado a impresora de cocina');
+  /* Impresión MANUAL: como en un POS de PC, la comanda se muestra en pantalla y solo
+     se imprime si el operador le da clic al botón. No se imprime nada automáticamente. */
 }
 
 /* ── cobro / facturación ── */
@@ -4449,6 +4453,7 @@ function openNegModal(id){
     +'<div class="nf-row"><div class="nf"><label>Plan</label><select class="pf-in" id="nmPlan">'+planOpts+'</select></div>'
     +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
     +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
+    +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
     +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
   let host=document.getElementById('negModalHost'); if(!host){host=document.createElement('div');host.id='negModalHost';document.body.appendChild(host);}
   host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeNegModal()">'+html+'</div>';
@@ -4458,14 +4463,17 @@ function closeNegModal(){ const h=document.getElementById('negModalHost'); if(h)
 async function saveNegModal(){
   const gv=(id)=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
   const nombre=gv('nmNombre'), wa=gv('nmWa'), co=gv('nmCorreo'), doc=gv('nmDoc'), sub=_slugify(gv('nmSub')), plan=document.getElementById('nmPlan').value, vence=gv('nmVence')||null;
+  const impProdEl=document.getElementById('nmImpProd'); const impProd = impProdEl ? !!impProdEl.checked : true;
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
   if(_negEditId){
-    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null});
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd});
     toastT('Cambios guardados ✓'); closeNegModal();
   } else {
     if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
     if(!/.+@.+\..+/.test(co)){ toastT('Escribe un correo válido del dueño'); return; }
-    try{ const {error}=await sb.rpc('admin_crear_negocio',{p_nombre:nombre,p_sub:sub||null,p_plan:plan,p_vence:vence,p_whatsapp:wa,p_correo:co,p_documento:doc||null}); if(error)throw error;
+    try{ const {data:cr,error}=await sb.rpc('admin_crear_negocio',{p_nombre:nombre,p_sub:sub||null,p_plan:plan,p_vence:vence,p_whatsapp:wa,p_correo:co,p_documento:doc||null}); if(error)throw error;
+      /* Por defecto la impresión viene encendida. Solo si el superadmin la apagó al crear, lo guardamos. */
+      if(impProd===false){ try{ const nid=(cr&&cr.id)||(Array.isArray(cr)&&cr[0]&&(cr[0].id||cr[0].negocio_id))||cr; if(nid) await sb.from('negocios').update({imprimir_produccion:false}).eq('id',nid); }catch(_){} }
       toastT('Negocio "'+nombre+'" creado ✓'); closeNegModal(); await pullNegocios();
     }catch(e){ toastT('No se pudo crear: '+String(e.message||e).slice(0,70)); }
   }
@@ -5240,6 +5248,12 @@ async function _cargarDatosFiscales(){
     if(error)throw error;
     if(data&&data.length) window._tenantFiscal=data[0];
   }catch(e){ /* silencioso: si aún no corriste el script SQL, no pasa nada */ }
+  /* ¿Este negocio imprime comandas de cocina/barra? Lo controla Fenlora por negocio.
+     Se consulta aparte para no depender del cuerpo de negocio_datos_fiscales. Por defecto SÍ. */
+  try{
+    const {data:ip,error:e2}=await sb.rpc('negocio_imprime_produccion',{p_sub:window._tenant});
+    if(!e2){ window._tenantFiscal=window._tenantFiscal||{}; window._tenantFiscal.imprimir_produccion = (ip===false)?false:true; }
+  }catch(_){ /* si no existe el RPC todavía, queda encendido por defecto */ }
 }
 async function initAuth(){
   if(!sb){showAuth('offline');return;}
