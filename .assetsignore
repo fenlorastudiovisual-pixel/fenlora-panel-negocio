@@ -1,0 +1,17 @@
+.git
+.git/**
+.wrangler
+.wrangler/**
+node_modules
+node_modules/**
+bridge
+bridge/**
+*.sql
+*.md
+_redirects
+wrangler.toml
+assetsignore
+.assetsignore
+.gitignore
+package.json
+package-lock.json
