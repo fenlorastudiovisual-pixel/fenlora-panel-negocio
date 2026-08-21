@@ -23,6 +23,16 @@ const PORT = 4321;
 // propiedades de la impresora (ej. "POS-58" o como se llame) y mira la
 // pestaña "Puertos". Ahí vas a ver algo como USB001, USB002, etc.
 const PUERTO_IMPRESORA = process.env.FENLORA_PUERTO || 'USB001';
+// (Opcional, MÁS confiable en USB) nombre con el que COMPARTISTE la impresora en Windows.
+// Si "copy a USB001" no imprime, comparte la impresora (Propiedades → Compartir → nombre, ej. POS58)
+// y arranca el bridge con:  set FENLORA_IMPRESORA=POS58   y luego  node bridge.js
+const NOMBRE_IMPRESORA = process.env.FENLORA_IMPRESORA || '';
+function _destinosImpresion(){
+  const d = [];
+  if (NOMBRE_IMPRESORA) d.push('\\\\localhost\\' + NOMBRE_IMPRESORA); // impresora compartida (respaldo)
+  d.push(PUERTO_IMPRESORA);                                           // puerto directo (USB001…)
+  return d;
+}
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -32,6 +42,12 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // 🔑 ARREGLO CLAVE: Chrome bloquea las peticiones de una web HTTPS hacia la red
+  // local (localhost) a menos que el servicio local conteste este permiso en el
+  // preflight. Sin esta línea el OPTIONS queda en 204 y el POST de impresión NUNCA
+  // se envía (por eso "no imprimía ni salía mensaje").
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -102,29 +118,31 @@ function imprimir(buf, cb) {
 
     console.log('✅ Archivo temporal creado');
 
-    const comando = `copy /b "${tmp}" "${PUERTO_IMPRESORA}"`;
-
-    console.log('📤 Enviando a impresora...');
-    console.log('   Comando:', comando);
-
-    exec(comando, (err2, stdout, stderr) => {
-      fs.unlink(tmp, () => {});
-
-      if (err2) {
-        console.error('❌ ERROR AL IMPRIMIR');
-        console.error('   Código:', err2.code);
-        console.error('   Mensaje:', err2.message);
-        console.error('   stdout:', stdout);
-        console.error('   stderr:', stderr);
-        return cb(err2);
+    const destinos = _destinosImpresion();
+    let i = 0, ultimo = '';
+    const intentar = () => {
+      if (i >= destinos.length) {
+        fs.unlink(tmp, () => {});
+        console.error('❌ No se pudo imprimir en ningún destino. Último error:', ultimo);
+        console.error('   👉 Si el puerto USB no imprime, COMPARTE la impresora en Windows y arranca con  set FENLORA_IMPRESORA=NOMBRE');
+        return cb(new Error('No imprimió. Último error: ' + ultimo));
       }
-
-      console.log('✅ IMPRESIÓN ENVIADA CORRECTAMENTE');
-      console.log('   stdout:', stdout || '(sin mensaje)');
-      console.log('   stderr:', stderr || '(sin mensaje)');
-
-      cb(null);
-    });
+      const dest = destinos[i++];
+      const comando = `copy /b "${tmp}" "${dest}"`;
+      console.log('📤 Enviando a impresora... Comando:', comando);
+      exec(comando, (err2, stdout, stderr) => {
+        if (err2) {
+          ultimo = ((stderr || '') + '' || err2.message || '').trim();
+          console.warn('   ⚠️ Falló en "' + dest + '":', ultimo, '— probando siguiente destino…');
+          return intentar();
+        }
+        fs.unlink(tmp, () => {});
+        console.log('✅ IMPRESIÓN ENVIADA CORRECTAMENTE a: ' + dest);
+        console.log('   stdout:', stdout || '(sin mensaje)');
+        cb(null);
+      });
+    };
+    intentar();
   });
 }
 
