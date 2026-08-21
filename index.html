@@ -192,6 +192,20 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .neg-card{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;flex-wrap:wrap}
 .neg-card.susp{opacity:.6}
 .neg-name{font-weight:600;font-size:14.5px}
+.stk-list{display:flex;flex-direction:column;gap:8px}
+.stk-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 14px;flex-wrap:wrap}
+.stk-row.bajo{border-color:rgba(255,91,91,.4);background:rgba(255,91,91,.06)}
+.stk-name{display:flex;align-items:center;gap:11px;flex:1;min-width:180px}
+.stk-e{font-size:22px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--card);border-radius:9px;flex-shrink:0}
+.stk-name b{font-weight:600;font-size:14px}
+.stk-sub{font-size:11.5px;color:var(--txt3);margin-top:1px}
+.stk-cant{font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;min-width:90px;text-align:right;font-variant-numeric:tabular-nums}
+.stk-cant .stk-u{font-size:11px;font-weight:500;color:var(--txt3);margin-left:4px}
+.stk-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.kx-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.kx-tbl th{text-align:left;color:var(--txt3);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+.kx-tbl td{padding:7px 8px;border-bottom:1px solid var(--border)}
+.kx-mot{color:var(--txt2);font-size:11.5px}
 .neg-meta{font-size:12px;color:var(--txt2);margin-top:3px}
 .neg-meta a{color:var(--primary);text-decoration:none}
 .neg-badge.susp{background:var(--red,#ef4444);color:#fff;font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600}
@@ -1083,7 +1097,7 @@ const S = {
   categorias: {g:'Catálogo', n:'Categorías y Áreas', ico:'🗂️', st:'activo', fase:'Fase 3', desc:'Organiza el menú en categorías (entradas, fuertes, bebidas…) y define las áreas de producción (cocina, barra, horno) para enrutar cada comanda.', feat:['Categorías ordenables','Áreas de producción','Enrutamiento de comandas por área','Orden de aparición en la carta']},
   juegos:     {g:'Catálogo', n:'Juegos de Espera', ico:'🎮', st:'construccion', fase:'Fase 4', desc:'Los minijuegos que el cliente juega en su celular mientras espera el pedido (Serpiente, Bloques, Pinball). Aquí el negocio los activa, elige cuáles y ve el tablero de puntajes para premiar.', feat:['Activar/desactivar juegos','Elegir qué juegos se muestran','Tablero de puntajes (leaderboard)','Premios por puntaje (ej. postre gratis)','Juego destacado de la semana','Es un diferenciador vs otros POS']},
   // INVENTARIO
-  stock:      {g:'Inventario', n:'Stock y Kardex', ico:'📦', st:'construccion', fase:'Fase 3', desc:'Control de existencias con Kardex (entradas y salidas) y alertas de stock bajo. El stock baja solo cuando se venden productos con receta.', feat:['Kardex de entradas y salidas','Descuento automático por receta','Alertas de stock mínimo','Reporte de mermas','Consumo interno y cortesías','Trabaja con o sin internet']},
+  stock:      {g:'Inventario', n:'Stock y Kardex', ico:'📦', st:'activo', fase:'Fase 3', desc:'Control de existencias por sede con Kardex (entradas y salidas) y alertas de stock bajo. Marca qué productos llevan inventario; al facturarlos, el stock baja solo.', feat:['Kardex de entradas y salidas por producto','Descuento automático al facturar','Control opcional por producto (ideal para barra/bebidas)','Alertas de stock mínimo','Entradas, salidas, ajustes, mermas, cortesías y consumo interno','Inventario independiente por sede']},
   recetas:    {g:'Inventario', n:'Recetas (Escandallos)', ico:'📖', st:'pronto', fase:'Fase 3', desc:'Define qué insumos y en qué cantidad lleva cada plato, para que el inventario se descuente solo y sepas el costo real de cada producto.', feat:['Insumos y gramajes por plato','Descuento automático al vender','Costeo real por producto','Control de merma por preparación']},
   compras:    {g:'Inventario', n:'Compras y Proveedores', ico:'🚚', st:'pronto', fase:'Fase 5', desc:'Registra compras de insumos, controla proveedores y genera órdenes de compra cuando el stock está bajo.', feat:['Registro de compras','Directorio de proveedores','Órdenes de compra','Comparador de precios','Cuentas por pagar','Consolidado de compras']},
   // CLIENTES
@@ -1171,7 +1185,7 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? stockView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
@@ -1183,6 +1197,7 @@ function buildPanel(k){
   else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
+  else if(k==='stock') initStock();
   else if(DYN[k]) DYN[k].init();
 }
 function toggleNav(){document.body.classList.toggle("nav-open");}
@@ -3404,7 +3419,7 @@ function confirmPay(){
     origen: (DYN[target]&&DYN[target].title)||target,
     mesero: meta.mesero||'',
     cliente: pay.fe?(pay.feData.nombre||''):(meta.cliente||''),
-    items: lines.map(l=>({n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})),
+    items: lines.map(l=>({pid:l.id||null,n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})),
     nItems: lines.reduce((s,l)=>s+l.qty,0),
     subtotal: t.subtotal, propina: t.tipAmt, descuento: t.disc, total: t.total,
     medio: pay.m, medioLabel: label, split: meta.split||null,
@@ -3611,7 +3626,7 @@ function confirmSplitCheckout(){
       num: baseNum+'-'+(i+1), ts: Date.now(),
       origen: (DYN[target]&&DYN[target].title)||target,
       mesero: meta.mesero||'', cliente: meta.cliente||'',
-      items: i===0?lines.map(l=>({n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})):[],
+      items: i===0?lines.map(l=>({pid:l.id||null,n:l.n,qty:l.qty,unit:l.unit,cort:!!l.cort})):[],
       nItems: i===0?lines.reduce((s,l)=>s+l.qty,0):0,
       subtotal: p.amount, propina:0, descuento:0, total: p.amount,
       medio: p.medio, medioLabel:(PAGOS.find(x=>x[0]===p.medio)||[])[2],
@@ -4087,7 +4102,7 @@ document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==
 let FACTURAS=[];
 function loadFacturas(){ try{const r=localStorage.getItem('fenlora_facturas');FACTURAS=r?JSON.parse(r):[];}catch(e){FACTURAS=[];} }
 function saveFacturas(){ try{localStorage.setItem('fenlora_facturas',JSON.stringify(FACTURAS));}catch(e){} }
-function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas(); if(active==='reportes'&&typeof verReportes==='function')verReportes();}}); if(active==='reportes'&&typeof verReportes==='function')setTimeout(()=>verReportes(),300); }
+function addFactura(f){ if(!f.id)f.id=(typeof newId==='function'?newId():'f'+Date.now()); f._sync=false; FACTURAS.unshift(f); saveFacturas(); refreshDashboard(); if(typeof rerenderCaja==='function')rerenderCaja(); if(typeof pushFactura==='function')pushFactura(f).then(ok=>{if(ok){f._sync=true;saveFacturas(); if(active==='reportes'&&typeof verReportes==='function')verReportes();}}); if(active==='reportes'&&typeof verReportes==='function')setTimeout(()=>verReportes(),300); try{ if(typeof _descontarStockVenta==='function' && f.items && f.items.length) _descontarStockVenta(f); }catch(e){ console.warn('stock venta:',e&&e.message); } }
 /* ── ANULACIONES (producto puntual o comanda completa) para métricas en Reportes ── */
 let ANULACIONES=[];
 function loadAnulaciones(){ try{const r=localStorage.getItem('fenlora_anulaciones');ANULACIONES=r?JSON.parse(r):[];}catch(e){ANULACIONES=[];} }
@@ -4916,7 +4931,208 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); try{ _pedirPermisoAvisos(); }catch(e){} }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullStock==='function') pullStock(); try{ _pedirPermisoAvisos(); }catch(e){} }
+
+/* ═══════════ STOCK y KARDEX (Fase 1: por producto, por sede) ═══════════ */
+let STOCK=[];                 // filas de existencia de la sede activa
+let _stkFiltro='';            // texto de búsqueda
+let _stkVer='todos';          // todos | control | bajos
+const STK_TIPOS={entrada:'📥 Entrada (compra)',salida:'📤 Salida',ajuste:'🔧 Ajuste (fijar conteo)',merma:'🗑️ Merma',cortesia:'🎁 Cortesía',consumo:'🍽️ Consumo interno'};
+function _sedeAct(){ return window._sedeId||null; }
+function _stockRow(pid){ return STOCK.find(r=>r.producto_id===pid) || null; }
+function _numF(v){ const n=parseFloat(String(v==null?'':v).replace(',','.')); return isNaN(n)?0:n; }
+function _fmtCant(n){ n=Number(n)||0; return (Math.round(n*100)/100).toLocaleString('es-CO'); }
+
+async function pullStock(){
+  if(!sb||!NEGOCIO_ID) return;
+  try{
+    const {data,error}=await sb.from('stock').select('*').eq('negocio_id',NEGOCIO_ID);
+    if(error)throw error;
+    const s=_sedeAct();
+    STOCK=(data||[]).filter(r=> (r.sede_id||null)===(s||null) );
+    if(document.querySelector('.tabpanel[data-k="stock"]')) renderStock();
+  }catch(e){ console.warn('pullStock (sigue con caché):',e.message||e); }
+}
+
+function stockView(){
+  return `<div class="page-head"><h1>📦 Stock y Kardex</h1>
+    <div class="sub">Controla las existencias de esta sede. Marca qué productos llevan inventario (ideal para barra, bebidas y embotellados); al facturarlos el stock baja solo.</div></div>
+  <div id="stockBody"><div class="dash-empty">Cargando inventario…</div></div>`;
+}
+function initStock(){ pullStock(); renderStock(); }
+
+function renderStock(){
+  const el=document.getElementById('stockBody'); if(!el) return;
+  const prods=(PRODUCTS||[]).slice().sort((a,b)=>(a.n||'').localeCompare(b.n||''));
+  const rowsAll=prods.map(p=>({p, s:_stockRow(p.id)}));
+  const nCtrl=rowsAll.filter(x=>x.s&&x.s.controlar).length;
+  const nBajo=rowsAll.filter(x=>x.s&&x.s.controlar&&x.s.minimo>0&&Number(x.s.cantidad)<=Number(x.s.minimo)).length;
+  const q=_stkFiltro.trim().toLowerCase();
+  let rows=rowsAll.filter(x=>{
+    if(q && !((x.p.n||'').toLowerCase().includes(q))) return false;
+    if(_stkVer==='control') return x.s&&x.s.controlar;
+    if(_stkVer==='bajos') return x.s&&x.s.controlar&&x.s.minimo>0&&Number(x.s.cantidad)<=Number(x.s.minimo);
+    return true;
+  });
+  const sede=(window._sedeActual&&window._sedeActual.nombre)||'';
+  const chips=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 12px">
+    ${sede?`<span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">🏬 ${sede}</span>`:''}
+    <span class="status-pill">📦 ${nCtrl} con control</span>
+    <span class="status-pill" style="${nBajo?'background:rgba(255,91,91,.14);color:#ff8f6b':''}">${nBajo?'⚠️':'✅'} ${nBajo} bajo mínimo</span>
+  </div>`;
+  const toolbar=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <input class="pf-in" style="max-width:260px" placeholder="🔎 Buscar producto…" value="${(_stkFiltro||'').replace(/"/g,'&quot;')}" oninput="_stkFiltro=this.value;renderStock()">
+    <select class="pf-in" style="max-width:200px" onchange="_stkVer=this.value;renderStock()">
+      <option value="todos"${_stkVer==='todos'?' selected':''}>Todos los productos</option>
+      <option value="control"${_stkVer==='control'?' selected':''}>Solo con control</option>
+      <option value="bajos"${_stkVer==='bajos'?' selected':''}>Solo bajo mínimo</option>
+    </select></div>`;
+  if(!prods.length){ el.innerHTML=chips+'<div class="dash-empty">Aún no tienes productos. Créalos en <b>Productos</b> y vuelve aquí para controlar su inventario.</div>'; return; }
+  const list=rows.map(({p,s})=>{
+    const ctrl=s&&s.controlar;
+    if(!ctrl){
+      return `<div class="stk-row">
+        <div class="stk-name"><span class="stk-e">${p.e||'📦'}</span><div><b>${p.n||''}</b><div class="stk-sub">Sin control de inventario</div></div></div>
+        <div class="stk-acts"><button class="btn ghost" style="width:auto;padding:8px 14px" onclick="openStockConfig('${p.id}')">➕ Activar control</button></div>
+      </div>`;
+    }
+    const cant=Number(s.cantidad)||0, min=Number(s.minimo)||0;
+    const bajo=min>0&&cant<=min;
+    const color=bajo?'#ff8f6b':(min>0&&cant<=min*1.5?'var(--amber)':'var(--primary)');
+    return `<div class="stk-row${bajo?' bajo':''}">
+      <div class="stk-name"><span class="stk-e">${p.e||'📦'}</span><div><b>${p.n||''}</b><div class="stk-sub">Mínimo: ${_fmtCant(min)} ${s.unidad||'un'}${bajo?' · ⚠️ bajo':''}</div></div></div>
+      <div class="stk-cant" style="color:${color}">${_fmtCant(cant)}<span class="stk-u">${s.unidad||'un'}</span></div>
+      <div class="stk-acts">
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','entrada')">📥 Entrada</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','salida')">📤 Salida</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','')">➕ Más</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openKardex('${p.id}')">📖 Kardex</button>
+        <button class="btn ghost" style="width:auto;padding:8px 10px" onclick="openStockConfig('${p.id}')" title="Configurar">⚙️</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=chips+toolbar+`<div class="stk-list">${list||'<div class="dash-empty">Nada que mostrar con este filtro.</div>'}</div>`;
+}
+
+function _stkHost(html){
+  let host=document.getElementById('stkModalHost'); if(!host){host=document.createElement('div');host.id='stkModalHost';document.body.appendChild(host);}
+  host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeStk()">'+html+'</div>';
+}
+function closeStk(){ const h=document.getElementById('stkModalHost'); if(h)h.innerHTML=''; }
+
+function openStockConfig(pid){
+  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
+  const r=_stockRow(pid)||{};
+  const html='<div class="modal" style="max-width:440px"><div class="modal-h"><b>⚙️ Inventario · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
+    +'<div class="modal-b">'
+    +'<div class="nf"><label class="pf-tgl" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="scCtrl"'+((r.controlar)?' checked':'')+'> Controlar inventario de este producto</label></div>'
+    +'<div class="nf-row"><div class="nf"><label>Existencia actual</label><input class="pf-in" id="scExist" type="number" step="any" value="'+(r.cantidad!=null?r.cantidad:0)+'"></div>'
+    +'<div class="nf"><label>Unidad</label><input class="pf-in" id="scUnidad" value="'+((r.unidad||'un').replace(/"/g,'&quot;'))+'" placeholder="un, botella, kg…"></div></div>'
+    +'<div class="nf"><label>Alerta cuando baje de (mínimo)</label><input class="pf-in" id="scMin" type="number" step="any" value="'+(r.minimo!=null?r.minimo:0)+'"></div>'
+    +'<div style="font-size:12px;color:var(--txt2);margin-top:4px">Si apagas el control, el producto deja de descontar al vender.</div>'
+    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="saveStockConfig(\''+pid+'\')">Guardar</button></div></div>';
+  _stkHost(html);
+}
+async function saveStockConfig(pid){
+  const ctrl=!!document.getElementById('scCtrl').checked;
+  const min=_numF(document.getElementById('scMin').value);
+  const uni=(document.getElementById('scUnidad').value||'un').trim()||'un';
+  const exist=_numF(document.getElementById('scExist').value);
+  try{
+    const {error}=await sb.rpc('stock_config',{p_negocio:NEGOCIO_ID,p_sede:_sedeAct(),p_producto:pid,p_controlar:ctrl,p_minimo:min,p_unidad:uni});
+    if(error)throw error;
+    await pullStock();
+    const r=_stockRow(pid);
+    // Si fijaron una existencia distinta a la actual, se registra como ajuste (conteo)
+    const actual=r?Number(r.cantidad)||0:0;
+    if(ctrl && exist!==actual){ await moverStock(pid,'ajuste',exist,{motivo:'Conteo / existencia inicial'}); }
+    closeStk(); toastT('Inventario actualizado ✓');
+  }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,70)); }
+}
+
+function openMovModal(pid,tipo){
+  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
+  const r=_stockRow(pid)||{}; const uni=r.unidad||'un';
+  const opts=Object.keys(STK_TIPOS).map(k=>'<option value="'+k+'"'+((tipo===k)?' selected':'')+'>'+STK_TIPOS[k]+'</option>').join('');
+  const html='<div class="modal" style="max-width:440px"><div class="modal-h"><b>Movimiento · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
+    +'<div class="modal-b">'
+    +'<div style="font-size:13px;color:var(--txt2);margin-bottom:8px">Existencia actual: <b style="color:var(--txt)">'+_fmtCant(r.cantidad||0)+' '+uni+'</b></div>'
+    +'<div class="nf"><label>Tipo de movimiento</label><select class="pf-in" id="mvTipo" onchange="_mvHint()">'+opts+'</select></div>'
+    +'<div class="nf"><label id="mvLbl">Cantidad ('+uni+')</label><input class="pf-in" id="mvCant" type="number" step="any" min="0" placeholder="0"></div>'
+    +'<div class="nf" id="mvCostoWrap"><label>Costo unitario (opcional, para valorizar)</label><input class="pf-in" id="mvCosto" type="number" step="any" min="0" placeholder="0"></div>'
+    +'<div class="nf"><label>Motivo / nota (opcional)</label><input class="pf-in" id="mvMotivo" placeholder="Ej: compra a proveedor, ajuste…"></div>'
+    +'<div id="mvHint" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
+    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="confirmMov(\''+pid+'\')">Registrar</button></div></div>';
+  _stkHost(html); _mvHint();
+}
+function _mvHint(){
+  const t=(document.getElementById('mvTipo')||{}).value; const h=document.getElementById('mvHint'); const cw=document.getElementById('mvCostoWrap'); const lbl=document.getElementById('mvLbl');
+  if(cw) cw.style.display=(t==='entrada')?'':'none';
+  if(lbl) lbl.textContent = (t==='ajuste')?'Existencia contada (queda en este número)':'Cantidad';
+  if(h) h.textContent = (t==='ajuste')?'El ajuste deja la existencia exactamente en el número que escribas.':(t==='entrada'?'Suma a la existencia.':'Resta de la existencia.');
+}
+async function confirmMov(pid){
+  const t=document.getElementById('mvTipo').value;
+  const cant=_numF(document.getElementById('mvCant').value);
+  const costo=_numF((document.getElementById('mvCosto')||{}).value);
+  const motivo=(document.getElementById('mvMotivo').value||'').trim();
+  if(t!=='ajuste' && cant<=0){ toastT('Escribe una cantidad mayor a 0'); return; }
+  const r=await moverStock(pid,t,cant,{costo:costo,motivo:motivo});
+  if(r){ closeStk(); toastT('Movimiento registrado ✓'); }
+}
+
+async function moverStock(pid,tipo,cant,opt){
+  opt=opt||{};
+  if(!sb||!NEGOCIO_ID){ toastT('Sin conexión para mover el stock'); return null; }
+  try{
+    const {data,error}=await sb.rpc('kardex_mover',{p_negocio:NEGOCIO_ID,p_sede:_sedeAct(),p_producto:pid,p_tipo:tipo,p_cantidad:cant,p_costo:opt.costo||0,p_motivo:opt.motivo||'',p_usuario:(typeof _meseroActual==='function'?_meseroActual():(window.ROL||'')),p_ref:opt.ref||null});
+    if(error)throw error;
+    const row=_stockRow(pid); if(row && data && data.saldo!=null) row.cantidad=Number(data.saldo);
+    if(data && data.alerta){ const p=(PRODUCTS||[]).find(x=>x.id===pid); toastT('⚠️ Stock bajo de '+((p&&p.n)||'un producto')); }
+    if(opt.silent){ if(document.querySelector('.tabpanel[data-k="stock"]')) renderStock(); }
+    else { await pullStock(); }
+    return data;
+  }catch(e){ if(!opt.silent) toastT('No se pudo mover el stock: '+String(e.message||e).slice(0,70)); else console.warn('stock venta:',e.message||e); return null; }
+}
+
+async function openKardex(pid){
+  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
+  _stkHost('<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">Cargando movimientos…</div></div></div>');
+  try{
+    let query=sb.from('kardex').select('*').eq('negocio_id',NEGOCIO_ID).eq('producto_id',pid).order('creado_at',{ascending:false}).limit(120);
+    const {data,error}=await query; if(error)throw error;
+    const s=_sedeAct();
+    const movs=(data||[]).filter(m=>(m.sede_id||null)===(s||null));
+    const signo={entrada:'+',ajuste:'=',salida:'−',venta:'−',merma:'−',cortesia:'−',consumo:'−'};
+    const filas=movs.length?movs.map(m=>{
+      const f=new Date(m.creado_at); const fecha=f.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit'})+' '+f.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+      const et=(STK_TIPOS[m.tipo]||m.tipo).replace(/^[^ ]+ /,'');
+      return `<tr><td>${fecha}</td><td>${et}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${signo[m.tipo]||''}${_fmtCant(m.cantidad)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><b>${_fmtCant(m.saldo)}</b></td><td class="kx-mot">${(m.motivo||'')+(m.usuario?(' · '+m.usuario):'')}</td></tr>`;
+    }).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:18px">Sin movimientos todavía.</td></tr>';
+    const body='<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
+      +'<div class="modal-b" style="max-height:60vh;overflow:auto"><table class="kx-tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Mov.</th><th style="text-align:right">Saldo</th><th>Motivo</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
+      +'<div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>';
+    _stkHost(body);
+  }catch(e){ _stkHost('<div class="modal" style="max-width:480px"><div class="modal-h"><b>📖 Kardex</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">No se pudo cargar el kardex: '+String(e.message||e).slice(0,80)+'</div></div><div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>'); }
+}
+
+/* Descuento automático de inventario al facturar (idempotente por id de factura). */
+function _descontarStockVenta(f){
+  if(!sb||!NEGOCIO_ID||!f||!f.items) return;
+  const groups={};
+  f.items.forEach(it=>{
+    const pid=it.pid; if(!pid) return;
+    const row=_stockRow(pid); if(!row||!row.controlar) return;   // solo productos con control activado
+    const key=pid+(it.cort?'|c':'|v');
+    groups[key]=groups[key]||{pid,cort:!!it.cort,qty:0};
+    groups[key].qty += Number(it.qty)||0;
+  });
+  Object.keys(groups).forEach(k=>{
+    const g=groups[k]; if(g.qty<=0) return;
+    moverStock(g.pid, g.cort?'cortesia':'venta', g.qty, {silent:true, ref:'fac:'+f.id+':'+g.pid+(g.cort?':c':':v'), motivo:(g.cort?'Cortesía ':'Venta ')+(f.num||'')});
+  });
+}
+
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
