@@ -1097,8 +1097,8 @@ const S = {
   categorias: {g:'Catálogo', n:'Categorías y Áreas', ico:'🗂️', st:'activo', fase:'Fase 3', desc:'Organiza el menú en categorías (entradas, fuertes, bebidas…) y define las áreas de producción (cocina, barra, horno) para enrutar cada comanda.', feat:['Categorías ordenables','Áreas de producción','Enrutamiento de comandas por área','Orden de aparición en la carta']},
   juegos:     {g:'Catálogo', n:'Juegos de Espera', ico:'🎮', st:'construccion', fase:'Fase 4', desc:'Los minijuegos que el cliente juega en su celular mientras espera el pedido (Serpiente, Bloques, Pinball). Aquí el negocio los activa, elige cuáles y ve el tablero de puntajes para premiar.', feat:['Activar/desactivar juegos','Elegir qué juegos se muestran','Tablero de puntajes (leaderboard)','Premios por puntaje (ej. postre gratis)','Juego destacado de la semana','Es un diferenciador vs otros POS']},
   // INVENTARIO
-  stock:      {g:'Inventario', n:'Stock y Kardex', ico:'📦', st:'activo', fase:'Fase 3', desc:'Control de existencias por sede con Kardex (entradas y salidas) y alertas de stock bajo. Marca qué productos llevan inventario; al facturarlos, el stock baja solo.', feat:['Kardex de entradas y salidas por producto','Descuento automático al facturar','Control opcional por producto (ideal para barra/bebidas)','Alertas de stock mínimo','Entradas, salidas, ajustes, mermas, cortesías y consumo interno','Inventario independiente por sede']},
-  recetas:    {g:'Inventario', n:'Recetas (Escandallos)', ico:'📖', st:'pronto', fase:'Fase 3', desc:'Define qué insumos y en qué cantidad lleva cada plato, para que el inventario se descuente solo y sepas el costo real de cada producto.', feat:['Insumos y gramajes por plato','Descuento automático al vender','Costeo real por producto','Control de merma por preparación']},
+  stock:      {g:'Inventario', n:'Inventario de Insumos', ico:'📦', st:'activo', fase:'Fase 3', desc:'La materia prima con la que preparas los platos (panela, café, queso, agua…), con existencias por sede, costo de compra y Kardex. Al vender un plato se descuentan sus insumos según la receta.', feat:['Insumos con existencia por sede','Costo de compra promedio ponderado','Kardex de entradas, salidas, ajustes, mermas y consumo','Alertas de mínimo','Descuento automático al facturar (por receta)','Inventario independiente por sede']},
+  recetas:    {g:'Inventario', n:'Recetas (Escandallos)', ico:'📖', st:'activo', fase:'Fase 3', desc:'Define qué insumos y en qué cantidad lleva cada plato, para que el inventario se descuente solo al vender y sepas el costo real y el margen de cada producto.', feat:['Insumos y cantidades por plato','Descuento automático al vender','Costo de materia prima por plato','Margen y food cost %','Trabaja junto al Inventario de Insumos']},
   compras:    {g:'Inventario', n:'Compras y Proveedores', ico:'🚚', st:'pronto', fase:'Fase 5', desc:'Registra compras de insumos, controla proveedores y genera órdenes de compra cuando el stock está bajo.', feat:['Registro de compras','Directorio de proveedores','Órdenes de compra','Comparador de precios','Cuentas por pagar','Consolidado de compras']},
   // CLIENTES
   clientes:   {g:'Clientes', n:'Clientes y Fidelización', ico:'⭐', st:'construccion', fase:'Fase 6', desc:'Tu base de clientes capturada desde el Club VIP (WhatsApp en la carta QR). Ves sus visitas, consumos y puntos acumulados.', feat:['Ficha de cliente con historial','Club VIP y puntos','Visitas y consumo acumulado','Segmentación (frecuentes, inactivos)','Cumpleaños y fechas clave','Base para remarketing']},
@@ -1185,7 +1185,7 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? stockView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? insumosView() : k==='recetas' ? recetasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
@@ -1197,7 +1197,8 @@ function buildPanel(k){
   else if(k==='reportes') initReportes();
   else if(k==='productos') initProductos();
   else if(k==='ambientes') initQrConfig();
-  else if(k==='stock') initStock();
+  else if(k==='stock') initInsumos();
+  else if(k==='recetas') initRecetas();
   else if(DYN[k]) DYN[k].init();
 }
 function toggleNav(){document.body.classList.toggle("nav-open");}
@@ -4931,208 +4932,266 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullStock==='function') pullStock(); try{ _pedirPermisoAvisos(); }catch(e){} }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullInsumos==='function') pullInsumos(); if(typeof pullRecetas==='function') pullRecetas(); try{ _pedirPermisoAvisos(); }catch(e){} }
 
-/* ═══════════ STOCK y KARDEX (Fase 1: por producto, por sede) ═══════════ */
-let STOCK=[];                 // filas de existencia de la sede activa
-let _stkFiltro='';            // texto de búsqueda
-let _stkVer='todos';          // todos | control | bajos
-const STK_TIPOS={entrada:'📥 Entrada (compra)',salida:'📤 Salida',ajuste:'🔧 Ajuste (fijar conteo)',merma:'🗑️ Merma',cortesia:'🎁 Cortesía',consumo:'🍽️ Consumo interno'};
+/* ═══════════ INVENTARIO DE INSUMOS + RECETAS ═══════════ */
+let INSUMOS=[];      // [{id,nombre,unidad,categoria,costo_prom,activo}]
+let INS_STOCK=[];    // filas insumos_stock de la sede activa
+let RECETAS=[];      // filas recetas [{id,producto_id,insumo_id,cantidad}]
+let _insFiltro='';
+let _recProd='';
+const INS_TIPOS={entrada:'📥 Entrada (compra)',salida:'📤 Salida',ajuste:'🔧 Ajuste (fijar conteo)',merma:'🗑️ Merma',consumo:'🍽️ Consumo interno'};
+const INS_UNIS=['un','g','kg','ml','lt'];
 function _sedeAct(){ return window._sedeId||null; }
-function _stockRow(pid){ return STOCK.find(r=>r.producto_id===pid) || null; }
 function _numF(v){ const n=parseFloat(String(v==null?'':v).replace(',','.')); return isNaN(n)?0:n; }
 function _fmtCant(n){ n=Number(n)||0; return (Math.round(n*100)/100).toLocaleString('es-CO'); }
+function _insumo(id){ return INSUMOS.find(x=>x.id===id)||null; }
+function _insStockRow(id){ return INS_STOCK.find(x=>x.insumo_id===id)||null; }
+function _costoReceta(pid){ return RECETAS.filter(r=>r.producto_id===pid).reduce((s,r)=>{const i=_insumo(r.insumo_id);return s+((i?Number(i.costo_prom)||0:0)*(Number(r.cantidad)||0));},0); }
 
-async function pullStock(){
-  if(!sb||!NEGOCIO_ID) return;
-  try{
-    const {data,error}=await sb.from('stock').select('*').eq('negocio_id',NEGOCIO_ID);
-    if(error)throw error;
-    const s=_sedeAct();
-    STOCK=(data||[]).filter(r=> (r.sede_id||null)===(s||null) );
-    if(document.querySelector('.tabpanel[data-k="stock"]')) renderStock();
-  }catch(e){ console.warn('pullStock (sigue con caché):',e.message||e); }
-}
-
-function stockView(){
-  return `<div class="page-head"><h1>📦 Stock y Kardex</h1>
-    <div class="sub">Controla las existencias de esta sede. Marca qué productos llevan inventario (ideal para barra, bebidas y embotellados); al facturarlos el stock baja solo.</div></div>
-  <div id="stockBody"><div class="dash-empty">Cargando inventario…</div></div>`;
-}
-function initStock(){ pullStock(); renderStock(); }
-
-function renderStock(){
-  const el=document.getElementById('stockBody'); if(!el) return;
-  const prods=(PRODUCTS||[]).slice().sort((a,b)=>(a.n||'').localeCompare(b.n||''));
-  const rowsAll=prods.map(p=>({p, s:_stockRow(p.id)}));
-  const nCtrl=rowsAll.filter(x=>x.s&&x.s.controlar).length;
-  const nBajo=rowsAll.filter(x=>x.s&&x.s.controlar&&x.s.minimo>0&&Number(x.s.cantidad)<=Number(x.s.minimo)).length;
-  const q=_stkFiltro.trim().toLowerCase();
-  let rows=rowsAll.filter(x=>{
-    if(q && !((x.p.n||'').toLowerCase().includes(q))) return false;
-    if(_stkVer==='control') return x.s&&x.s.controlar;
-    if(_stkVer==='bajos') return x.s&&x.s.controlar&&x.s.minimo>0&&Number(x.s.cantidad)<=Number(x.s.minimo);
-    return true;
-  });
-  const sede=(window._sedeActual&&window._sedeActual.nombre)||'';
-  const chips=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 12px">
-    ${sede?`<span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">🏬 ${sede}</span>`:''}
-    <span class="status-pill">📦 ${nCtrl} con control</span>
-    <span class="status-pill" style="${nBajo?'background:rgba(255,91,91,.14);color:#ff8f6b':''}">${nBajo?'⚠️':'✅'} ${nBajo} bajo mínimo</span>
-  </div>`;
-  const toolbar=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-    <input class="pf-in" style="max-width:260px" placeholder="🔎 Buscar producto…" value="${(_stkFiltro||'').replace(/"/g,'&quot;')}" oninput="_stkFiltro=this.value;renderStock()">
-    <select class="pf-in" style="max-width:200px" onchange="_stkVer=this.value;renderStock()">
-      <option value="todos"${_stkVer==='todos'?' selected':''}>Todos los productos</option>
-      <option value="control"${_stkVer==='control'?' selected':''}>Solo con control</option>
-      <option value="bajos"${_stkVer==='bajos'?' selected':''}>Solo bajo mínimo</option>
-    </select></div>`;
-  if(!prods.length){ el.innerHTML=chips+'<div class="dash-empty">Aún no tienes productos. Créalos en <b>Productos</b> y vuelve aquí para controlar su inventario.</div>'; return; }
-  const list=rows.map(({p,s})=>{
-    const ctrl=s&&s.controlar;
-    if(!ctrl){
-      return `<div class="stk-row">
-        <div class="stk-name"><span class="stk-e">${p.e||'📦'}</span><div><b>${p.n||''}</b><div class="stk-sub">Sin control de inventario</div></div></div>
-        <div class="stk-acts"><button class="btn ghost" style="width:auto;padding:8px 14px" onclick="openStockConfig('${p.id}')">➕ Activar control</button></div>
-      </div>`;
-    }
-    const cant=Number(s.cantidad)||0, min=Number(s.minimo)||0;
-    const bajo=min>0&&cant<=min;
-    const color=bajo?'#ff8f6b':(min>0&&cant<=min*1.5?'var(--amber)':'var(--primary)');
-    return `<div class="stk-row${bajo?' bajo':''}">
-      <div class="stk-name"><span class="stk-e">${p.e||'📦'}</span><div><b>${p.n||''}</b><div class="stk-sub">Mínimo: ${_fmtCant(min)} ${s.unidad||'un'}${bajo?' · ⚠️ bajo':''}</div></div></div>
-      <div class="stk-cant" style="color:${color}">${_fmtCant(cant)}<span class="stk-u">${s.unidad||'un'}</span></div>
-      <div class="stk-acts">
-        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','entrada')">📥 Entrada</button>
-        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','salida')">📤 Salida</button>
-        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openMovModal('${p.id}','')">➕ Más</button>
-        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openKardex('${p.id}')">📖 Kardex</button>
-        <button class="btn ghost" style="width:auto;padding:8px 10px" onclick="openStockConfig('${p.id}')" title="Configurar">⚙️</button>
-      </div>
-    </div>`;
-  }).join('');
-  el.innerHTML=chips+toolbar+`<div class="stk-list">${list||'<div class="dash-empty">Nada que mostrar con este filtro.</div>'}</div>`;
-}
-
-function _stkHost(html){
-  let host=document.getElementById('stkModalHost'); if(!host){host=document.createElement('div');host.id='stkModalHost';document.body.appendChild(host);}
-  host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeStk()">'+html+'</div>';
-}
+function _stkHost(html){ let host=document.getElementById('stkModalHost'); if(!host){host=document.createElement('div');host.id='stkModalHost';document.body.appendChild(host);} host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeStk()">'+html+'</div>'; }
 function closeStk(){ const h=document.getElementById('stkModalHost'); if(h)h.innerHTML=''; }
 
-function openStockConfig(pid){
-  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
-  const r=_stockRow(pid)||{};
-  const html='<div class="modal" style="max-width:440px"><div class="modal-h"><b>⚙️ Inventario · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
+async function pullInsumos(){
+  if(!sb||!NEGOCIO_ID) return;
+  try{
+    const [ins,st]=await Promise.all([
+      sb.from('insumos').select('*').eq('negocio_id',NEGOCIO_ID),
+      sb.from('insumos_stock').select('*').eq('negocio_id',NEGOCIO_ID)
+    ]);
+    if(ins.error) throw ins.error; if(st.error) throw st.error;
+    INSUMOS=(ins.data||[]).filter(x=>x.activo!==false);
+    const s=_sedeAct();
+    INS_STOCK=(st.data||[]).filter(r=>(r.sede_id||null)===(s||null));
+    if(document.querySelector('.tabpanel[data-k="stock"]')) renderInsumos();
+    if(document.querySelector('.tabpanel[data-k="recetas"]')) renderRecetas();
+  }catch(e){ console.warn('pullInsumos (sigue con caché):',e.message||e); }
+}
+async function pullRecetas(){
+  if(!sb||!NEGOCIO_ID) return;
+  try{ const {data,error}=await sb.from('recetas').select('*').eq('negocio_id',NEGOCIO_ID); if(error)throw error; RECETAS=data||[];
+    if(document.querySelector('.tabpanel[data-k="recetas"]')) renderRecetas();
+  }catch(e){ console.warn('pullRecetas:',e.message||e); }
+}
+
+/* ── Vista: Inventario de Insumos ── */
+function insumosView(){
+  return `<div class="page-head"><h1>📦 Inventario de Insumos</h1>
+    <div class="sub">La materia prima con la que preparas los platos (panela, café, queso, agua…). Registra existencias, costo de compra y mínimos; al vender un plato se descuentan sus insumos según la receta.</div></div>
+  <div style="margin:2px 0 12px"><button class="btn primary" style="width:auto;padding:10px 18px" onclick="openInsumoModal(null)">＋ Nuevo insumo</button></div>
+  <div id="insBody"><div class="dash-empty">Cargando…</div></div>`;
+}
+function initInsumos(){ pullInsumos(); renderInsumos(); }
+function renderInsumos(){
+  const el=document.getElementById('insBody'); if(!el) return;
+  const q=_insFiltro.trim().toLowerCase();
+  let list=INSUMOS.slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  if(q) list=list.filter(i=>(i.nombre||'').toLowerCase().includes(q));
+  const nBajo=INSUMOS.filter(i=>{const s=_insStockRow(i.id);return s&&s.minimo>0&&Number(s.cantidad)<=Number(s.minimo);}).length;
+  const sede=(window._sedeActual&&window._sedeActual.nombre)||'';
+  const chips=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+    ${sede?`<span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">🏬 ${sede}</span>`:''}
+    <span class="status-pill">🧾 ${INSUMOS.length} insumos</span>
+    <span class="status-pill" style="${nBajo?'background:rgba(255,91,91,.14);color:#ff8f6b':''}">${nBajo?'⚠️':'✅'} ${nBajo} bajo mínimo</span></div>`;
+  const toolbar=`<div style="margin-bottom:12px"><input class="pf-in" style="max-width:280px" placeholder="🔎 Buscar insumo…" value="${(_insFiltro||'').replace(/"/g,'&quot;')}" oninput="_insFiltro=this.value;renderInsumos()"></div>`;
+  if(!INSUMOS.length){ el.innerHTML=chips+'<div class="dash-empty">Aún no tienes insumos. Crea el primero con <b>＋ Nuevo insumo</b> (ej: Panela, Café, Queso, Agua).</div>'; return; }
+  const rows=list.map(i=>{
+    const s=_insStockRow(i.id)||{}; const cant=Number(s.cantidad)||0, min=Number(s.minimo)||0; const bajo=min>0&&cant<=min;
+    const color=bajo?'#ff8f6b':(min>0&&cant<=min*1.5?'var(--amber)':'var(--primary)');
+    return `<div class="stk-row${bajo?' bajo':''}">
+      <div class="stk-name"><span class="stk-e">🧺</span><div><b>${i.nombre}</b><div class="stk-sub">${i.categoria?(i.categoria+' · '):''}Costo ${COP(i.costo_prom)}/${i.unidad}${min>0?(' · mín '+_fmtCant(min)+' '+i.unidad):''}${bajo?' · ⚠️ bajo':''}</div></div></div>
+      <div class="stk-cant" style="color:${color}">${_fmtCant(cant)}<span class="stk-u">${i.unidad}</span></div>
+      <div class="stk-acts">
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openInsMov('${i.id}','entrada')">📥 Entrada</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openInsMov('${i.id}','salida')">📤 Salida</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openInsMov('${i.id}','')">➕ Más</button>
+        <button class="btn ghost" style="width:auto;padding:8px 12px" onclick="openInsKardex('${i.id}')">📖 Kardex</button>
+        <button class="btn ghost" style="width:auto;padding:8px 10px" onclick="openInsumoModal('${i.id}')" title="Editar">⚙️</button>
+      </div></div>`;
+  }).join('');
+  el.innerHTML=chips+toolbar+`<div class="stk-list">${rows}</div>`;
+}
+
+/* ── Crear / editar insumo ── */
+function openInsumoModal(id){
+  const i=id?_insumo(id):null; const s=id?(_insStockRow(id)||{}):{};
+  const uniOpts=INS_UNIS.map(u=>'<option value="'+u+'"'+((i&&i.unidad===u)?' selected':(!i&&u==='un'?' selected':''))+'>'+u+'</option>').join('');
+  const html='<div class="modal" style="max-width:460px"><div class="modal-h"><b>'+(i?'✏️ Editar insumo':'🧺 Nuevo insumo')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
     +'<div class="modal-b">'
-    +'<div class="nf"><label class="pf-tgl" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="scCtrl"'+((r.controlar)?' checked':'')+'> Controlar inventario de este producto</label></div>'
-    +'<div class="nf-row"><div class="nf"><label>Existencia actual</label><input class="pf-in" id="scExist" type="number" step="any" value="'+(r.cantidad!=null?r.cantidad:0)+'"></div>'
-    +'<div class="nf"><label>Unidad</label><input class="pf-in" id="scUnidad" value="'+((r.unidad||'un').replace(/"/g,'&quot;'))+'" placeholder="un, botella, kg…"></div></div>'
-    +'<div class="nf"><label>Alerta cuando baje de (mínimo)</label><input class="pf-in" id="scMin" type="number" step="any" value="'+(r.minimo!=null?r.minimo:0)+'"></div>'
-    +'<div style="font-size:12px;color:var(--txt2);margin-top:4px">Si apagas el control, el producto deja de descontar al vender.</div>'
-    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="saveStockConfig(\''+pid+'\')">Guardar</button></div></div>';
+    +'<div class="nf"><label>Nombre *</label><input class="pf-in" id="inNombre" value="'+(i?(i.nombre||'').replace(/"/g,'&quot;'):'')+'" placeholder="Ej: Panela, Café, Queso, Agua"></div>'
+    +'<div class="nf-row"><div class="nf"><label>Unidad</label><select class="pf-in" id="inUnidad">'+uniOpts+'</select></div>'
+    +'<div class="nf"><label>Categoría (opcional)</label><input class="pf-in" id="inCat" value="'+(i?(i.categoria||'').replace(/"/g,'&quot;'):'')+'" placeholder="Lácteos, Granos…"></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Costo de compra (por unidad)</label><input class="pf-in" id="inCosto" type="number" step="any" min="0" value="'+(i?(i.costo_prom||0):0)+'"></div>'
+    +'<div class="nf"><label>Existencia actual</label><input class="pf-in" id="inExist" type="number" step="any" value="'+(s.cantidad!=null?s.cantidad:0)+'"></div></div>'
+    +'<div class="nf"><label>Alerta cuando baje de (mínimo)</label><input class="pf-in" id="inMin" type="number" step="any" value="'+(s.minimo!=null?s.minimo:0)+'"></div>'
+    +'<div style="font-size:12px;color:var(--txt2);margin-top:4px">El costo se ajusta solo con cada Entrada (compra). Aquí pones el punto de partida.</div>'
+    +'</div><div class="modal-f">'+(i?'<button class="btn ghost danger" onclick="delInsumo(\''+id+'\')">Eliminar</button>':'')+'<button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="saveInsumo('+(i?("'"+id+"'"):'null')+')">Guardar</button></div></div>';
   _stkHost(html);
 }
-async function saveStockConfig(pid){
-  const ctrl=!!document.getElementById('scCtrl').checked;
-  const min=_numF(document.getElementById('scMin').value);
-  const uni=(document.getElementById('scUnidad').value||'un').trim()||'un';
-  const exist=_numF(document.getElementById('scExist').value);
+async function saveInsumo(id){
+  const nombre=(document.getElementById('inNombre').value||'').trim();
+  const unidad=document.getElementById('inUnidad').value||'un';
+  const cat=(document.getElementById('inCat').value||'').trim();
+  const costo=_numF(document.getElementById('inCosto').value);
+  const exist=_numF(document.getElementById('inExist').value);
+  const min=_numF(document.getElementById('inMin').value);
+  if(!nombre){ toastT('Escribe el nombre del insumo'); return; }
   try{
-    const {error}=await sb.rpc('stock_config',{p_negocio:NEGOCIO_ID,p_sede:_sedeAct(),p_producto:pid,p_controlar:ctrl,p_minimo:min,p_unidad:uni});
-    if(error)throw error;
-    await pullStock();
-    const r=_stockRow(pid);
-    // Si fijaron una existencia distinta a la actual, se registra como ajuste (conteo)
-    const actual=r?Number(r.cantidad)||0:0;
-    if(ctrl && exist!==actual){ await moverStock(pid,'ajuste',exist,{motivo:'Conteo / existencia inicial'}); }
-    closeStk(); toastT('Inventario actualizado ✓');
+    let insumoId=id;
+    if(id){ const {error}=await sb.from('insumos').update({nombre,unidad,categoria:cat,costo_prom:costo}).eq('id',id); if(error)throw error; }
+    else { const {data,error}=await sb.from('insumos').insert({negocio_id:NEGOCIO_ID,nombre,unidad,categoria:cat,costo_prom:costo}).select('id').single(); if(error)throw error; insumoId=data.id; }
+    await _setInsMin(insumoId,min);
+    await pullInsumos();
+    const row=_insStockRow(insumoId); const actual=row?Number(row.cantidad)||0:0;
+    if(exist!==actual){ await moverInsumo(insumoId,'ajuste',exist,{motivo:'Inventario inicial / conteo'}); }
+    closeStk(); toastT('Insumo guardado ✓');
   }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,70)); }
 }
+async function _setInsMin(insumoId,min){
+  const s=_sedeAct();
+  try{
+    let sel=sb.from('insumos_stock').select('id').eq('negocio_id',NEGOCIO_ID).eq('insumo_id',insumoId);
+    sel = s ? sel.eq('sede_id',s) : sel.is('sede_id',null);
+    const {data}=await sel;
+    if(data&&data.length){ await sb.from('insumos_stock').update({minimo:min}).eq('id',data[0].id); }
+    else { await sb.from('insumos_stock').insert({negocio_id:NEGOCIO_ID,sede_id:s,insumo_id:insumoId,minimo:min}); }
+  }catch(e){ console.warn('setInsMin:',e.message||e); }
+}
+async function delInsumo(id){
+  if(!confirm('¿Eliminar este insumo? Se quitará del inventario y de las recetas que lo usen.')) return;
+  try{
+    await sb.from('recetas').delete().eq('negocio_id',NEGOCIO_ID).eq('insumo_id',id);
+    await sb.from('insumos').update({activo:false}).eq('id',id);
+    await pullInsumos(); await pullRecetas(); closeStk(); toastT('Insumo eliminado');
+  }catch(e){ toastT('No se pudo eliminar: '+String(e.message||e).slice(0,60)); }
+}
 
-function openMovModal(pid,tipo){
-  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
-  const r=_stockRow(pid)||{}; const uni=r.unidad||'un';
-  const opts=Object.keys(STK_TIPOS).map(k=>'<option value="'+k+'"'+((tipo===k)?' selected':'')+'>'+STK_TIPOS[k]+'</option>').join('');
-  const html='<div class="modal" style="max-width:440px"><div class="modal-h"><b>Movimiento · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
+/* ── Movimientos de insumo ── */
+function openInsMov(insumoId,tipo){
+  const i=_insumo(insumoId); if(!i)return; const s=_insStockRow(insumoId)||{};
+  const opts=Object.keys(INS_TIPOS).map(k=>'<option value="'+k+'"'+((tipo===k)?' selected':'')+'>'+INS_TIPOS[k]+'</option>').join('');
+  const html='<div class="modal" style="max-width:440px"><div class="modal-h"><b>Movimiento · '+i.nombre+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
     +'<div class="modal-b">'
-    +'<div style="font-size:13px;color:var(--txt2);margin-bottom:8px">Existencia actual: <b style="color:var(--txt)">'+_fmtCant(r.cantidad||0)+' '+uni+'</b></div>'
-    +'<div class="nf"><label>Tipo de movimiento</label><select class="pf-in" id="mvTipo" onchange="_mvHint()">'+opts+'</select></div>'
-    +'<div class="nf"><label id="mvLbl">Cantidad ('+uni+')</label><input class="pf-in" id="mvCant" type="number" step="any" min="0" placeholder="0"></div>'
-    +'<div class="nf" id="mvCostoWrap"><label>Costo unitario (opcional, para valorizar)</label><input class="pf-in" id="mvCosto" type="number" step="any" min="0" placeholder="0"></div>'
-    +'<div class="nf"><label>Motivo / nota (opcional)</label><input class="pf-in" id="mvMotivo" placeholder="Ej: compra a proveedor, ajuste…"></div>'
-    +'<div id="mvHint" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
-    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="confirmMov(\''+pid+'\')">Registrar</button></div></div>';
-  _stkHost(html); _mvHint();
+    +'<div style="font-size:13px;color:var(--txt2);margin-bottom:8px">Existencia: <b style="color:var(--txt)">'+_fmtCant(s.cantidad||0)+' '+i.unidad+'</b> · Costo '+COP(i.costo_prom)+'/'+i.unidad+'</div>'
+    +'<div class="nf"><label>Tipo</label><select class="pf-in" id="imTipo" onchange="_imHint()">'+opts+'</select></div>'
+    +'<div class="nf"><label id="imLbl">Cantidad ('+i.unidad+')</label><input class="pf-in" id="imCant" type="number" step="any" min="0" placeholder="0"></div>'
+    +'<div class="nf" id="imCostoWrap"><label>Costo de compra por '+i.unidad+' (opcional)</label><input class="pf-in" id="imCosto" type="number" step="any" min="0" placeholder="'+(i.costo_prom||0)+'"></div>'
+    +'<div class="nf"><label>Motivo / nota (opcional)</label><input class="pf-in" id="imMotivo" placeholder="Ej: compra a proveedor"></div>'
+    +'<div id="imHint" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
+    +'</div><div class="modal-f"><button class="btn ghost" onclick="closeStk()">Cancelar</button><button class="btn primary" onclick="confirmInsMov(\''+insumoId+'\')">Registrar</button></div></div>';
+  _stkHost(html); _imHint();
 }
-function _mvHint(){
-  const t=(document.getElementById('mvTipo')||{}).value; const h=document.getElementById('mvHint'); const cw=document.getElementById('mvCostoWrap'); const lbl=document.getElementById('mvLbl');
+function _imHint(){ const t=(document.getElementById('imTipo')||{}).value; const cw=document.getElementById('imCostoWrap'); const lbl=document.getElementById('imLbl'); const h=document.getElementById('imHint');
   if(cw) cw.style.display=(t==='entrada')?'':'none';
-  if(lbl) lbl.textContent = (t==='ajuste')?'Existencia contada (queda en este número)':'Cantidad';
-  if(h) h.textContent = (t==='ajuste')?'El ajuste deja la existencia exactamente en el número que escribas.':(t==='entrada'?'Suma a la existencia.':'Resta de la existencia.');
-}
-async function confirmMov(pid){
-  const t=document.getElementById('mvTipo').value;
-  const cant=_numF(document.getElementById('mvCant').value);
-  const costo=_numF((document.getElementById('mvCosto')||{}).value);
-  const motivo=(document.getElementById('mvMotivo').value||'').trim();
-  if(t!=='ajuste' && cant<=0){ toastT('Escribe una cantidad mayor a 0'); return; }
-  const r=await moverStock(pid,t,cant,{costo:costo,motivo:motivo});
+  if(lbl) lbl.textContent=(t==='ajuste')?'Existencia contada (queda en este número)':'Cantidad';
+  if(h) h.textContent=(t==='entrada')?'Suma al inventario y recalcula el costo promedio.':(t==='ajuste'?'Deja la existencia exactamente en el número que escribas.':'Resta del inventario.'); }
+async function confirmInsMov(insumoId){
+  const t=document.getElementById('imTipo').value; const cant=_numF(document.getElementById('imCant').value);
+  const costo=_numF((document.getElementById('imCosto')||{}).value); const motivo=(document.getElementById('imMotivo').value||'').trim();
+  if(t!=='ajuste'&&cant<=0){ toastT('Escribe una cantidad mayor a 0'); return; }
+  const r=await moverInsumo(insumoId,t,cant,{costo:costo,motivo:motivo});
   if(r){ closeStk(); toastT('Movimiento registrado ✓'); }
 }
-
-async function moverStock(pid,tipo,cant,opt){
+async function moverInsumo(insumoId,tipo,cant,opt){
   opt=opt||{};
-  if(!sb||!NEGOCIO_ID){ toastT('Sin conexión para mover el stock'); return null; }
+  if(!sb||!NEGOCIO_ID){ if(!opt.silent)toastT('Sin conexión para mover el inventario'); return null; }
   try{
-    const {data,error}=await sb.rpc('kardex_mover',{p_negocio:NEGOCIO_ID,p_sede:_sedeAct(),p_producto:pid,p_tipo:tipo,p_cantidad:cant,p_costo:opt.costo||0,p_motivo:opt.motivo||'',p_usuario:(typeof _meseroActual==='function'?_meseroActual():(window.ROL||'')),p_ref:opt.ref||null});
+    const {data,error}=await sb.rpc('insumo_mover',{p_negocio:NEGOCIO_ID,p_sede:_sedeAct(),p_insumo:insumoId,p_tipo:tipo,p_cantidad:cant,p_costo:opt.costo||0,p_motivo:opt.motivo||'',p_usuario:(typeof _meseroActual==='function'?_meseroActual():(window.ROL||'')),p_ref:opt.ref||null});
     if(error)throw error;
-    const row=_stockRow(pid); if(row && data && data.saldo!=null) row.cantidad=Number(data.saldo);
-    if(data && data.alerta){ const p=(PRODUCTS||[]).find(x=>x.id===pid); toastT('⚠️ Stock bajo de '+((p&&p.n)||'un producto')); }
-    if(opt.silent){ if(document.querySelector('.tabpanel[data-k="stock"]')) renderStock(); }
-    else { await pullStock(); }
+    const row=_insStockRow(insumoId); if(row&&data&&data.saldo!=null) row.cantidad=Number(data.saldo);
+    if(data&&data.alerta){ const i=_insumo(insumoId); toastT('⚠️ Insumo bajo: '+((i&&i.nombre)||'')); }
+    if(opt.silent){ if(document.querySelector('.tabpanel[data-k="stock"]')) renderInsumos(); }
+    else { await pullInsumos(); }
     return data;
-  }catch(e){ if(!opt.silent) toastT('No se pudo mover el stock: '+String(e.message||e).slice(0,70)); else console.warn('stock venta:',e.message||e); return null; }
+  }catch(e){ if(!opt.silent) toastT('No se pudo mover: '+String(e.message||e).slice(0,70)); else console.warn('venta insumo:',e.message||e); return null; }
 }
 
-async function openKardex(pid){
-  const p=(PRODUCTS||[]).find(x=>x.id===pid); if(!p)return;
-  _stkHost('<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">Cargando movimientos…</div></div></div>');
+/* ── Kardex de insumo ── */
+async function openInsKardex(insumoId){
+  const i=_insumo(insumoId); if(!i)return;
+  _stkHost('<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+i.nombre+'</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">Cargando…</div></div></div>');
   try{
-    let query=sb.from('kardex').select('*').eq('negocio_id',NEGOCIO_ID).eq('producto_id',pid).order('creado_at',{ascending:false}).limit(120);
-    const {data,error}=await query; if(error)throw error;
-    const s=_sedeAct();
-    const movs=(data||[]).filter(m=>(m.sede_id||null)===(s||null));
-    const signo={entrada:'+',ajuste:'=',salida:'−',venta:'−',merma:'−',cortesia:'−',consumo:'−'};
-    const filas=movs.length?movs.map(m=>{
-      const f=new Date(m.creado_at); const fecha=f.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit'})+' '+f.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-      const et=(STK_TIPOS[m.tipo]||m.tipo).replace(/^[^ ]+ /,'');
-      return `<tr><td>${fecha}</td><td>${et}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${signo[m.tipo]||''}${_fmtCant(m.cantidad)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><b>${_fmtCant(m.saldo)}</b></td><td class="kx-mot">${(m.motivo||'')+(m.usuario?(' · '+m.usuario):'')}</td></tr>`;
-    }).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:18px">Sin movimientos todavía.</td></tr>';
-    const body='<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+(p.n||'')+'</b><div class="mx" onclick="closeStk()">✕</div></div>'
-      +'<div class="modal-b" style="max-height:60vh;overflow:auto"><table class="kx-tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Mov.</th><th style="text-align:right">Saldo</th><th>Motivo</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
-      +'<div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>';
-    _stkHost(body);
-  }catch(e){ _stkHost('<div class="modal" style="max-width:480px"><div class="modal-h"><b>📖 Kardex</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">No se pudo cargar el kardex: '+String(e.message||e).slice(0,80)+'</div></div><div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>'); }
+    const {data,error}=await sb.from('insumos_kardex').select('*').eq('negocio_id',NEGOCIO_ID).eq('insumo_id',insumoId).order('creado_at',{ascending:false}).limit(120);
+    if(error)throw error;
+    const s=_sedeAct(); const movs=(data||[]).filter(m=>(m.sede_id||null)===(s||null));
+    const signo={entrada:'+',ajuste:'=',salida:'−',venta:'−',merma:'−',consumo:'−'};
+    const filas=movs.length?movs.map(m=>{const f=new Date(m.creado_at);const fecha=f.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit'})+' '+f.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});const et=(INS_TIPOS[m.tipo]||m.tipo).replace(/^[^ ]+ /,'');
+      return `<tr><td>${fecha}</td><td>${et}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${signo[m.tipo]||''}${_fmtCant(m.cantidad)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><b>${_fmtCant(m.saldo)}</b></td><td class="kx-mot">${(m.motivo||'')+(m.usuario?(' · '+m.usuario):'')}</td></tr>`;}).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:18px">Sin movimientos todavía.</td></tr>';
+    _stkHost('<div class="modal" style="max-width:560px"><div class="modal-h"><b>📖 Kardex · '+i.nombre+'</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b" style="max-height:60vh;overflow:auto"><table class="kx-tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Mov.</th><th style="text-align:right">Saldo</th><th>Motivo</th></tr></thead><tbody>'+filas+'</tbody></table></div><div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>');
+  }catch(e){ _stkHost('<div class="modal" style="max-width:480px"><div class="modal-h"><b>📖 Kardex</b><div class="mx" onclick="closeStk()">✕</div></div><div class="modal-b"><div class="dash-empty">No se pudo cargar: '+String(e.message||e).slice(0,80)+'</div></div><div class="modal-f"><button class="btn primary" onclick="closeStk()">Cerrar</button></div></div>'); }
 }
 
-/* Descuento automático de inventario al facturar (idempotente por id de factura). */
+/* ── Vista: Recetas (escandallos) ── */
+function recetasView(){
+  return `<div class="page-head"><h1>📖 Recetas (Escandallos)</h1>
+    <div class="sub">Define qué insumos y cuánto lleva cada plato. Con eso el inventario se descuenta solo al vender y ves el costo y el margen real de cada plato.</div></div>
+  <div id="recBody"><div class="dash-empty">Cargando…</div></div>`;
+}
+function initRecetas(){ pullInsumos(); pullRecetas(); renderRecetas(); }
+function renderRecetas(){
+  const el=document.getElementById('recBody'); if(!el) return;
+  const prods=(PRODUCTS||[]).slice().sort((a,b)=>(a.n||'').localeCompare(b.n||''));
+  if(!prods.length){ el.innerHTML='<div class="dash-empty">Primero crea productos en <b>Productos</b>.</div>'; return; }
+  if(!_recProd||!prods.find(x=>x.id===_recProd)) _recProd=prods[0].id;
+  const p=prods.find(x=>x.id===_recProd)||prods[0];
+  const opciones=prods.map(x=>'<option value="'+x.id+'"'+(x.id===_recProd?' selected':'')+'>'+((x.n||'').replace(/</g,''))+(_costoReceta(x.id)>0?' ✓':'')+'</option>').join('');
+  const rows=RECETAS.filter(r=>r.producto_id===p.id);
+  const filas=rows.length?rows.map(r=>{ const i=_insumo(r.insumo_id); const costoL=(i?Number(i.costo_prom)||0:0)*(Number(r.cantidad)||0);
+    return `<tr><td>${i?i.nombre:'(insumo eliminado)'}</td><td style="text-align:right">${_fmtCant(r.cantidad)} ${i?i.unidad:''}</td><td style="text-align:right">${COP(costoL)}</td><td style="text-align:right"><button class="btn ghost" style="padding:5px 9px" onclick="delReceta('${r.id}')">🗑</button></td></tr>`;
+  }).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--txt3);padding:14px">Este plato aún no tiene receta.</td></tr>';
+  const costo=_costoReceta(p.id); const precio=Number(p.pr)||0; const margen=precio-costo; const fc=precio>0?(costo/precio*100):0;
+  const insOpts=INSUMOS.slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')).map(i=>'<option value="'+i.id+'">'+i.nombre+' ('+i.unidad+')</option>').join('');
+  el.innerHTML=`
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <label style="font-size:12.5px;color:var(--txt2)">Plato:</label>
+      <select class="pf-in" style="max-width:340px" onchange="_recProd=this.value;renderRecetas()">${opciones}</select>
+    </div>
+    <div class="neg-card" style="align-items:stretch;flex-direction:column">
+      <table class="kx-tbl"><thead><tr><th>Insumo</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Costo</th><th></th></tr></thead><tbody>${filas}</tbody></table>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        ${INSUMOS.length?`<select class="pf-in" id="recIns" style="max-width:220px">${insOpts}</select>
+        <input class="pf-in" id="recCant" type="number" step="any" min="0" placeholder="Cantidad" style="max-width:130px">
+        <button class="btn primary" style="width:auto;padding:9px 16px" onclick="addReceta('${p.id}')">＋ Agregar insumo</button>`
+        :`<span style="color:var(--txt3);font-size:12.5px">Primero crea insumos en <b>Inventario de Insumos</b>.</span>`}
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
+      <div class="neg-card" style="flex:1;min-width:140px;flex-direction:column;align-items:flex-start;gap:2px"><div style="color:var(--txt3);font-size:12px">Costo materia prima</div><div style="font-size:20px;font-weight:800;font-family:'Outfit',sans-serif">${COP(costo)}</div></div>
+      <div class="neg-card" style="flex:1;min-width:140px;flex-direction:column;align-items:flex-start;gap:2px"><div style="color:var(--txt3);font-size:12px">Precio de venta</div><div style="font-size:20px;font-weight:800;font-family:'Outfit',sans-serif">${COP(precio)}</div></div>
+      <div class="neg-card" style="flex:1;min-width:140px;flex-direction:column;align-items:flex-start;gap:2px"><div style="color:var(--txt3);font-size:12px">Margen</div><div style="font-size:20px;font-weight:800;font-family:'Outfit',sans-serif;color:${margen>=0?'var(--primary)':'#ff8f6b'}">${COP(margen)}</div></div>
+      <div class="neg-card" style="flex:1;min-width:140px;flex-direction:column;align-items:flex-start;gap:2px"><div style="color:var(--txt3);font-size:12px">Food cost %</div><div style="font-size:20px;font-weight:800;font-family:'Outfit',sans-serif;color:${fc<=35?'var(--primary)':(fc<=45?'var(--amber)':'#ff8f6b')}">${precio>0?fc.toFixed(0)+'%':'—'}</div></div>
+    </div>
+    <div style="font-size:11.5px;color:var(--txt3);margin-top:10px">El food cost es qué % del precio se va en materia prima. Un buen rango en Colombia suele estar entre 25% y 35%.</div>`;
+}
+async function addReceta(pid){
+  const insId=(document.getElementById('recIns')||{}).value; const cant=_numF((document.getElementById('recCant')||{}).value);
+  if(!insId){ toastT('Elige un insumo'); return; }
+  if(cant<=0){ toastT('Escribe la cantidad'); return; }
+  try{
+    const ex=RECETAS.find(r=>r.producto_id===pid&&r.insumo_id===insId);
+    if(ex){ const {error}=await sb.from('recetas').update({cantidad:cant}).eq('id',ex.id); if(error)throw error; }
+    else { const {error}=await sb.from('recetas').insert({negocio_id:NEGOCIO_ID,producto_id:pid,insumo_id:insId,cantidad:cant}); if(error)throw error; }
+    await pullRecetas(); toastT('Receta actualizada ✓');
+  }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,70)); }
+}
+async function delReceta(id){
+  try{ const {error}=await sb.from('recetas').delete().eq('id',id); if(error)throw error; await pullRecetas(); }
+  catch(e){ toastT('No se pudo quitar: '+String(e.message||e).slice(0,60)); }
+}
+
+/* Descuento de insumos al facturar (explota la receta de cada plato, idempotente). */
 function _descontarStockVenta(f){
   if(!sb||!NEGOCIO_ID||!f||!f.items) return;
-  const groups={};
-  f.items.forEach(it=>{
-    const pid=it.pid; if(!pid) return;
-    const row=_stockRow(pid); if(!row||!row.controlar) return;   // solo productos con control activado
-    const key=pid+(it.cort?'|c':'|v');
-    groups[key]=groups[key]||{pid,cort:!!it.cort,qty:0};
-    groups[key].qty += Number(it.qty)||0;
-  });
-  Object.keys(groups).forEach(k=>{
-    const g=groups[k]; if(g.qty<=0) return;
-    moverStock(g.pid, g.cort?'cortesia':'venta', g.qty, {silent:true, ref:'fac:'+f.id+':'+g.pid+(g.cort?':c':':v'), motivo:(g.cort?'Cortesía ':'Venta ')+(f.num||'')});
+  const perProd={};
+  f.items.forEach(it=>{ const pid=it.pid; if(!pid)return; perProd[pid]=(perProd[pid]||0)+(Number(it.qty)||0); });
+  Object.keys(perProd).forEach(pid=>{
+    const qty=perProd[pid]; if(qty<=0) return;
+    RECETAS.filter(r=>r.producto_id===pid).forEach(r=>{
+      const consumo=(Number(r.cantidad)||0)*qty; if(consumo<=0) return;
+      moverInsumo(r.insumo_id,'venta',consumo,{silent:true, ref:'fac:'+f.id+':'+pid+':'+r.insumo_id, motivo:'Venta '+(f.num||'')});
+    });
   });
 }
-
 
 /* ═══════════ AUTENTICACIÓN (Supabase) ═══════════ */
 const SB_URL='https://adyqqfasfexuknwrcfic.supabase.co';
