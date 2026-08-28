@@ -26,8 +26,10 @@ create index if not exists menu_api_keys_neg on public.menu_api_keys(negocio_id)
 
 alter table public.menu_api_keys enable row level security;
 drop policy if exists menu_api_keys_rw on public.menu_api_keys;
+-- El superadmin de Fenlora administra las keys de todos los negocios; el dueño solo las suyas.
 create policy menu_api_keys_rw on public.menu_api_keys for all
-  using (negocio_id in (select mis_negocios())) with check (negocio_id in (select mis_negocios()));
+  using      (public.es_super_admin() OR negocio_id in (select mis_negocios()))
+  with check (public.es_super_admin() OR negocio_id in (select mis_negocios()));
 
 -- Resuelve api_key → negocio_id (interno). SECURITY DEFINER para saltar RLS al validar.
 create or replace function public._menu_neg_por_key(p_api_key text)
