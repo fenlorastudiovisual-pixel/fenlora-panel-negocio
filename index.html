@@ -4470,11 +4470,42 @@ function openNegModal(id){
     +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
     +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
     +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
+    +(g?('<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:600">🔗 Enlace con el Menú Digital</label><div style="font-size:12px;color:var(--txt3);margin:2px 0 8px">Genera una clave y pégala en el negocio del menú digital (campo “API key del POS”). Con eso el menú lee la carta del POS y le manda los pedidos.</div><div id="nmMenuKeyBox" style="font-size:13px;color:var(--txt2)">Cargando…</div></div>'):'')
     +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
   let host=document.getElementById('negModalHost'); if(!host){host=document.createElement('div');host.id='negModalHost';document.body.appendChild(host);}
   host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeNegModal()">'+html+'</div>';
   _nmRuta();
+  if(g) _cargarMenuKey(g.id);
 }
+async function _cargarMenuKey(negId){
+  const box=document.getElementById('nmMenuKeyBox'); if(!box)return;
+  try{
+    const {data,error}=await sb.from('menu_api_keys').select('api_key').eq('negocio_id',negId).eq('activo',true).order('creado_at',{ascending:false}).limit(1);
+    if(error)throw error;
+    _renderMenuKeyBox(negId,(data&&data[0]&&data[0].api_key)||'');
+  }catch(e){ box.innerHTML='<span style="color:#ff8f6b">No se pudo cargar. ¿Ya corriste el SQL del enlace (sql_pos_menu_api.sql)?</span>'; }
+}
+function _renderMenuKeyBox(negId,key){
+  const box=document.getElementById('nmMenuKeyBox'); if(!box)return;
+  if(key){
+    box.innerHTML='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><code style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;word-break:break-all;flex:1;min-width:170px">'+key+'</code>'
+      +'<button class="btn ghost" style="width:auto;padding:8px 12px" onclick="_copiarTexto(\''+key+'\')">📋 Copiar</button>'
+      +'<button class="btn ghost" style="width:auto;padding:8px 12px" onclick="_generarMenuKey(\''+negId+'\',true)">🔄 Regenerar</button></div>'
+      +'<div style="font-size:11.5px;color:var(--txt3);margin-top:6px">Pega esta clave en el menú digital. Si la regeneras, la anterior deja de funcionar.</div>';
+  } else {
+    box.innerHTML='<button class="btn primary" style="width:auto;padding:9px 16px" onclick="_generarMenuKey(\''+negId+'\',false)">🔑 Generar API key del menú</button>';
+  }
+}
+async function _generarMenuKey(negId,regen){
+  if(regen && !confirm('¿Regenerar la clave? La anterior dejará de funcionar y tendrás que actualizar el menú digital.')) return;
+  try{
+    const key='mk_'+crypto.randomUUID().replace(/-/g,'')+crypto.randomUUID().replace(/-/g,'').slice(0,12);
+    if(regen){ await sb.from('menu_api_keys').update({activo:false}).eq('negocio_id',negId).eq('activo',true); }
+    const {error}=await sb.from('menu_api_keys').insert({negocio_id:negId,api_key:key}); if(error)throw error;
+    _renderMenuKeyBox(negId,key); toastT('Clave generada ✓');
+  }catch(e){ toastT('No se pudo generar: '+String(e.message||e).slice(0,70)); }
+}
+function _copiarTexto(t){ try{ navigator.clipboard.writeText(t); toastT('📋 Copiado'); }catch(e){ toastT('Copia manual: '+t); } }
 function closeNegModal(){ const h=document.getElementById('negModalHost'); if(h)h.innerHTML=''; _negEditId=null; }
 async function saveNegModal(){
   const gv=(id)=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
@@ -4668,7 +4699,7 @@ async function pullComandas(){
     if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
     _applyingRemote=false;
     // Avisos: pedidos que quedaron listos (mesero) y mesas que pidieron cuenta (admin) — red si se pierde el realtime
-    (data||[]).forEach(r=>{ if(r&&r.clave){ try{ _chequearListoParaMesero(r.clave); }catch(e){} try{ _chequearFaseAdmin(r.clave); }catch(e){} } });
+    (data||[]).forEach(r=>{ if(r&&r.clave){ try{ _chequearListoParaMesero(r.clave); }catch(e){} try{ _chequearFaseAdmin(r.clave); }catch(e){} try{ _chequearLlamadoMesero(r.clave); }catch(e){} } });
     _readyBaseline=true;   // desde la 2ª pasada en adelante, sí avisamos en cada transición
   }catch(e){ _applyingRemote=false; console.warn('pullComandas:',e.message||e); }
 }
@@ -4687,6 +4718,7 @@ function _applyRemoteComanda(row){
   _applyingRemote=false;
   try{ _chequearListoParaMesero(row.clave); }catch(e){}   // ¿este pedido acaba de quedar listo y es de este mesero? → avísale
   try{ _chequearFaseAdmin(row.clave); }catch(e){}         // ¿pidieron la cuenta? → avisa al admin/cajero
+  try{ _chequearLlamadoMesero(row.clave); }catch(e){}     // ¿llamaron al mesero desde el menú QR? → avisa
 }
 function _removeRemoteComanda(clave){
   if(!clave)return;
@@ -4796,6 +4828,29 @@ function _chequearFaseAdmin(clave){
     _avisarAdminCuenta(clave);
   }
 }
+/* Aviso de "Llamar al mesero" que viene del menú digital (meta.llamado con marca de tiempo). */
+let _llamadoPrev={};
+function _chequearLlamadoMesero(clave){
+  if(!clave)return;
+  const ll=(ORDMETA[clave]||{}).llamado; const ts=ll&&ll.ts?ll.ts:0;
+  const prev=_llamadoPrev[clave]||0;
+  _llamadoPrev[clave]=Math.max(prev,ts);
+  if(!_readyBaseline||!ts||ts<=prev)return;
+  const rol=window.ROL||'admin'; if(rol==='cocina')return;   // cocina no atiende mesas
+  const meta=ORDMETA[clave]||{};
+  const titulo=meta.title||('Mesa '+String(clave).replace('mesa_','').split('_').join(' + '));
+  const motivo=(ll&&ll.motivo==='cuenta')?'El cliente pide la cuenta.':'Un cliente pide atención en la mesa.';
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([200,100,200]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const opt={body:titulo+' — '+motivo,tag:'mesero-'+clave,renotify:true,requireInteraction:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(reg=>reg.showNotification('🙋 Llaman al mesero',opt)).catch(()=>{ try{new Notification('🙋 Llaman al mesero',{body:titulo});}catch(_){} }); }
+      else { try{new Notification('🙋 Llaman al mesero',{body:titulo});}catch(_){} }
+    }
+  }catch(e){}
+  _overlayAviso('mesero',titulo,{sub:motivo});
+}
 function _avisarAdminCuenta(clave){
   const meta=ORDMETA[clave]||{};
   const titulo=meta.title||('Mesa '+clave.replace('mesa_','').split('_').join(' + '));
@@ -4877,6 +4932,8 @@ function _overlayAviso(kind,titulo,opts){
     ? {cls:'cuenta',emoji:'🧾',t:'¡PIDEN LA CUENTA!',sub:'Ve a la mesa y factúrala.',btn:'✅ Voy a facturar'}
     : (kind==='nuevopedido')
     ? {cls:'',emoji:'👨‍🍳',t:'¡PEDIDO NUEVO!',sub:'Entró un pedido a producción.',btn:'✅ Recibido'}
+    : (kind==='mesero')
+    ? {cls:'cuenta',emoji:'🙋',t:'¡LLAMAN AL MESERO!',sub:(opts.sub||'Un cliente pide atención en la mesa.'),btn:'✅ Voy'}
     : {cls:'',emoji:'🔔',t:'¡PEDIDO LISTO!',sub:(actionable?'Reclámalo en cocina y entrégalo a la mesa.':'El mesero va a reclamarlo. (Aviso de control para el admin)'),btn:'✅ Voy por él'};
   let el=document.getElementById('listoOverlay');
   if(!el){ el=document.createElement('div'); el.id='listoOverlay'; el.className='listo-ov'; document.body.appendChild(el); }
