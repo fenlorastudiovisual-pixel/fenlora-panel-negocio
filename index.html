@@ -1082,6 +1082,7 @@ body:not(.authed) .app{display:none}
 <div class="fullview" id="fullView"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
 /* ─── ESTRUCTURA DEL PANEL (data-driven) ─── */
 const S = {
@@ -1185,7 +1186,7 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? insumosView() : k==='recetas' ? recetasView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? insumosView() : k==='recetas' ? recetasView() : k==='carta' ? cartaView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
@@ -3836,21 +3837,27 @@ const QR_OPTIONS=[
   ['autoped','🛒','Auto-pedido','El cliente arma y envía su pedido solo (llega a cocina)'],
   ['resena','⭐','Reseña / Club VIP','Captura nombre, WhatsApp y cumpleaños para promos y regalo de cumpleaños'],
 ];
-const QLINK=n=>'pos.fenloravisual.com/m/el-fogon/'+pad(n);
-
-function pseudoQR(seed){
-  const N=21,cell=100/N;let s=(seed*7919+13)%233280;
-  const rnd=()=>{s=(s*9301+49297)%233280;return s/233280;};
-  const finder=(x,y)=>{let r='';for(let i=0;i<7;i++)for(let j=0;j<7;j++){const edge=i===0||i===6||j===0||j===6;const core=i>=2&&i<=4&&j>=2&&j<=4;if(edge||core)r+=`<rect x="${(x+i)*cell}" y="${(y+j)*cell}" width="${cell}" height="${cell}"/>`;}return r;};
-  let rects='';
-  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const inF=(i<8&&j<8)||(i>N-9&&j<8)||(i<8&&j>N-9);if(inF)continue;if(rnd()>0.52)rects+=`<rect x="${i*cell}" y="${j*cell}" width="${cell}" height="${cell}"/>`;}
-  rects+=finder(0,0)+finder(N-7,0)+finder(0,N-7);
-  return `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fff"/><g fill="#0b1020">${rects}</g></svg>`;
+/* ── Enlace base del menú digital de este negocio (para los QR de mesa) ── */
+function _menuBaseKey(){ return 'fenlora_menubase_'+(window._tenant||'x'); }
+function _menuBase(){ try{ return localStorage.getItem(_menuBaseKey())||''; }catch(e){ return ''; } }
+function _setMenuBase(v){ try{ localStorage.setItem(_menuBaseKey(),(v||'').trim()); }catch(e){} }
+/* Enlace del cliente para una mesa = base del menú + ?mesa=N */
+const QLINK=n=>{ const b=_menuBase().replace(/\/+$/,''); return b?(b+'?mesa='+n):''; };
+/* QR real (data URL) con la librería qrcode-generator; null si no cargó o no hay enlace */
+function _qrDataURL(text,cell,margin){
+  try{ if(!text||typeof qrcode!=='function')return null; const q=qrcode(0,'M'); q.addData(text); q.make(); return q.createDataURL(cell||6, margin==null?4:margin); }
+  catch(e){ return null; }
+}
+function _qrImgHTML(text,size){
+  const d=_qrDataURL(text,6,4); size=size||190;
+  if(d) return '<img src="'+d+'" alt="QR" style="width:'+size+'px;height:'+size+'px;image-rendering:pixelated;border-radius:8px;background:#fff;padding:8px">';
+  return '<div style="width:'+size+'px;height:'+size+'px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--card);border:1px dashed var(--border);border-radius:8px;color:var(--txt3);font-size:12px;padding:12px;margin:0 auto">'+(_menuBase()?'No se pudo generar el QR (¿sin internet?)':'Primero configura el enlace del menú')+'</div>';
 }
 function qrConfigView(){
   return `
-  <div class="page-head"><h1>🪑 Mesas, QR y NFC <span class="status-pill activo">Activo</span><span class="fase-tag">Configuración</span></h1>
-    <div class="sub">Configura tus mesas, su código QR/NFC y qué puede hacer el cliente al escanear. Esto se conecta con tu Carta / Menú QR.</div></div>
+  <div class="page-head"><h1>🪑 Mesas, QR y NFC <span class="status-pill activo">Activo</span></h1>
+    <div class="sub">Configura tus mesas y su código QR/NFC. Cada mesa genera un QR real que abre tu menú digital ya ubicado en esa mesa.</div></div>
+  <div id="menuBaseCard"></div>
   <div class="qr-layout">
     <div class="qr-card">
       <h3>🙋 Experiencia del cliente (QR)</h3>
@@ -3863,10 +3870,47 @@ function qrConfigView(){
     </div>
   </div>
   <div class="section-title">🗺️ Ambientes y mesas</div>
-  <div class="qsub-note">Cada ambiente agrupa sus mesas. Entra a “Configurar mesas” para crear, editar, generar en masa o eliminar mesas y ver su QR.</div>
+  <div class="qsub-note">Cada ambiente agrupa sus mesas. Entra a “Configurar mesas” para crear/editar, y toca el 📱 de cada mesa para ver, descargar o imprimir su QR real. También puedes imprimir el QR de todas las mesas de un ambiente de una vez (🖨️).</div>
   <div id="qrAmbientes"></div>`;
 }
-function initQrConfig(){renderQrOpts();renderQrPhone();renderAmbientes();}
+function initQrConfig(){renderMenuBaseCard();renderQrOpts();renderQrPhone();renderAmbientes();}
+function renderMenuBaseCard(){
+  const el=document.getElementById('menuBaseCard'); if(!el)return;
+  const b=_menuBase();
+  el.innerHTML=`<div class="qr-card" style="margin-bottom:14px">
+    <h3>🔗 Menú digital de este negocio</h3>
+    <div class="qsub">Pega el enlace del menú digital de este negocio (lo ves en el panel del menú, ej: <b>https://menudigital.fenloravisual.com/dulce-cafe</b>). Con eso cada mesa arma su QR sola.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+      <input class="pf-in" id="menuBaseIn" style="flex:1;min-width:220px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(b||'').replace(/"/g,'&quot;')}">
+      <button class="btn primary" style="width:auto;padding:10px 16px" onclick="_guardarMenuBase()">Guardar</button>
+      ${b?`<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="window.open(_menuBase(),'_blank')">↗ Abrir menú</button>`:''}
+    </div>
+    ${b?'':'<div style="font-size:12px;color:#ff8f6b;margin-top:8px">⚠️ Sin este enlace, los QR de las mesas no funcionan.</div>'}
+  </div>`;
+}
+function _guardarMenuBase(){ const v=(document.getElementById('menuBaseIn')||{}).value||''; _setMenuBase(v); toastT('Enlace del menú guardado ✓'); renderMenuBaseCard(); }
+
+/* ═══ Carta / Menú QR → puente al Menú Digital ═══ */
+function cartaView(){
+  const b=_menuBase();
+  return `<div class="page-head"><h1>📱 Carta / Menú QR</h1>
+    <div class="sub">Tu carta digital es el Menú Digital de Fenlora. Aquí lo abres, lo editas y ves cómo se ve. Los QR de cada mesa se generan en <b>Mesas, QR y NFC</b>.</div></div>
+  <div class="qr-card">
+    <h3>🔗 Tu menú digital</h3>
+    ${b?`<div style="font-size:13px;color:var(--txt2);margin-bottom:10px">Enlace: <a href="${b}" target="_blank" style="color:var(--primary);word-break:break-all">${b}</a></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary" style="width:auto;padding:11px 18px" onclick="window.open(_menuBase(),'_blank')">👁 Ver el menú</button>
+      <button class="btn ghost" style="width:auto;padding:11px 18px" onclick="window.open('https://menudigital.fenloravisual.com/admin','_blank')">✏️ Editar en el panel del menú</button>
+      <button class="btn ghost" style="width:auto;padding:11px 18px" onclick="openTab('ambientes')">🪑 Ver QR de mesas</button>
+    </div>`
+    :`<div style="font-size:13px;color:#ff8f6b">Aún no has configurado el enlace del menú de este negocio.</div>
+    <div style="margin-top:10px"><button class="btn primary" style="width:auto;padding:11px 18px" onclick="openTab('ambientes')">Ir a configurarlo</button></div>`}
+  </div>
+  <div class="qr-card" style="margin-top:14px">
+    <h3>Cómo funciona</h3>
+    <div style="font-size:13px;color:var(--txt2);line-height:1.65">El menú digital muestra tu carta, recibe los pedidos como <b>comandas en la mesa</b> y avisa cuando el cliente <b>llama al mesero</b>. Si el negocio está en <b>modo POS</b>, los productos y precios salen del POS (edítalos en Productos); el diseño y las fotos se ajustan en el panel del menú. Cada mesa tiene su propio QR con su número, que armas en <b>Mesas, QR y NFC</b>.</div>
+  </div>`;
+}
 function renderQrOpts(){
   const el=document.getElementById('qrOpts');if(!el)return;
   el.innerHTML=QR_OPTIONS.map(o=>`<div class="opt-toggle ${QROPTS[o[0]]?'on':''}" onclick="toggleQrOpt('${o[0]}')">
@@ -3918,6 +3962,7 @@ function renderAmbientes(){
       <div class="amb-acts">
         <button class="mi edit" title="Editar ambiente" onclick="editarAmbiente('${_q(a.n)}')">✏️</button>
         <button class="mi del" title="Eliminar ambiente" onclick="eliminarAmbiente('${_q(a.n)}')">🗑️</button>
+        <button class="mi" title="Imprimir el QR de todas las mesas de este ambiente" onclick="_qrPrintAmbiente('${_q(a.n)}')">🖨️</button>
         <button class="amb-cfg" onclick="openMesasLB('${_q(a.n)}')">🪑 Configurar mesas</button>
       </div></div>`;
   }).join('')+`<button class="btn ghost" style="width:auto;padding:9px 15px;margin-top:12px" onclick="nuevoAmbiente()">➕ Nuevo ambiente</button>`;
@@ -4056,15 +4101,33 @@ document.getElementById('mesasModal').addEventListener('click',e=>{if(e.target.i
 
 /* ── ver QR / configurar mesa (diálogos individuales) ── */
 function openQrView(n){
-  const m=document.getElementById('qrModal');
-  m.innerHTML=`<div class="modal" style="width:340px"><div class="modal-h"><b>📱 QR · Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
-    <div class="modal-b"><div class="qr-big">${pseudoQR(n)}</div>
-      <div class="cfg-field"><div class="cl-lb">Enlace del cliente</div><input class="cfg-in" readonly value="${QLINK(n)}"></div>
-      <div style="font-size:11.5px;color:var(--txt2);text-align:center">El cliente escanea o acerca el celular (NFC) y abre esta experiencia.</div></div>
-    <div class="modal-f"><div class="print-actions">
-      <button class="btn ghost" style="width:auto;padding:11px 16px" onclick="toastT('Enlace copiado')">🔗 Copiar enlace</button>
-      <button class="btn primary" style="width:auto;padding:11px 16px" onclick="toastT('QR descargado (demo)')">⬇️ Descargar QR</button></div></div></div>`;
+  const link=QLINK(n); const m=document.getElementById('qrModal');
+  m.innerHTML=`<div class="modal" style="width:360px"><div class="modal-h"><b>📱 QR · Mesa ${pad(n)}</b><div class="mx" onclick="closeQr()">✕</div></div>
+    <div class="modal-b" style="text-align:center">
+      ${_qrImgHTML(link,200)}
+      ${link?`<div class="cfg-field" style="margin-top:12px"><div class="cl-lb">Enlace del cliente (para grabar en el NFC)</div><input class="cfg-in" readonly value="${link}"></div>
+      <div style="font-size:11.5px;color:var(--txt2);margin-top:4px">El cliente escanea el QR (o acerca el celular al sticker NFC grabado con este enlace) y abre el menú ya ubicado en la Mesa ${pad(n)}.</div>`
+      :'<div style="font-size:12.5px;color:#ff8f6b;margin-top:10px">Configura arriba el <b>enlace del menú digital</b> para que este QR funcione.</div>'}
+    </div>
+    ${link?`<div class="modal-f"><div class="print-actions" style="flex-wrap:wrap;gap:8px;justify-content:center">
+      <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrCopy(${n})">🔗 Copiar</button>
+      <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrDownload(${n})">⬇️ Descargar</button>
+      <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrPrintMesa(${n})">🖨️ Imprimir</button>
+      <button class="btn primary" style="width:auto;padding:10px 13px" onclick="window.open(QLINK(${n}),'_blank')">👁 Ver desde esta mesa</button>
+    </div></div>`:''}</div>`;
   m.classList.add('on');
+}
+function _qrCopy(n){ const l=QLINK(n); try{ navigator.clipboard.writeText(l); toastT('🔗 Enlace copiado'); }catch(e){ toastT(l); } }
+function _qrDownload(n){ const l=QLINK(n); const d=_qrDataURL(l,10,4); if(!d){ toastT('No se pudo generar el QR'); return; } const a=document.createElement('a'); a.href=d; a.download='QR-Mesa-'+pad(n)+'.gif'; document.body.appendChild(a); a.click(); a.remove(); toastT('QR descargado'); }
+function _qrPrintMesa(n){ _qrPrint([n]); }
+function _qrPrintAmbiente(amb){ const ns=MESAS.filter(m=>m.piso===amb).map(m=>m.n).sort((a,b)=>a-b); if(!ns.length){ toastT('Ese ambiente no tiene mesas'); return; } _qrPrint(ns); }
+function _qrPrint(nums){
+  if(!_menuBase()){ toastT('Primero configura el enlace del menú'); return; }
+  const marca=_marcaNegocio();
+  const cards=nums.map(n=>{ const d=_qrDataURL(QLINK(n),8,4); return '<div class="qc"><div class="qm">'+marca+'</div><div class="qt">Mesa '+pad(n)+'</div>'+(d?'<img src="'+d+'">':'<div style="color:#c00">Sin enlace</div>')+'<div class="qh">Escanea para ver el menú y pedir</div></div>'; }).join('');
+  const w=window.open('','_blank'); if(!w){ toastT('Permite las ventanas emergentes para imprimir'); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR de mesas · '+marca+'</title><style>*{box-sizing:border-box}body{font-family:system-ui,Arial,sans-serif;margin:0;padding:14px;display:flex;flex-wrap:wrap;gap:14px;justify-content:center}.qc{width:280px;border:1px solid #ddd;border-radius:14px;padding:18px;text-align:center;page-break-inside:avoid}.qm{font-weight:800;font-size:16px}.qt{font-size:22px;font-weight:800;margin:2px 0 10px}.qc img{width:210px;height:210px;image-rendering:pixelated}.qh{font-size:12px;color:#555;margin-top:8px}</style></head><body>'+cards+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print()},350)}</scr'+'ipt></body></html>');
+  w.document.close();
 }
 function openMesaCfg(n){
   const mm=getMesa(n);if(!mm)return;const m=document.getElementById('qrModal');
