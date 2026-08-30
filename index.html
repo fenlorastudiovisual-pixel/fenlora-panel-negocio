@@ -3841,6 +3841,26 @@ const QR_OPTIONS=[
 function _menuBaseKey(){ return 'fenlora_menubase_'+(window._tenant||'x'); }
 function _menuBase(){ try{ return localStorage.getItem(_menuBaseKey())||''; }catch(e){ return ''; } }
 function _setMenuBase(v){ try{ localStorage.setItem(_menuBaseKey(),(v||'').trim()); }catch(e){} }
+/* Valida/normaliza el enlace del menú. Devuelve {ok, url, error}.
+   Bloquea el error típico de pegar la API key (mk_...) en vez de la URL. */
+function _validarMenuBase(v){
+  let s=(v||'').trim();
+  if(!s) return {ok:false, url:'', error:'Escribe el enlace de tu menú (ej: https://menudigital.fenloravisual.com/tu-negocio).'};
+  if(/^mk_/i.test(s)) return {ok:false, url:'', error:'Eso es la API key del POS (mk_…), no el enlace del menú. La API key va en el panel del MENÚ → “API key del POS”. Aquí pega la dirección web del menú: https://menudigital.fenloravisual.com/tu-negocio'};
+  if(!/^https?:\/\//i.test(s)){
+    if(/\s/.test(s) || !/[.]/.test(s)) return {ok:false, url:'', error:'Eso no parece una dirección web. Debe empezar por https:// y ser el enlace del menú.'};
+    s='https://'+s; // el usuario escribió el dominio sin https:// → se lo agregamos
+  }
+  try{ new URL(s); }catch(e){ return {ok:false, url:'', error:'Ese enlace no es válido. Ejemplo correcto: https://menudigital.fenloravisual.com/tu-negocio'}; }
+  return {ok:true, url:s, error:''};
+}
+/* Abre el menú de forma segura; si el enlace guardado está mal, avisa en vez de recargar el POS. */
+function _abrirMenu(extra){
+  const r=_validarMenuBase(_menuBase());
+  if(!r.ok){ toastT('⚠️ '+r.error); return; }
+  let u=r.url; if(extra){ u+=(u.includes('?')?'&':'?')+extra; }
+  window.open(u,'_blank');
+}
 /* Enlace del cliente para una mesa = base del menú + ?mesa=N */
 const QLINK=n=>{ const b=_menuBase().replace(/\/+$/,''); return b?(b+'?mesa='+n):''; };
 /* QR real (data URL) con la librería qrcode-generator; null si no cargó o no hay enlace */
@@ -3883,34 +3903,57 @@ function renderMenuBaseCard(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
       <input class="pf-in" id="menuBaseIn" style="flex:1;min-width:220px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(b||'').replace(/"/g,'&quot;')}">
       <button class="btn primary" style="width:auto;padding:10px 16px" onclick="_guardarMenuBase()">Guardar</button>
-      ${b?`<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="window.open(_menuBase(),'_blank')">↗ Abrir menú</button>`:''}
+      ${b?`<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="_abrirMenu()">↗ Abrir menú</button>`:''}
     </div>
     ${b?'':'<div style="font-size:12px;color:#ff8f6b;margin-top:8px">⚠️ Sin este enlace, los QR de las mesas no funcionan.</div>'}
   </div>`;
 }
-function _guardarMenuBase(){ const v=(document.getElementById('menuBaseIn')||{}).value||''; _setMenuBase(v); toastT('Enlace del menú guardado ✓'); renderMenuBaseCard(); }
+function _guardarMenuBase(){ const v=(document.getElementById('menuBaseIn')||{}).value||''; const r=_validarMenuBase(v); if(!r.ok){ toastT('⚠️ '+r.error); return; } _setMenuBase(r.url); toastT('Enlace del menú guardado ✓'); renderMenuBaseCard(); }
 
-/* ═══ Carta / Menú QR → puente al Menú Digital ═══ */
+/* ═══ Carta / Menú QR → configurar, abrir y previsualizar el Menú Digital ═══ */
 function cartaView(){
-  const b=_menuBase();
+  const raw=_menuBase();
+  const v=_validarMenuBase(raw);
+  const b=(raw && v.ok)?v.url:'';   // enlace válido listo para abrir
+  const roto=(raw && !v.ok);        // hay algo guardado pero está mal (ej: la API key)
+  const alerta = roto
+    ? `<div style="background:#3a1414;border:1px solid #b3341f;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="color:#ff8f6b;font-weight:700;margin-bottom:4px">⚠️ El enlace guardado está mal</div>
+        <div style="font-size:12.5px;color:var(--txt2);line-height:1.55">Tienes guardado <code style="background:#00000040;padding:1px 5px;border-radius:4px">${(raw||'').replace(/</g,'&lt;').slice(0,60)}</code>. ${v.error} Corrígelo en el campo de abajo y guarda.</div>
+      </div>`
+    : '';
   return `<div class="page-head"><h1>📱 Carta / Menú QR</h1>
-    <div class="sub">Tu carta digital es el Menú Digital de Fenlora. Aquí lo abres, lo editas y ves cómo se ve. Los QR de cada mesa se generan en <b>Mesas, QR y NFC</b>.</div></div>
-  <div class="qr-card">
-    <h3>🔗 Tu menú digital</h3>
-    ${b?`<div style="font-size:13px;color:var(--txt2);margin-bottom:10px">Enlace: <a href="${b}" target="_blank" style="color:var(--primary);word-break:break-all">${b}</a></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn primary" style="width:auto;padding:11px 18px" onclick="window.open(_menuBase(),'_blank')">👁 Ver el menú</button>
-      <button class="btn ghost" style="width:auto;padding:11px 18px" onclick="window.open('https://menudigital.fenloravisual.com/admin','_blank')">✏️ Editar en el panel del menú</button>
-      <button class="btn ghost" style="width:auto;padding:11px 18px" onclick="openTab('ambientes')">🪑 Ver QR de mesas</button>
-    </div>`
-    :`<div style="font-size:13px;color:#ff8f6b">Aún no has configurado el enlace del menú de este negocio.</div>
-    <div style="margin-top:10px"><button class="btn primary" style="width:auto;padding:11px 18px" onclick="openTab('ambientes')">Ir a configurarlo</button></div>`}
-  </div>
-  <div class="qr-card" style="margin-top:14px">
-    <h3>Cómo funciona</h3>
-    <div style="font-size:13px;color:var(--txt2);line-height:1.65">El menú digital muestra tu carta, recibe los pedidos como <b>comandas en la mesa</b> y avisa cuando el cliente <b>llama al mesero</b>. Si el negocio está en <b>modo POS</b>, los productos y precios salen del POS (edítalos en Productos); el diseño y las fotos se ajustan en el panel del menú. Cada mesa tiene su propio QR con su número, que armas en <b>Mesas, QR y NFC</b>.</div>
+    <div class="sub">Tu carta digital <b>es</b> el Menú Digital de Fenlora. Aquí pegas su enlace y lo abres para ver lo que ve el cliente. Los QR de cada mesa salen en <b>Mesas, QR y NFC</b>.</div></div>
+  ${alerta}
+  <div class="qr-layout" style="align-items:start">
+    <div class="qr-card">
+      <h3>🔗 Enlace de tu menú digital</h3>
+      <div class="qsub">Pega la <b>dirección web</b> del menú de este negocio (la ves en el panel del MENÚ, ej: <b>https://menudigital.fenloravisual.com/dulce-cafe</b>). Es el mismo enlace que usan los QR de las mesas.<br><span style="color:#ff8f6b">No pegues aquí la API key (mk_…): esa va en el panel del MENÚ.</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+        <input class="pf-in" id="menuBaseInCarta" style="flex:1;min-width:200px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(raw||'').replace(/"/g,'&quot;')}">
+        <button class="btn primary" style="width:auto;padding:10px 16px" onclick="_guardarMenuBaseCarta()">Guardar</button>
+      </div>
+      ${b?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn ghost" style="width:auto;padding:10px 15px" onclick="_abrirMenu()">↗ Ver el menú</button>
+        <button class="btn ghost" style="width:auto;padding:10px 15px" onclick="window.open('https://menudigital.fenloravisual.com/admin','_blank')">✏️ Editar diseño/fotos</button>
+        <button class="btn ghost" style="width:auto;padding:10px 15px" onclick="openTab('ambientes')">🪑 QR de mesas</button>
+      </div>`:''}
+      <div style="margin-top:14px">
+        <h3 style="font-size:14px">Cómo funciona</h3>
+        <div style="font-size:12.5px;color:var(--txt2);line-height:1.6">El menú muestra tu carta, recibe los pedidos como <b>comandas en la mesa</b> y avisa cuando el cliente <b>llama al mesero</b>. En <b>modo POS</b>, productos y precios salen del POS (edítalos en Productos); el diseño y las fotos, en el panel del menú.</div>
+      </div>
+    </div>
+    <div class="qr-card" style="padding:20px 16px;text-align:center">
+      <div class="qsub" style="margin-bottom:14px">📱 Ver tu menú</div>
+      ${b?`<div style="font-size:42px;margin-bottom:8px">☕📱</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:14px">Ábrelo para ver exactamente lo que ve el cliente al escanear.</div>
+      <button class="btn primary" style="width:auto;padding:12px 22px" onclick="_abrirMenu()">👁 Ver mi menú</button>
+      <div style="margin-top:10px"><button class="btn ghost" style="width:auto;padding:9px 16px" onclick="_abrirMenu('mesa=1')">Ver como Mesa 1 (con ?mesa=)</button></div>`
+      :'<div class="dash-empty">Pega arriba el enlace de tu menú para poder verlo.</div>'}
+    </div>
   </div>`;
 }
+function _guardarMenuBaseCarta(){ const v=(document.getElementById('menuBaseInCarta')||{}).value||''; const r=_validarMenuBase(v); if(!r.ok){ toastT('⚠️ '+r.error); return; } _setMenuBase(r.url); toastT('Enlace del menú guardado ✓'); const p=document.querySelector('.tabpanel[data-k="carta"]'); if(p) p.innerHTML=cartaView(); }
 function renderQrOpts(){
   const el=document.getElementById('qrOpts');if(!el)return;
   el.innerHTML=QR_OPTIONS.map(o=>`<div class="opt-toggle ${QROPTS[o[0]]?'on':''}" onclick="toggleQrOpt('${o[0]}')">
