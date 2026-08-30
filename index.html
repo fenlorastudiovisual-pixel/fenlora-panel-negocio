@@ -3896,12 +3896,13 @@ function qrConfigView(){
 function initQrConfig(){renderMenuBaseCard();renderQrOpts();renderQrPhone();renderAmbientes();}
 function renderMenuBaseCard(){
   const el=document.getElementById('menuBaseCard'); if(!el)return;
-  const b=_menuBase();
+  const raw=_menuBase(); const v=_validarMenuBase(raw); const roto=(raw && !v.ok); const b=(raw && v.ok);
   el.innerHTML=`<div class="qr-card" style="margin-bottom:14px">
     <h3>🔗 Menú digital de este negocio</h3>
-    <div class="qsub">Pega el enlace del menú digital de este negocio (lo ves en el panel del menú, ej: <b>https://menudigital.fenloravisual.com/dulce-cafe</b>). Con eso cada mesa arma su QR sola.</div>
+    <div class="qsub">Pega la <b>dirección web</b> del menú (ej: <b>https://menudigital.fenloravisual.com/dulce-cafe</b>). Con eso cada mesa arma su QR sola. <span style="color:#ff8f6b">Aquí NO va la API key (mk_…).</span></div>
+    ${roto?'<div style="font-size:12px;color:#ff8f6b;margin-top:8px">⚠️ Lo que tenías guardado no era una dirección web (parecía la API key). Limpié el campo: pega el enlace y guarda.</div>':''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-      <input class="pf-in" id="menuBaseIn" style="flex:1;min-width:220px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(b||'').replace(/"/g,'&quot;')}">
+      <input class="pf-in" id="menuBaseIn" style="flex:1;min-width:220px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(roto?'':(raw||'')).replace(/"/g,'&quot;')}">
       <button class="btn primary" style="width:auto;padding:10px 16px" onclick="_guardarMenuBase()">Guardar</button>
       ${b?`<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="_abrirMenu()">↗ Abrir menú</button>`:''}
     </div>
@@ -3918,8 +3919,8 @@ function cartaView(){
   const roto=(raw && !v.ok);        // hay algo guardado pero está mal (ej: la API key)
   const alerta = roto
     ? `<div style="background:#3a1414;border:1px solid #b3341f;border-radius:10px;padding:12px 14px;margin-bottom:14px">
-        <div style="color:#ff8f6b;font-weight:700;margin-bottom:4px">⚠️ El enlace guardado está mal</div>
-        <div style="font-size:12.5px;color:var(--txt2);line-height:1.55">Tienes guardado <code style="background:#00000040;padding:1px 5px;border-radius:4px">${(raw||'').replace(/</g,'&lt;').slice(0,60)}</code>. ${v.error} Corrígelo en el campo de abajo y guarda.</div>
+        <div style="color:#ff8f6b;font-weight:700;margin-bottom:4px">⚠️ Aquí NO va la API key</div>
+        <div style="font-size:12.5px;color:var(--txt2);line-height:1.55">Pegaste <code style="background:#00000040;padding:1px 5px;border-radius:4px">${(raw||'').replace(/</g,'&lt;').slice(0,50)}…</code> — eso es la <b>llave</b> (mk_…) y ya está bien puesta en el panel del MENÚ. Aquí abajo va la <b>dirección web</b> del menú. Ya limpié el campo: dale al botón verde y guarda.</div>
       </div>`
     : '';
   return `<div class="page-head"><h1>📱 Carta / Menú QR</h1>
@@ -3930,9 +3931,10 @@ function cartaView(){
       <h3>🔗 Enlace de tu menú digital</h3>
       <div class="qsub">Pega la <b>dirección web</b> del menú de este negocio (la ves en el panel del MENÚ, ej: <b>https://menudigital.fenloravisual.com/dulce-cafe</b>). Es el mismo enlace que usan los QR de las mesas.<br><span style="color:#ff8f6b">No pegues aquí la API key (mk_…): esa va en el panel del MENÚ.</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-        <input class="pf-in" id="menuBaseInCarta" style="flex:1;min-width:200px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(raw||'').replace(/"/g,'&quot;')}">
+        <input class="pf-in" id="menuBaseInCarta" style="flex:1;min-width:200px" placeholder="https://menudigital.fenloravisual.com/tu-negocio" value="${(roto?'':(raw||'')).replace(/"/g,'&quot;')}">
         <button class="btn primary" style="width:auto;padding:10px 16px" onclick="_guardarMenuBaseCarta()">Guardar</button>
       </div>
+      <div style="margin-top:8px"><button class="btn ghost" style="width:auto;padding:8px 13px;font-size:12.5px" onclick="var e=document.getElementById('menuBaseInCarta'); if(e){ e.value='https://menudigital.fenloravisual.com/'; e.focus(); }">✍️ Empezar con https://menudigital.fenloravisual.com/…</button></div>
       ${b?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
         <button class="btn ghost" style="width:auto;padding:10px 15px" onclick="_abrirMenu()">↗ Ver el menú</button>
         <button class="btn ghost" style="width:auto;padding:10px 15px" onclick="window.open('https://menudigital.fenloravisual.com/admin','_blank')">✏️ Editar diseño/fotos</button>
