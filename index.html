@@ -1136,7 +1136,7 @@ const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
 function _puedeCobrar(){ const r=window.ROL||'admin'; return r==='admin'||r==='cajero'; }
 function _puedeCocina(){ const r=window.ROL||'admin'; return r==='cocina'||r==='admin'; }  // solo cocina o admin marca listo/entregado
-function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
+function _canSee(k){ if(k==='negocios') return !!window._esSuper; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
