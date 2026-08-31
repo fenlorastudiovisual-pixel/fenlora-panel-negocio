@@ -121,6 +121,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 /* OPTIONS MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:260;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg.on{display:flex}
+/* El QR de mesa es un detalle que puede abrirse ENCIMA del modal de mesas: va más alto */
+#qrModal{z-index:290}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:440px;max-width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 30px 70px -15px rgba(0,0,0,.7)}
 .modal-h{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .modal-h b{font-family:'Outfit',sans-serif;font-size:17px;font-weight:700}
@@ -4158,7 +4160,7 @@ function openQrView(n){
       <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrCopy(${n})">🔗 Copiar</button>
       <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrDownload(${n})">⬇️ Descargar</button>
       <button class="btn ghost" style="width:auto;padding:10px 13px" onclick="_qrPrintMesa(${n})">🖨️ Imprimir</button>
-      <button class="btn primary" style="width:auto;padding:10px 13px" onclick="window.open(QLINK(${n}),'_blank')">👁 Ver desde esta mesa</button>
+      <button class="btn primary" style="width:auto;padding:10px 13px" onclick="_abrirMenu('mesa=${n}')">👁 Ver desde esta mesa</button>
     </div></div>`:''}</div>`;
   m.classList.add('on');
 }
