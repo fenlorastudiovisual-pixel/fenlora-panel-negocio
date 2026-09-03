@@ -1834,6 +1834,35 @@ function _resizeImg(file,cb){
   };img.onerror=()=>cb(e.target.result);img.src=e.target.result;};
   r.readAsDataURL(file);
 }
+/* Redimensiona a máx 640px y devuelve un BLOB WebP (liviano) + un base64 de respaldo. */
+function _imgToWebp(file,cb){
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{
+    const max=640;let w=img.width,h=img.height;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    let fb; try{ fb=c.toDataURL('image/webp',0.8); }catch(_){ try{fb=c.toDataURL('image/jpeg',0.82);}catch(__){fb=e.target.result;} }
+    if(c.toBlob){ c.toBlob(b=>cb(b,fb),'image/webp',0.8); } else { cb(null,fb); }
+  };img.onerror=()=>cb(null,e.target.result);img.src=e.target.result;};
+  r.readAsDataURL(file);
+}
+/* Sube la foto a Supabase Storage (bucket 'productos', carpeta = negocio_id) y devuelve la URL.
+   Si falla (bucket sin crear, sin red…), cae a base64 para no dejar al usuario sin foto. */
+function _subirFotoProducto(file,cb){
+  _imgToWebp(file, async (blob,fallback)=>{
+    if(blob && sb && sb.storage && window._tenantNeg && window._tenantNeg.id){
+      try{
+        const rid=(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()+Math.floor(Math.random()*1e4));
+        const path=window._tenantNeg.id+'/'+rid+'.webp';
+        const {error}=await sb.storage.from('productos').upload(path,blob,{contentType:'image/webp',upsert:true,cacheControl:'31536000'});
+        if(error) throw error;
+        const {data}=sb.storage.from('productos').getPublicUrl(path);
+        if(data&&data.publicUrl){ cb(data.publicUrl); return; }
+      }catch(e){ console.warn('subir foto:',e&&e.message); toastT('⚠️ No se pudo subir al storage; la foto quedó local. ¿Corriste el SQL de fotos?'); }
+    }
+    cb(fallback);
+  });
+}
 function productosView(){
   const seed = PRODUCTS.length===0 ? `<button class="btn ghost" style="width:auto;padding:10px 14px" onclick="loadDulceCafe()">☕ Cargar menú de ejemplo</button>` : '';
   return `
@@ -1932,7 +1961,7 @@ function renderProdForm(){
   </div>`;
   m.classList.add('on');renderPfOpts();renderPfNotes();
 }
-function pfPhoto(input){const f=input.files&&input.files[0];if(!f)return;_resizeImg(f,url=>{_pf.img=url;renderProdForm();});}
+function pfPhoto(input){const f=input.files&&input.files[0];if(!f)return;toastT('⏳ Subiendo foto…');_subirFotoProducto(f,url=>{_pf.img=url;renderProdForm();if(/^https?:/.test(url))toastT('✅ Foto subida');});}
 function pfClearPhoto(){_pf.img=null;renderProdForm();}
 function renderPfOpts(){
   const el=document.getElementById('pfOpts');if(!el)return;
