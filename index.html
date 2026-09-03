@@ -2568,6 +2568,8 @@ function comCount(t){ if(t==='mesas') return MESAS.filter(m=>m.est!=='libre').le
 function initComandas(){
   document.getElementById('comTypes').innerHTML=COMTYPES.map(c=>`<div class="comtype${c[0]===comType?' active':''}" onclick="setComType('${c[0]}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${comCount(c[0])}</span></div>`).join('');
   renderComContent();
+  // Asegura que las mesas estén cargadas (reintenta si el negocio/red aún no responden).
+  if(typeof _asegurarMesas==='function') _asegurarMesas();
 }
 function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelectorAll('#comTypes .comtype').forEach((el,i)=>el.classList.toggle('active',COMTYPES[i][0]===t));renderComContent();}
 
@@ -2642,6 +2644,11 @@ function renderComContent(){
       });
       if(singles.length) html+=`<div class="mesa-map">${singles.map(mesaCard).join('')}</div>`;
     });
+    if(!AMBIENTES.length){
+      html+= window._mesasCargadas
+        ? `<div class="dash-empty" style="margin-top:14px">Este negocio todavía no tiene mesas configuradas. Créalas en <b>Mesas, QR y NFC</b>. <button class="btn ghost" style="width:auto;padding:6px 12px;margin-left:8px" onclick="_asegurarMesas(true)">↻ Reintentar</button></div>`
+        : `<div class="dash-empty" style="margin-top:14px">⏳ Cargando mesas… <button class="btn ghost" style="width:auto;padding:6px 12px;margin-left:8px" onclick="_asegurarMesas(true)">↻ Reintentar</button></div>`;
+    }
     if(unirMode) html+=`<div class="unir-bar"><span>${unirSel.length} mesa(s) seleccionada(s)</span>
       <button class="btn primary" style="width:auto;padding:9px 16px" onclick="confirmarUnir()">Unir y abrir comanda</button></div>`;
     c.innerHTML=html;
@@ -5697,8 +5704,27 @@ async function _cargarSedeYMesas(){
     const vistosAmb=[]; MESAS.forEach(m=>{ if(m.piso && vistosAmb.indexOf(m.piso)<0) vistosAmb.push(m.piso); });
     AMBIENTES.length=0; vistosAmb.forEach(n=>AMBIENTES.push({n}));
     if(typeof renderAmbientes==='function')renderAmbientes();
+    window._mesasCargadas=true;
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
-  }catch(e){ console.warn('mesas/sede:',e.message||e); }
+    return true;
+  }catch(e){ console.warn('mesas/sede:',e.message||e); return false; }
+}
+/* Garantiza que las mesas estén cargadas al abrir Comandas: reintenta si el
+   negocio aún no está listo o si la consulta falló por red (evita el "no carga / refrescar"). */
+let _mesasCargando=false, _mesasReintentos=0;
+async function _asegurarMesas(forzar){
+  if(AMBIENTES.length && !forzar) return;
+  if(_mesasCargando) return;
+  if(!window._tenantNeg||!window._tenantNeg.id||!sb){
+    if(_mesasReintentos<10){ _mesasReintentos++; setTimeout(()=>_asegurarMesas(forzar),600); }
+    return;
+  }
+  _mesasCargando=true;
+  let ok=false;
+  try{ ok=await _cargarSedeYMesas(); }catch(e){ ok=false; }
+  _mesasCargando=false;
+  if(!ok && _mesasReintentos<6){ _mesasReintentos++; setTimeout(()=>_asegurarMesas(true),1500); }
+  else { _mesasReintentos=0; }
 }
 /* Datos fiscales (NIT, dirección, teléfono) para el encabezado de la tirilla.
    Función aparte, no toca resolveTenant ni negocio_por_subdominio. Si la
