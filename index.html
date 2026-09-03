@@ -1323,49 +1323,6 @@ function wireDrag(){
   });
 }
 
-function dashboard(){
-  const kpis=[
-    ['Ventas de hoy','$1.240.000','+18% vs ayer','up','💰','hl'],
-    ['Ventas de ayer','$980.000','día completo','n','📅',''],
-    ['Facturado DIAN (mes)','$18.4M','632 comprobantes','n','🧾',''],
-    ['Ventas del mes','$42.1M','+12% vs mes anterior','up','📈',''],
-    ['Ticket promedio','$38.500','por mesa','n','🎫',''],
-    ['Productos vendidos','156','hoy','n','🍽️',''],
-    ['Mesas activas','7 / 24','en este momento','n','🪑',''],
-    ['Clientes Club VIP','312','+9 esta semana','up','⭐',''],
-  ];
-  const qa=[
-    ['mesas','🍽️','Comandas','var(--primary-dim)','var(--primary)'],
-    ['cocina','👨‍🍳','Cocina KDS','var(--red-dim)','var(--red)'],
-    ['caja','💵','Caja','var(--primary-dim)','var(--primary)'],
-    ['dian','🧾','Facturar','var(--blue-dim)','var(--blue)'],
-    ['productos','🍔','Productos','var(--amber-dim)','var(--amber)'],
-    ['carta','📱','Carta QR','var(--purple-dim)','var(--purple)'],
-    ['compras','🚚','Compras','var(--primary-dim)','var(--primary)'],
-    ['clientes','⭐','Clientes','var(--amber-dim)','var(--amber)'],
-    ['reportes','📈','Reportes','var(--blue-dim)','var(--blue)'],
-    ['local','🏬','Configurar local','var(--red-dim)','var(--red)'],
-    ['empleados','👥','Empleados','var(--purple-dim)','var(--purple)'],
-  ];
-  const mesas=[
-    ['MESA 01','ocup','hace 45 min','$16.500'],['MESA 02','cobr','hace 3 h','$68.000'],
-    ['MESA 03','ocup','hace 20 min','$42.000'],['MESA 04','libre','Disponible',''],
-    ['MESA 05','libre','Disponible',''],['MESA 06','ocup','hace 1 h','$120.000'],
-  ];
-  return `
-  <div class="page-head"><h1>👋 Buen día, ${_saludoNombre()}</h1><div class="sub">Esto es lo que está pasando en ${_marcaNegocio()}${(window._sedeActual&&window._sedeActual.nombre)?(' · '+window._sedeActual.nombre):''} hoy.</div></div>
-  <div class="kpi-grid">${kpis.map(k=>`
-    <div class="kpi ${k[5]}"><div class="kt">${k[0]}</div><div class="kv">${k[1]}</div><div class="kd ${k[3]}">${k[2]}</div><div class="kico">${k[4]}</div></div>`).join('')}
-  </div>
-  <div class="section-title">⚡ Accesos directos</div>
-  <div class="qa-grid">${qa.map(q=>`
-    <div class="qa" onclick="openTab('${q[0]}')"><div class="qi" style="background:${q[3]};color:${q[4]}">${q[1]}</div><div class="qn">${q[2]}</div></div>`).join('')}
-  </div>
-  <div class="section-title">🍽️ Estado de las mesas <span style="font-size:11px;color:var(--txt2);font-weight:400">· Piso 1</span></div>
-  <div class="mini-mesas">${mesas.map(m=>`
-    <div class="mm ${m[1]}"><div class="mn">${m[0]}</div><div class="ms">${m[2]}</div>${m[3]?`<div class="mp">${m[3]}</div>`:''}</div>`).join('')}
-  </div>`;
-}
 
 /* ═══ LOCAL Y SUCURSALES — datos del negocio y gestión real de sedes ═══ */
 function localSucursalesView(){
@@ -1851,7 +1808,11 @@ function renderKdsModal(){
     <div class="modal-f">${!_puedeCocina()?`<span style="font-size:12px;color:var(--txt2)">👀 Solo la cocina o el administrador marcan listo/entregado.</span>`:(allReady?`<button class="btn primary" onclick="kdsServe('${k}');closeKdsModal()">🍽️ Entregado a la mesa</button>`:`<button class="btn ghost" onclick="kdsReadyAll('${k}')">✅ Marcar todo listo</button>`)}</div></div>`;
   m.classList.add('on');
 }
-function _kdsRefreshAll(k){syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();if(window._kdsOpen)renderKdsModal();saveState();if(document.getElementById('comContent'))renderComContent();}
+function _kdsRefreshAll(k){
+  // Encola SIEMPRE la comanda para subir a la nube (mesa y NO-mesa: domicilio/online/llevar),
+  // así el "listo/entregado" de cocina llega a los demás dispositivos.
+  try{ if(typeof _touched!=='undefined' && !_applyingRemote && k){ _touched.add(k); if(typeof pushComandasSoon==='function')pushComandasSoon(true); } }catch(e){}
+  syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();if(window._kdsOpen)renderKdsModal();saveState();if(document.getElementById('comContent'))renderComContent();}
 function kdsToggleItem(k,lid){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}const l=ORD[k].find(x=>x.lid===lid);if(l){l.ready=!l.ready;_kdsRefreshAll(k);}}
 function kdsReadyAll(k){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
 function kdsServe(k){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
@@ -3104,7 +3065,7 @@ function comandaFoot(target){
   if(!lines.length) return `<div class="save-grid">
       <button class="sbtn" disabled><span class="si">💾</span>Grabar</button>
       <button class="sbtn prod" disabled><span class="si">🔥</span>Enviar a Producción</button>
-      <button class="sbtn" disabled><span class="si">🧾</span>Enviar Comanda</button>
+      <button class="sbtn" disabled><span class="si">🧾</span>Imprimir comanda</button>
       ${_puedeCobrar()?`<button class="sbtn fact" disabled><span class="si">💵</span>Facturar y Grabar</button>`:''}</div>`;
   const subtotal=lines.reduce((s,l)=>s+l.unit*l.qty,0);
   const cortAmt=lines.filter(l=>l.cort).reduce((s,l)=>s+l.unit*l.qty,0);
@@ -3120,7 +3081,7 @@ function comandaFoot(target){
     <div class="save-grid">
       <button class="sbtn" onclick="grabar('${target}')"><span class="si">💾</span>Grabar</button>
       <button class="sbtn prod" onclick="enviarProduccion('${target}')" ${pend?'':'disabled'}><span class="si">🔥</span>Enviar a Producción${pend?' ('+pend+')':''}</button>
-      ${(window.ROL||'admin')!=='mesero'?`<button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Enviar Comanda</button>`:''}
+      ${(window.ROL||'admin')!=='mesero'?`<button class="sbtn" onclick="enviarComanda('${target}')"><span class="si">🧾</span>Imprimir comanda</button>`:''}
       ${_puedeCobrar()?`<button class="sbtn fact" onclick="openPay('${target}')"><span class="si">💵</span>Facturar y Grabar</button>`:''}
     </div>
     ${held?`<div style="font-size:10.5px;color:var(--amber);text-align:center;margin-top:8px">⏸ ${held} plato(s) retenido(s) — se envían cuando toques "▶ enviar" en cada uno</div>`:''}
