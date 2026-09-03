@@ -179,7 +179,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 @media (max-width:560px){ .chooser.split{grid-template-columns:1fr} }
 .mesas-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .mesas-head b{font-family:'Outfit',sans-serif;font-size:15px}
-.mesa-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.mesa-map{display:grid;gap:14px;grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:1240px){.mesa-map{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:1000px){.mesa-map{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:720px){.mesa-map{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){.mesa-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .mesa{border-radius:15px;padding:18px;color:#fff;cursor:pointer;position:relative;min-height:118px;transition:.15s;border:1px solid transparent}
 .mesa:hover{transform:translateY(-3px);box-shadow:0 14px 30px -12px rgba(0,0,0,.6)}
 .mesa:active{transform:scale(.98)}
