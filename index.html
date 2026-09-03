@@ -147,6 +147,36 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .comtype.active{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}
 .comtype .ct-badge{background:var(--card2);color:var(--txt2);font-size:11px;font-weight:700;padding:1px 8px;border-radius:10px}
 .comtype.active .ct-badge{background:var(--primary);color:#052e21}
+/* ── Selector de vista de Comandas (Interruptor / Partida / Tarjetas) ── */
+.vista-bar{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.vista-bar .vb-lb{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+.vbtn{background:var(--card);border:1px solid var(--border);color:var(--txt2);font-family:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:9px;cursor:pointer;transition:.15s}
+.vbtn:hover{border-color:var(--border2);color:var(--txt)}
+.vbtn.on{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}
+/* Interruptor Salón / Fuera */
+.lado-seg{display:flex;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:5px;margin-bottom:16px}
+.lado-seg button{flex:1;border:0;background:transparent;color:var(--txt2);font-family:inherit;font-weight:700;font-size:14px;padding:11px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.lado-seg button b{background:var(--card2);color:var(--txt2);border-radius:20px;font-size:11px;padding:1px 8px;font-weight:800}
+.lado-seg button.on{background:var(--primary);color:#052e21}
+.lado-seg button.on b{background:rgba(0,0,0,.22);color:#052e21}
+.lado-back{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.lado-back button{background:var(--card);border:1px solid var(--border);color:var(--primary);font-family:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;cursor:pointer}
+.lado-back b{font-size:15px}
+/* Chooser grande: partida (split) y tarjetas (cards) */
+.chooser{display:grid;gap:14px}
+.chooser.split{grid-template-columns:1fr 1fr;min-height:340px}
+.chooser.cards{grid-template-columns:1fr}
+.cch{border-radius:18px;padding:26px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;transition:.15s;text-align:center;color:#eafff7;border:1px solid var(--border)}
+.chooser.cards .cch{flex-direction:row;justify-content:flex-start;text-align:left;gap:16px;padding:22px}
+.cch.salon{background:linear-gradient(150deg,#125e49,#0f7a5c)}
+.cch.fuera{background:linear-gradient(150deg,#7a3b1e,#9c4a22)}
+.cch:hover{filter:brightness(1.09)}
+.cch-ic{font-size:42px}
+.chooser.cards .cch-ic{width:60px;height:60px;border-radius:15px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cch-ti{font-size:22px;font-weight:800}
+.cch-st{font-size:12px;opacity:.85}
+.cch-cnt{position:absolute;top:12px;right:14px;background:rgba(0,0,0,.28);border-radius:20px;font-size:11px;font-weight:800;padding:3px 10px}
+@media (max-width:560px){ .chooser.split{grid-template-columns:1fr} }
 .mesas-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .mesas-head b{font-family:'Outfit',sans-serif;font-size:15px}
 .mesa-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
@@ -2560,18 +2590,63 @@ function comandasView(){
 
   return `
   <div class="page-head"><h1>🍽️ Comandas <span class="status-pill activo">Activo</span></h1>
-    <div class="sub">Elige el tipo de pedido. En "Mesas" toca una mesa para abrir su comanda; cada una se abre en su propia pestaña.</div></div>
-  <div class="comtypes" id="comTypes"></div>
-  <div id="comContent"></div>`;
+    <div class="sub">Elige dónde vas a trabajar: <b>Salón</b> (mesas) o <b>Fuera</b> (domicilio, llevar, online). Cambia la vista con el selector.</div></div>
+  <div id="comShell"></div>`;
 }
 function comCount(t){ if(t==='mesas') return MESAS.filter(m=>m.est!=='libre').length; return Object.keys(ORD).filter(k=>k.startsWith(t+'_')&&ORD[k]&&ORD[k].length).length; }
+/* ── Vista de Comandas: 3 estilos que el usuario elige y cambia cuando quiera ──
+   'seg' = interruptor Salón/Fuera · 'split' = pantalla partida · 'cards' = dos tarjetas.
+   Se guarda por dispositivo (localStorage). Salón = mesas · Fuera = llevar/delivery/dext/online. */
+let comVista=(()=>{try{return localStorage.getItem('fenlora_comvista')||'seg';}catch(e){return 'seg';}})();
+let comLado=null;   // 'salon' | 'fuera' | null (pantalla de elección, solo en split/cards)
+const FUERA_TYPES=['llevar','delivery','dext','online'];
+function _salonCount(){ return comCount('mesas'); }
+function _fueraCount(){ return FUERA_TYPES.reduce((s,t)=>s+comCount(t),0); }
+function setComVista(v){ comVista=v; try{localStorage.setItem('fenlora_comvista',v);}catch(e){} comLado=(v==='seg')?'salon':null; initComandas(); }
+function setLado(l){ comLado=l; if(l==='salon')comType='mesas'; else if(l==='fuera'){ if(!FUERA_TYPES.includes(comType))comType='llevar'; } initComandas(); }
+function _vistaBar(){
+  const opts=[['seg','⇋ Interruptor'],['split','▛ Partida'],['cards','▤ Tarjetas']];
+  return `<div class="vista-bar"><span class="vb-lb">Vista</span>`+
+    opts.map(o=>`<button class="vbtn${comVista===o[0]?' on':''}" onclick="setComVista('${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+}
+function _chooserBig(kind){
+  return `<div class="chooser ${kind}">
+    <div class="cch salon" onclick="setLado('salon')"><span class="cch-cnt">${_salonCount()} activas</span><div class="cch-ic">🍽️</div><div><div class="cch-ti">Salón</div><div class="cch-st">Mesas del local</div></div></div>
+    <div class="cch fuera" onclick="setLado('fuera')"><span class="cch-cnt">${_fueraCount()} pedidos</span><div class="cch-ic">🛵</div><div><div class="cch-ti">Fuera</div><div class="cch-st">Domicilio · Llevar · Online</div></div></div>
+  </div>`;
+}
 function initComandas(){
-  document.getElementById('comTypes').innerHTML=COMTYPES.map(c=>`<div class="comtype${c[0]===comType?' active':''}" onclick="setComType('${c[0]}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${comCount(c[0])}</span></div>`).join('');
-  renderComContent();
-  // Asegura que las mesas estén cargadas (reintenta si el negocio/red aún no responden).
+  const shell=document.getElementById('comShell'); if(!shell)return;
+  if(comVista==='seg' && !comLado) comLado='salon';
+  let html=_vistaBar();
+  if((comVista==='split'||comVista==='cards') && !comLado){
+    html+=_chooserBig(comVista);
+    shell.innerHTML=html;
+  } else {
+    if(comVista==='seg'){
+      html+=`<div class="lado-seg">
+        <button class="${comLado==='salon'?'on':''}" onclick="setLado('salon')">🍽️ Salón <b>${_salonCount()}</b></button>
+        <button class="${comLado==='fuera'?'on':''}" onclick="setLado('fuera')">🛵 Fuera <b>${_fueraCount()}</b></button></div>`;
+    } else {
+      html+=`<div class="lado-back"><button onclick="setLado(null)">← Salón / Fuera</button><b>${comLado==='salon'?'🍽️ Salón':'🛵 Fuera'}</b></div>`;
+    }
+    html+=`<div id="comSub"></div><div id="comContent"></div>`;
+    shell.innerHTML=html;
+    _renderSub();
+    renderComContent();
+  }
   if(typeof _asegurarMesas==='function') _asegurarMesas();
 }
-function setComType(t){comType=t;unirMode=false;unirSel=[];document.querySelectorAll('#comTypes .comtype').forEach((el,i)=>el.classList.toggle('active',COMTYPES[i][0]===t));renderComContent();}
+function _renderSub(){
+  const sub=document.getElementById('comSub'); if(!sub)return;
+  if(comLado==='fuera'){
+    if(!FUERA_TYPES.includes(comType)) comType='llevar';
+    sub.innerHTML=`<div class="comtypes" id="comTypes">`+FUERA_TYPES.map(t=>{const c=COMTYPES.find(x=>x[0]===t);return `<div class="comtype${comType===t?' active':''}" data-t="${t}" onclick="setComType('${t}')"><span>${c[1]}</span> ${c[2]} <span class="ct-badge">${comCount(t)}</span></div>`;}).join('')+`</div>`;
+  } else {
+    comType='mesas'; sub.innerHTML='';
+  }
+}
+function setComType(t){ comType=t; unirMode=false; unirSel=[]; _renderSub(); renderComContent(); }
 
 function mesaKitchen(m){
   const key=m.grp||('mesa_'+m.n);const lines=ORD[key];
@@ -2623,7 +2698,7 @@ function mesaCard(m){
 }
 function renderComContent(){
   const c=document.getElementById('comContent'); if(!c)return;
-  const ct=document.getElementById('comTypes'); if(ct) ct.querySelectorAll('.comtype').forEach((el,i)=>{const b=el.querySelector('.ct-badge'); if(b&&COMTYPES[i])b.textContent=comCount(COMTYPES[i][0]);});
+  const ct=document.getElementById('comTypes'); if(ct) ct.querySelectorAll('.comtype').forEach(el=>{const b=el.querySelector('.ct-badge'); const t=el.dataset.t; if(b&&t)b.textContent=comCount(t);});
   if(comType==='mesas'){
     if(typeof _normalizarMesasUnidas==='function')_normalizarMesasUnidas();
     let html=`<div class="mesas-head"><b>🗺️ Mapa de mesas</b>
