@@ -1136,7 +1136,7 @@ const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
 function _puedeCobrar(){ const r=window.ROL||'admin'; return r==='admin'||r==='cajero'; }
 function _puedeCocina(){ const r=window.ROL||'admin'; return r==='cocina'||r==='admin'; }  // solo cocina o admin marca listo/entregado
-function _canSee(k){ if(k==='negocios') return !!window._esSuper; const rol=window.ROL||'admin'; if(rol==='admin')return true;
+function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
@@ -4656,10 +4656,24 @@ function renderNegList(){
         <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
         <button class="btn ghost" onclick="entrarNegocio('${g.id}')">➡️ Entrar</button>
         <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar</button>
+        <button class="btn ghost" onclick="resetPassNegocio('${g.id}')">🔑 Reset contraseña</button>
         <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
         <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
       </div></div>`;
   }).join('');
+}
+/* Superadmin: enviar enlace de reseteo de contraseña al correo del dueño de un negocio. */
+async function resetPassNegocio(id){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g){ toastT('Negocio no encontrado'); return; }
+  const correo=(g.correo||'').trim();
+  if(!correo){ toastT('Ese negocio no tiene correo del dueño registrado. Agrégalo en Editar.'); return; }
+  if(!confirm('¿Enviar un enlace de reseteo de contraseña al correo del dueño?\n\n'+correo)) return;
+  try{
+    const dest=location.origin+(g.subdominio?('/'+g.subdominio):'');
+    const {error}=await sb.auth.resetPasswordForEmail(correo,{redirectTo:dest});
+    if(error)throw error;
+    toastT('🔑 Enlace de reseteo enviado a '+correo);
+  }catch(e){ toastT('No se pudo enviar: '+String(e.message||e).slice(0,70)); }
 }
 function negociosView(){
   const venc=NEGOCIOS_ADMIN.filter(g=>g.vence&&new Date(g.vence+'T23:59:59')<new Date()).length;
@@ -5367,7 +5381,7 @@ let sb=null; try{ sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSe
 window.NEGOCIO_ID=null; let authMode='login';
 function _authMsg(e){const m=(e&&e.message)||String(e);if(/Invalid login/i.test(m))return'Correo o contraseña incorrectos.';if(/already registered/i.test(m))return'Ese correo ya tiene cuenta. Inicia sesión.';if(/at least 6/i.test(m))return'La contraseña debe tener al menos 6 caracteres.';if(/Email not confirmed/i.test(m))return'Debes confirmar tu correo antes de entrar.';return m;}
 function authErr(t){const el=document.getElementById('authErr');if(el){el.textContent=t||'';el.style.display=t?'block':'none';}}
-function authBusy(b){const btn=document.getElementById('authBtn');if(btn){btn.disabled=b;btn.textContent=b?'Un momento…':(authMode==='register'?'Crear cuenta':(authMode==='onboarding'?'Crear negocio':'Ingresar'));}}
+function authBusy(b){const btn=document.getElementById('authBtn');if(btn){btn.disabled=b;btn.textContent=b?'Un momento…':(authMode==='register'?'Crear cuenta':(authMode==='onboarding'?'Crear negocio':(authMode==='recovery'?'Guardar contraseña':'Ingresar')));}}
 function showAuth(mode){authMode=mode||'login';document.body.classList.remove('authed');renderAuth();}
 function hideAuth(){document.body.classList.add('authed');}
 function authToggle(){authMode=authMode==='login'?'register':'login';renderAuth();}
@@ -5389,14 +5403,47 @@ function renderAuth(){
       <div class="auth-alt"><span onclick="cerrarSesion()">Cerrar sesión</span></div></div>`;
     setTimeout(()=>{const e=document.getElementById('obNombre');if(e)e.focus();},50);return;
   }
+  if(authMode==='recovery'){
+    s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">Crea una nueva contraseña</div>
+      <div class="auth-f"><label>Nueva contraseña</label><input class="pf-in" id="authNewPass" type="password" placeholder="mínimo 6 caracteres" onkeydown="if(event.key==='Enter')authNuevaPass()"></div>
+      <div id="authErr" class="auth-err"></div>
+      <button class="btn primary" id="authBtn" style="width:100%;margin-top:6px" onclick="authNuevaPass()">Guardar contraseña</button></div>`;
+    setTimeout(()=>{const e=document.getElementById('authNewPass');if(e)e.focus();},50);return;
+  }
   const reg=authMode==='register';
   s.innerHTML=`<div class="auth-card"><div class="auth-logo">🔥 FENLORA CLOUD</div><div class="auth-sub">${reg?'Crea tu cuenta':_marcaNegocio()}</div>
     <div class="auth-f"><label>Correo</label><input class="pf-in" id="authEmail" type="email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')document.getElementById('authPass').focus()"></div>
     <div class="auth-f"><label>Contraseña</label><input class="pf-in" id="authPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()"></div>
     <div id="authErr" class="auth-err"></div>
     <button class="btn primary" id="authBtn" style="width:100%;margin-top:6px" onclick="authSubmit()">${reg?'Crear cuenta':'Ingresar'}</button>
+    ${reg?'':'<div class="auth-alt" style="margin-top:8px"><span onclick="authReset()">¿Olvidaste tu contraseña?</span></div>'}
     <div class="auth-alt">${reg?'¿Ya tienes cuenta? ':'¿Primera vez? '}<span onclick="authToggle()">${reg?'Inicia sesión':'Crea tu cuenta'}</span></div></div>`;
   setTimeout(()=>{const e=document.getElementById('authEmail');if(e)e.focus();},50);
+}
+/* Enviar enlace de recuperación al correo (el dueño olvidó su contraseña). */
+async function authReset(){
+  if(!sb)return; const email=(document.getElementById('authEmail').value||'').trim();
+  if(!email||!/.+@.+\..+/.test(email)){ authErr('Escribe tu correo arriba y vuelve a tocar “¿Olvidaste tu contraseña?”.'); return; }
+  authErr(''); authBusy(true);
+  try{
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    if(error)throw error;
+    authBusy(false);
+    authErr('✅ Te enviamos un enlace a '+email+' para crear una nueva contraseña. Revisa tu correo (y la carpeta de spam).');
+  }catch(e){ authBusy(false); authErr(_authMsg(e)); }
+}
+/* Guardar la nueva contraseña (cuando el dueño llega desde el enlace del correo). */
+async function authNuevaPass(){
+  if(!sb)return; const p=(document.getElementById('authNewPass').value||'');
+  if(p.length<6){ authErr('La contraseña debe tener al menos 6 caracteres.'); return; }
+  authErr(''); authBusy(true);
+  try{
+    const {data,error}=await sb.auth.updateUser({password:p}); if(error)throw error;
+    try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+    authBusy(false); window._recovery=false; authMode='login';
+    let u=(data&&data.user)||null; if(!u){ try{ u=(await sb.auth.getUser()).data.user; }catch(e){} }
+    if(u){ await afterLogin(u); } else { renderAuth(); authErr('Contraseña actualizada. Inicia sesión.'); }
+  }catch(e){ authBusy(false); authErr(_authMsg(e)); }
 }
 async function authSubmit(){
   if(!sb)return;const email=(document.getElementById('authEmail').value||'').trim();const pass=document.getElementById('authPass').value||'';
@@ -5697,13 +5744,18 @@ async function _cargarDatosFiscales(){
     if(!e2){ window._tenantFiscal=window._tenantFiscal||{}; window._tenantFiscal.imprimir_produccion = (ip===false)?false:true; }
   }catch(_){ /* si no existe el RPC todavía, queda encendido por defecto */ }
 }
+function _esRecoveryURL(){ try{ return /(?:^|[#&?])type=recovery(?:$|[&])/.test(location.hash||'') || /(?:^|[#&?])type=recovery(?:$|[&])/.test(location.search||''); }catch(e){ return false; } }
 async function initAuth(){
   if(!sb){showAuth('offline');return;}
   await resolveTenant();
+  // El dueño llegó desde el enlace de "olvidé mi contraseña": mostrar pantalla de nueva contraseña.
+  if(_esRecoveryURL()){ window._recovery=true; showAuth('recovery'); return; }
   try{const {data:{session}}=await sb.auth.getSession();
     if(session&&session.user){await afterLogin(session.user);}else{showAuth('login');}
   }catch(e){showAuth('login');}
 }
+// Respaldo: si Supabase detecta el token de recuperación después de cargar, forzar la pantalla.
+try{ if(sb) sb.auth.onAuthStateChange((event)=>{ if(event==='PASSWORD_RECOVERY'){ window._recovery=true; showAuth('recovery'); } }); }catch(e){}
 initAuth();
 
 </script>
