@@ -22,7 +22,7 @@
   --red:#FF4D6D;--red-dim:rgba(255,77,109,.12);
   --blue:#3B82F6;--blue-dim:rgba(59,130,246,.12);
   --purple:#A78BFA;--purple-dim:rgba(167,139,250,.14);
-  --txt:#F0F4FF;--txt2:#8892A4;--txt3:#4A5568;
+  --txt:#F0F4FF;--txt2:#AEB8CC;--txt3:#7E8AA0;
   --sidebar-w:246px;--hdr:60px;
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree',sans-serif;overflow:hidden}
@@ -799,7 +799,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Figtree
 .acct-top .aav{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--primary),#00b381);display:flex;align-items:center;justify-content:center;font-weight:700;color:#062;font-family:'Outfit',sans-serif;font-size:18px}
 
 /* tema claro */
-body.light{--bg:#EEF1F7;--surface:#FFFFFF;--card:#FFFFFF;--card2:#F1F4FA;--border:rgba(20,30,50,.10);--border2:rgba(20,30,50,.18);--txt:#151C2B;--txt2:#5B6678;--txt3:#98A2B3;--primary-dim:rgba(0,179,129,.14);--primary-dim2:rgba(0,179,129,.07)}
+body.light{--bg:#EEF1F7;--surface:#FFFFFF;--card:#FFFFFF;--card2:#EDF1F8;--border:rgba(20,30,50,.12);--border2:rgba(20,30,50,.20);--txt:#0F1622;--txt2:#44506A;--txt3:#697488;--primary-dim:rgba(0,179,129,.16);--primary-dim2:rgba(0,179,129,.09)}
 body.light .sidebar,body.light .hdr{background:#FFFFFF}
 body.light .comanda-body .cl,body.light .prod{box-shadow:0 1px 3px rgba(20,30,50,.06)}
 /* mejoras: cantidad con teclado, descuento por plato, leyenda, íconos tablet */
@@ -2963,10 +2963,10 @@ function renderProds(target){
   if(viewMode==='list'){
     cont.className='prod-list';
     cont.innerHTML=list.map(p=>`<div class="prow" onclick="pick('${target}','${p.id}')">
-      ${p.img?`<span class="pe2 pe2-img" style="background-image:url(${p.img})"></span>`:`<span class="pe2">${p.e||'🍽️'}</span>`}<span class="pn2">${p.n}</span>${p.opts?'<span class="popt2">opciones</span>':''}<span class="pp2">${COP(p.pr)}</span><span class="padd2">+</span></div>`).join('');
+      ${p.img?`<span class="pe2 pe2-img" style="background-image:url(${p.img})"></span>`:`<span class="pe2">${p.e||'🍽️'}</span>`}<span class="pn2">${p.n}</span>${(p.opts&&p.opts.length)?'<span class="popt2">opciones</span>':''}<span class="pp2">${COP(p.pr)}</span><span class="padd2">+</span></div>`).join('');
   } else {
     cont.className='prod-grid';
-    cont.innerHTML=list.map(p=>`<div class="prod" onclick="pick('${target}','${p.id}')">${p.opts?'<span class="popt">opciones</span>':''}
+    cont.innerHTML=list.map(p=>`<div class="prod" onclick="pick('${target}','${p.id}')">${(p.opts&&p.opts.length)?'<span class="popt">opciones</span>':''}
       ${p.img?`<div class="pe pe-img" style="background-image:url(${p.img})"></div>`:`<div class="pe">${p.e||'🍽️'}</div>`}<div class="pn">${p.n}</div><div class="pp">${COP(p.pr)}</div><div class="padd">+</div></div>`).join('');
   }
 }
