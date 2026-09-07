@@ -1171,18 +1171,14 @@ const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
 function _puedeCobrar(){ const r=window.ROL||'admin'; return r==='admin'||r==='cajero'; }
 function _puedeCocina(){ const r=window.ROL||'admin'; return r==='cocina'||r==='admin'; }  // solo cocina o admin marca listo/entregado
-function _canSee(k){
-  const fenRoot = !!window._esSuper && !window._tenant;      // Fenlora en la raíz (sin negocio en la URL)
-  if(fenRoot) return !!(S[k] && S[k].g==='Fenlora');         // consola Fenlora: SOLO su grupo (Negocios). Nada de la operación de un negocio.
-  if(k==='negocios') return false;                           // dentro de un negocio: nunca aparece
-  const rol=window.ROL||'admin'; if(rol==='admin')return true;
+function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
   const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
   const esComanda = /^(mesa_|delivery|llevar|barra_|pickup|dom_)/.test(k) || (typeof DYN!=='undefined'&&DYN&&DYN[k]);
   if(esComanda) return base.includes('mesas');
   return base.includes(k); }
-function _homeTab(){ if(!!window._esSuper && !window._tenant) return 'negocios'; const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='cajero'?'caja':'panel'; }
+function _homeTab(){ const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='cajero'?'caja':'panel'; }
 function renderNav(){
   nav.innerHTML='';
   GROUPS.forEach(g=>{
@@ -5286,10 +5282,7 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME);
-  const _fr=!!window._esSuper && !window._tenant;
-  if(_fr){ if(typeof _actualizarBizSel==='function')_actualizarBizSel(); return; }   // Consola Fenlora: no cargar datos de ningún negocio
-  if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullInsumos==='function') pullInsumos(); if(typeof pullRecetas==='function') pullRecetas(); try{ _pedirPermisoAvisos(); }catch(e){} }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullInsumos==='function') pullInsumos(); if(typeof pullRecetas==='function') pullRecetas(); try{ _pedirPermisoAvisos(); }catch(e){} }
 
 /* ═══════════ INVENTARIO DE INSUMOS + RECETAS ═══════════ */
 let INSUMOS=[];      // [{id,nombre,unidad,categoria,costo_prom,activo}]
@@ -5903,10 +5896,6 @@ window._tenantFiscal=null;
 /* Actualiza el selector de negocio/sede del header con datos reales (nace fijo en "Dulce Café · Sede Centro" en el HTML base). Si hay más de una sede, lo vuelve un selector real. */
 function _actualizarBizSel(){
   const el=document.querySelector('.biz-sel'); if(!el) return;
-  if(!!window._esSuper && !window._tenant){   // Raíz de Fenlora: no es un negocio, es la consola del superadmin
-    el.innerHTML='<span class="bl" style="background:linear-gradient(135deg,#22d3aa,#12a37f)">🔥</span><div>Fenlora<div class="cv">Superadmin</div></div>';
-    el.style.cursor='default'; el.onclick=null; return;
-  }
   const nombreNeg=_marcaNegocio();
   const nombreSede=(window._sedeActual&&window._sedeActual.nombre)||'';
   const multi=(window._sedesTodas||[]).length>1;
