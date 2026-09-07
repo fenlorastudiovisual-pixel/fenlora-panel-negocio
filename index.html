@@ -5291,7 +5291,8 @@ async function _fetchCierres(from,to){
   return CIERRES.filter(c=>c.cerradaEn>=from&&c.cerradaEn<=to).sort((a,b)=>a.cerradaEn-b.cerradaEn);
 }
 if(typeof window!=='undefined'){ window.addEventListener('online',()=>{ if(typeof flushVentas==='function')flushVentas(); }); }
-function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullInsumos==='function') pullInsumos(); if(typeof pullRecetas==='function') pullRecetas(); try{ _pedirPermisoAvisos(); }catch(e){} }
+function bootPanel(){ window.HOME=_homeTab(); HOME=window.HOME; renderNav(); openTabs=[HOME]; buildPanel(HOME); switchTab(HOME); if(!window._tenant){ try{_actualizarBizSel();}catch(e){} }   // en la raíz, el header dice "Fenlora"
+  if((window.ROL||'admin')==='admin'&&typeof restoreWorkspace==='function') restoreWorkspace(); if(typeof pullCatalog==='function') pullCatalog(); if(typeof pullComandas==='function') pullComandas(); if(typeof subscribeComandas==='function') subscribeComandas(); if(typeof flushVentas==='function') flushVentas(); if(typeof pullEmpleados==='function') pullEmpleados(); if(typeof pullCaja==='function') pullCaja(); if(typeof subscribeCaja==='function') subscribeCaja(); if(typeof pullInsumos==='function') pullInsumos(); if(typeof pullRecetas==='function') pullRecetas(); try{ _pedirPermisoAvisos(); }catch(e){} }
 
 /* ═══════════ INVENTARIO DE INSUMOS + RECETAS ═══════════ */
 let INSUMOS=[];      // [{id,nombre,unidad,categoria,costo_prom,activo}]
@@ -5905,6 +5906,10 @@ window._tenantFiscal=null;
 /* Actualiza el selector de negocio/sede del header con datos reales (nace fijo en "Dulce Café · Sede Centro" en el HTML base). Si hay más de una sede, lo vuelve un selector real. */
 function _actualizarBizSel(){
   const el=document.querySelector('.biz-sel'); if(!el) return;
+  if(!window._tenant){   // raíz = panel maestro de Fenlora (no es un negocio en la URL). No debe decir "Dulce Café".
+    el.innerHTML='<span class="bl" style="background:linear-gradient(135deg,#22d3aa,#12a37f)">🔥</span><div>Fenlora<div class="cv">'+(window._esSuper?'Superadmin':'Panel maestro')+'</div></div>';
+    el.style.cursor='default'; el.onclick=null; return;
+  }
   const nombreNeg=_marcaNegocio();
   const nombreSede=(window._sedeActual&&window._sedeActual.nombre)||'';
   const multi=(window._sedesTodas||[]).length>1;
