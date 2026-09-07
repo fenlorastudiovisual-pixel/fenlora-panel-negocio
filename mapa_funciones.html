@@ -1,0 +1,912 @@
+<title>Mapa de Funciones · FENLORA CLOUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef2ef; --surface:#ffffff; --surface-2:#f6f9f7; --border:#dde5e0;
+    --text:#16211c; --muted:#566a61; --faint:#7d8f87;
+    --accent:#0a9d6e; --accent-2:#067a55;
+    --ok:#0a9d6e; --ok-bg:rgba(10,157,110,.10);
+    --star:#b9791a; --star-bg:rgba(185,121,26,.12);
+    --soon:#6f8189; --soon-bg:rgba(111,129,137,.12);
+    --shadow:0 1px 2px rgba(20,40,30,.05),0 8px 24px rgba(20,40,30,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0e1512; --surface:#151d19; --surface-2:#1a231e; --border:#27342d;
+    --text:#e9f1ec; --muted:#95a99e; --faint:#6f857b;
+    --accent:#25e0a2; --accent-2:#25e0a2;
+    --ok:#25e0a2; --ok-bg:rgba(37,224,162,.12);
+    --star:#f3b64a; --star-bg:rgba(243,182,74,.13);
+    --soon:#83968e; --soon-bg:rgba(131,150,142,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0e1512; --surface:#151d19; --surface-2:#1a231e; --border:#27342d;
+    --text:#e9f1ec; --muted:#95a99e; --faint:#6f857b;
+    --accent:#25e0a2; --accent-2:#25e0a2;
+    --ok:#25e0a2; --ok-bg:rgba(37,224,162,.12);
+    --star:#f3b64a; --star-bg:rgba(243,182,74,.13);
+    --soon:#83968e; --soon-bg:rgba(131,150,142,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{font-family:"Outfit",sans-serif;text-wrap:balance;line-height:1.15;margin:0}
+  a{color:var(--accent-2)}
+  code,.mono{font-family:"IBM Plex Mono",monospace}
+
+  /* ── header ── */
+  header{padding:54px 0 30px;border-bottom:1px solid var(--border)}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent-2);margin-bottom:14px}
+  h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.02em}
+  .lede{margin:16px 0 0;max-width:64ch;color:var(--muted);font-size:16.5px}
+
+  /* ── legend ── */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .lg{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--border);
+    border-radius:11px;background:var(--surface);font-size:13.5px;box-shadow:var(--shadow)}
+  .lg b{font-weight:600}
+  .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .dot.ok{background:var(--ok)} .dot.star{background:var(--star)} .dot.soon{background:var(--soon)}
+
+  /* ── sticky nav ── */
+  nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(9px);border-bottom:1px solid var(--border);margin-top:30px}
+  .toc-in{display:flex;gap:5px;overflow-x:auto;padding:11px 0;scrollbar-width:thin}
+  .toc-in a{white-space:nowrap;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;
+    padding:7px 13px;border-radius:9px;border:1px solid transparent}
+  .toc-in a:hover{color:var(--text);background:var(--surface-2)}
+  .toc-in a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* ── group ── */
+  .group{padding-top:46px}
+  .group-h{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  .group-h h2{font-size:13px;font-family:"IBM Plex Mono",monospace;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent-2)}
+  .group-h .rule{flex:1;height:1px;background:var(--border)}
+
+  /* ── module card ── */
+  .mod{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:22px 22px 8px;margin-top:16px;box-shadow:var(--shadow)}
+  .mod-head{display:flex;align-items:flex-start;gap:13px;flex-wrap:wrap}
+  .mod-ico{width:40px;height:40px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+  .mod-title{flex:1;min-width:200px}
+  .mod-title h3{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .mod-title p{margin:3px 0 0;color:var(--muted);font-size:14px;max-width:70ch}
+  .pill{font-size:11.5px;font-family:"IBM Plex Mono",monospace;font-weight:600;letter-spacing:.03em;
+    padding:5px 10px;border-radius:20px;white-space:nowrap;align-self:center}
+  .pill.on{color:var(--ok);background:var(--ok-bg)}
+  .pill.build{color:var(--star);background:var(--star-bg)}
+  .pill.soon{color:var(--soon);background:var(--soon-bg)}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:18px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr;gap:14px}}
+  .col h4{font-size:12.5px;font-family:"IBM Plex Mono",monospace;font-weight:600;letter-spacing:.05em;
+    text-transform:uppercase;margin:0 0 9px;display:flex;align-items:center;gap:7px}
+  .col.c-ok h4{color:var(--ok)} .col.c-star h4{color:var(--star)} .col.c-soon h4{color:var(--soon)}
+  ul{list-style:none;margin:0;padding:0}
+  li{position:relative;padding:0 0 0 17px;margin:0 0 7px;font-size:13.7px;line-height:1.5;color:var(--text)}
+  li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--border)}
+  .c-ok li::before{background:var(--ok)} .c-star li::before{background:var(--star)} .c-soon li::before{background:var(--soon)}
+  li .ref{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);border:1px solid var(--border);
+    border-radius:5px;padding:1px 5px;margin-left:5px;white-space:nowrap;vertical-align:1px}
+
+  /* callouts */
+  .note{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:12px;padding:16px 18px;margin-top:20px;font-size:14px;color:var(--muted)}
+  .note b{color:var(--text)}
+  .big-note{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-top:18px;box-shadow:var(--shadow)}
+  .big-note h3{font-size:18px;margin-bottom:10px}
+  .big-note ul li{font-size:14.5px;margin-bottom:9px}
+  footer{margin:60px 0 40px;padding-top:22px;border-top:1px solid var(--border);color:var(--faint);font-size:13px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">FENLORA CLOUD · Documento de trabajo</div>
+    <h1>Mapa completo de funciones del POS</h1>
+    <p class="lede">Todo lo que tiene y debería tener cada apartado, para decidir qué construir y en qué orden. Incluye las ideas útiles del POS de referencia (plan restaurantes, Perú) que revisamos.</p>
+    <div class="legend">
+      <div class="lg"><span class="dot ok"></span><b>Ya está</b> — funcionando hoy en el sistema</div>
+      <div class="lg"><span class="dot star"></span><b>Recomendado</b> — alto valor, siguiente prioridad</div>
+      <div class="lg"><span class="dot soon"></span><b>Avanzado</b> — para fases futuras</div>
+    </div>
+  </header>
+</div>
+
+<nav class="toc"><div class="wrap"><div class="toc-in">
+  <a href="#operacion">Operación</a>
+  <a href="#catalogo">Catálogo</a>
+  <a href="#inventario">Inventario</a>
+  <a href="#clientes">Clientes</a>
+  <a href="#automat">Automatización</a>
+  <a href="#facturacion">Facturación</a>
+  <a href="#equipo">Equipo</a>
+  <a href="#analisis">Análisis</a>
+  <a href="#config">Configuración</a>
+  <a href="#nuevos">Módulos nuevos</a>
+  <a href="#ref">Ideas del POS ref</a>
+</div></div></nav>
+
+<div class="wrap">
+
+  <!-- ══════════ OPERACIÓN ══════════ -->
+  <section class="group" id="operacion">
+    <div class="group-h"><h2>Operación</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📊</div>
+        <div class="mod-title"><h3>Panel (Inicio)</h3><p>La pantalla de resumen al abrir: cómo va el día de un vistazo.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Ventas del día y número de facturas</li>
+          <li>Productos vendidos hoy</li>
+          <li>Avisos: mesas que piden la cuenta y pedidos listos</li>
+          <li>Accesos rápidos a lo más usado</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Comparativo contra ayer / semana pasada</li>
+          <li>Ventas por hora (curva del día) y hora pico</li>
+          <li>Estado de caja: abierta / cerrada y efectivo esperado</li>
+          <li>Mesas ocupadas vs libres en vivo</li>
+          <li>Alerta de insumos bajo mínimo</li>
+          <li>Ticket promedio y propinas del día</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Metas de venta con barra de progreso</li>
+          <li>Resumen consolidado por sede</li>
+          <li>Panel configurable (elegir/ordenar widgets)</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🍽️</div>
+        <div class="mod-title"><h3>Comandas / Mesas</h3><p>El corazón del salón: tomar y gestionar los pedidos por mesa.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Mapa de mesas por piso / ambiente</li>
+          <li>Tomar pedido con variantes y adicionales</li>
+          <li>Enviar a producción (cocina / barra)</li>
+          <li>Precuenta → facturar → confirmar pago</li>
+          <li>Anular producto o comanda completa</li>
+          <li>Estados de mesa y tiempo real entre dispositivos</li>
+          <li>PIN personal por mesero en pantalla compartida</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Unir y dividir mesas <span class="ref">POS ref</span></li>
+          <li>Trasladar platos a otra mesa <span class="ref">POS ref</span></li>
+          <li>Cambiar de mesero a una mesa <span class="ref">POS ref</span></li>
+          <li>Precuenta por posición / silla (dividir por comensal) <span class="ref">POS ref</span></li>
+          <li>Número de comensales y nota por mesa</li>
+          <li>Cronómetro de mesa (tiempo sentados / demora)</li>
+          <li>Venta al peso (por gramo / kg) <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Dividir la cuenta por ítems (arrastrar)</li>
+          <li>Plano visual del salón arrastrable</li>
+          <li>Reservas de mesa integradas</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">👨‍🍳</div>
+        <div class="mod-title"><h3>Cocina (Pantalla KDS)</h3><p>La pantalla en cocina/barra que muestra las comandas para preparar.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Comandas en pantalla por área (cocina/barra/horno)</li>
+          <li>Marcar listo y entregado</li>
+          <li>Aviso de pedido nuevo</li>
+          <li>Ruteo de cada plato a su área</li>
+          <li>Impresión manual por clic (interruptor por negocio)</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Cronómetro por comanda con colores (verde/amarillo/rojo)</li>
+          <li>Sonido de nuevo pedido</li>
+          <li>Marcar listo por ítem, no solo la comanda completa</li>
+          <li>Tiempo promedio de preparación</li>
+          <li>Pantalla separada por estación</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Pantalla de "listos para recoger" para el cliente</li>
+          <li>Métricas de tiempos de cocina por producto/hora</li>
+          <li>Reglas de priorización de comandas</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">💵</div>
+        <div class="mod-title"><h3>Caja</h3><p>El control del dinero del turno: apertura, cobros, gastos y cuadre.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Apertura y cierre de turno con base</li>
+          <li>Cuadre automático: esperado vs. real</li>
+          <li>Caja chica y gastos menores</li>
+          <li>Cobro: efectivo, tarjeta, Nequi, QR</li>
+          <li>Arqueo por cajero e historial de movimientos</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Bloqueo de montos totales por cajero (antirrobo) <span class="ref">POS ref</span></li>
+          <li>Ingresos / egresos con motivo y comprobante</li>
+          <li>Retiros parciales de efectivo (sangrías) registrados</li>
+          <li>Conteo de billetes asistido (ya tienes las imágenes)</li>
+          <li>Propinas separadas por medio de pago</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Cierre ciego (el cajero no ve el esperado)</li>
+          <li>Reporte X y Z de caja</li>
+          <li>Gaveta de dinero e integración con datáfono</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🛵</div>
+        <div class="mod-title"><h3>Pedidos Online / Delivery</h3><p>Todos los pedidos que no son de salón: domicilio propio y apps.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Domicilio propio con dirección y teléfono</li>
+          <li>Registro manual de Rappi / PedidosYa / iFood</li>
+          <li>Pago anticipado antes de crear el pedido</li>
+          <li>Estados: pendiente → en camino → entregado</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>QR con Google Maps para el domiciliario <span class="ref">POS ref</span></li>
+          <li>Tiempo en camino / despacho <span class="ref">POS ref</span></li>
+          <li>Aviso al cliente por WhatsApp (en camino / entregado) <span class="ref">POS ref</span></li>
+          <li>Asignar repartidor y tarifa de domicilio por zona</li>
+          <li>Cobro contra entrega y tiempo estimado</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Integración por API con Rappi/PedidosYa (pedidos entran solos)</li>
+          <li>Seguimiento del repartidor en mapa en vivo</li>
+          <li>Zonas de cobertura y gestión de flota</li>
+        </ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ CATÁLOGO ══════════ -->
+  <section class="group" id="catalogo">
+    <div class="group-h"><h2>Catálogo</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🍔</div>
+        <div class="mod-title"><h3>Productos</h3><p>El catálogo del negocio: qué vendes y cómo se configura cada plato.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Producto con foto, precio, categoría y área</li>
+          <li>Variantes (tamaños, presentaciones)</li>
+          <li>Adicionales y toppings con precio</li>
+          <li>Combos con selector de opciones</li>
+          <li>Precio por sede</li>
+          <li>Importar productos desde Excel</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Receta enlazada → costo y margen visibles</li>
+          <li>Disponible / agotado (86) en un clic</li>
+          <li>Venta al peso (precio por gramo/kg) <span class="ref">POS ref</span></li>
+          <li>Impuesto por producto</li>
+          <li>Código de barras / PLU y duplicar producto</li>
+          <li>Modificadores obligatorios vs. opcionales</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Precios por canal (salón / delivery / QR)</li>
+          <li>Horarios de disponibilidad (desayuno solo AM)</li>
+          <li>Promos programadas (happy hour) y etiquetas</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📱</div>
+        <div class="mod-title"><h3>Carta / Menú QR</h3><p>La carta digital que ve el cliente al escanear el QR en la mesa.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Editor visual de la carta</li>
+          <li>Fotos grandes por plato</li>
+          <li>Recomendados y "más pedido"</li>
+          <li>Promos y combos del día</li>
+          <li>Juegos de espera y captura Club VIP por WhatsApp</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Disponibilidad en vivo (agotados no se muestran)</li>
+          <li>Pedido desde la mesa por QR directo a cocina</li>
+          <li>Subir carta en PDF con acceso por QR <span class="ref">POS ref</span></li>
+          <li>Propina y pago desde el QR</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Autopedido en tótem NFC (tipo McDonald's) <span class="ref">POS ref</span></li>
+          <li>Varios idiomas y temas de diseño</li>
+          <li>Upselling automático ("¿quieres agregar…?")</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🗂️</div>
+        <div class="mod-title"><h3>Categorías y Áreas</h3><p>Organiza el menú y define a qué estación va cada comanda.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Categorías ordenables</li>
+          <li>Áreas de producción (cocina/barra/horno)</li>
+          <li>Enrutamiento de comandas por área</li>
+          <li>Orden de aparición en la carta</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Color e ícono por categoría</li>
+          <li>Asignar una impresora física a cada área</li>
+          <li>Subcategorías</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Categoría por horario (desayuno/almuerzo/cena)</li>
+          <li>Reglas de ruteo avanzadas (bebidas frías→barra 1)</li>
+        </ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ INVENTARIO ══════════ -->
+  <section class="group" id="inventario">
+    <div class="group-h"><h2>Inventario</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📦</div>
+        <div class="mod-title"><h3>Inventario de Insumos</h3><p>La materia prima (panela, café, queso, agua…) con existencias, costo y kardex.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Insumos con existencia por sede</li>
+          <li>Costo de compra promedio ponderado</li>
+          <li>Entradas, salidas, ajustes, mermas y consumo</li>
+          <li>Kardex por insumo</li>
+          <li>Alertas de mínimo</li>
+          <li>Descuento automático al facturar (por receta)</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Unidad de compra vs. de uso + conversión (compras libra, usas gramo)</li>
+          <li>Valor total del inventario (existencia × costo)</li>
+          <li>Lista de reposición (qué y cuánto pedir)</li>
+          <li>Reporte de mermas por motivo <span class="ref">POS ref</span></li>
+          <li>Consumo por periodo y stock máximo</li>
+          <li>Traslados entre sedes <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Costo teórico vs. real / cuadre inopinado <span class="ref">POS ref</span></li>
+          <li>Vencimientos y lotes (perecederos)</li>
+          <li>Proveedor, SKU, código de barras y foto</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📖</div>
+        <div class="mod-title"><h3>Recetas (Escandallos)</h3><p>Qué insumos y cuánto lleva cada plato, para costear y descontar al vender.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Insumos y cantidades por plato</li>
+          <li>Costo de materia prima del plato</li>
+          <li>Margen y food cost %</li>
+          <li>Descuento de insumos al vender</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Botón de agregar insumos siempre visible (guía si no hay)</li>
+          <li>Precio sugerido según food cost objetivo</li>
+          <li>Rendimiento / porciones por preparación</li>
+          <li>Tablero de rentabilidad de todos los platos</li>
+          <li>Alertas: plato sin receta o margen negativo</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Sub-recetas (una salsa que es insumo de varios platos)</li>
+          <li>Merma por cocción y costo por variante/adicional</li>
+          <li>Impacto de precios (sube la panela → platos afectados)</li>
+          <li>Menu engineering (estrellas / vacas / perros)</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🚚</div>
+        <div class="mod-title"><h3>Compras y Proveedores</h3><p>De dónde viene la materia prima y a qué precio: el otro lado del inventario.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Directorio de proveedores (contacto y qué surten)</li>
+          <li>Registro de compras que hace entrada al inventario y actualiza el costo</li>
+          <li>Órdenes de compra (generar y enviar por WhatsApp) <span class="ref">POS ref</span></li>
+          <li>Comparador de precios entre proveedores <span class="ref">POS ref</span></li>
+          <li>Cuentas por pagar</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Sugerencia de compra automática según mínimos</li>
+          <li>Recepción parcial e historial de precios</li>
+          <li>Consolidado de compras multi-sede <span class="ref">POS ref</span></li>
+          <li>Órdenes de servicio <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ CLIENTES ══════════ -->
+  <section class="group" id="clientes">
+    <div class="group-h"><h2>Clientes</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">⭐</div>
+        <div class="mod-title"><h3>Clientes y Fidelización</h3><p>Tu base de clientes: quiénes son, qué consumen y cómo hacerlos volver.</p></div>
+        <span class="pill build">En construcción</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Captura de Club VIP por WhatsApp desde la carta</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Ficha de cliente (WhatsApp, historial, consumo, última visita)</li>
+          <li>Buscar cliente al facturar</li>
+          <li>Puntos / sellos de fidelización</li>
+          <li>Cumpleaños y segmentación (frecuentes / inactivos)</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Niveles de membresía y monedero (saldo a favor)</li>
+          <li>Cupones personales</li>
+          <li>Datos del cliente en la factura DIAN</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">💬</div>
+        <div class="mod-title"><h3>Campañas WhatsApp</h3><p>Enviar promociones y reactivar clientes desde la base VIP.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Envío masivo por WhatsApp con plantillas</li>
+          <li>Segmentar a quién enviar</li>
+          <li>Cupones y códigos</li>
+          <li>Reactivar inactivos</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Campañas automáticas por evento (cumpleaños, 30 días sin venir)</li>
+          <li>Métricas de apertura y A/B testing</li>
+          <li>WhatsApp Business API oficial</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ AUTOMATIZACIONES ══════════ -->
+  <section class="group" id="automat">
+    <div class="group-h"><h2>Automatizaciones</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🤖</div>
+        <div class="mod-title"><h3>Bot de WhatsApp</h3><p>Atención automática que recibe pedidos sin tener a alguien pegado al teléfono.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Recibe pedidos por WhatsApp solo</li>
+          <li>Responde preguntas frecuentes y envía la carta</li>
+          <li>Toma la orden, confirma y pasa a cocina</li>
+          <li>Manda el link de pago · horario del bot</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Menú interactivo con botones</li>
+          <li>Pago dentro del chat</li>
+          <li>Escalar a un humano</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">✨</div>
+        <div class="mod-title"><h3>Agente IA de Ventas</h3><p>Un agente que cierra ventas por chat con el tono de la marca.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Cierra ventas por WhatsApp <span class="ref">POS ref</span></li>
+          <li>Sugiere combos y adicionales</li>
+          <li>Recupera pedidos abandonados</li>
+          <li>Manda link de pago y factura · tono por marca</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Aprende del histórico de ventas</li>
+          <li>Upselling inteligente</li>
+          <li>Escala a humano si hace falta</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">⚙️</div>
+        <div class="mod-title"><h3>Reglas y Remarketing</h3><p>Automatizaciones que se disparan solas: "si pasa X, haz Y".</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Cliente inactivo 30 días → cupón automático</li>
+          <li>Mesa demorada sin cobrar → aviso</li>
+          <li>Stock bajo → aviso por WhatsApp</li>
+          <li>Felicitación de cumpleaños automática</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Constructor visual de flujos</li>
+          <li>Disparadores por cualquier evento del POS</li>
+          <li>Recordatorio de reservas</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ FACTURACIÓN ══════════ -->
+  <section class="group" id="facturacion">
+    <div class="group-h"><h2>Facturación</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🧾</div>
+        <div class="mod-title"><h3>Comprobantes DIAN</h3><p>Facturación electrónica válida ante la DIAN, con trazabilidad.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Factura electrónica DIAN y notas de venta</li>
+          <li>Numeración y resoluciones</li>
+          <li>Anulaciones y notas de crédito</li>
+          <li>Comprobante por WhatsApp <span class="ref">POS ref</span></li>
+          <li>Datos fiscales del cliente</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Documento soporte y contingencia</li>
+          <li>Nómina electrónica</li>
+          <li>Acceso para el contador <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Base de datos fiscales del negocio ya montada</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ EQUIPO ══════════ -->
+  <section class="group" id="equipo">
+    <div class="group-h"><h2>Equipo</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">👥</div>
+        <div class="mod-title"><h3>Empleados y Meseros</h3><p>Tu equipo: cada uno entra con su PIN aunque compartan pantalla.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Empleados por rol (mesero, cajero, cocina)</li>
+          <li>PIN personal por mesero</li>
+          <li>Identificación en pantalla compartida</li>
+          <li>Datos de contacto</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Activar / desactivar acceso</li>
+          <li>Foto del empleado</li>
+          <li>Ventas y propinas por mesero</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Turnos y horarios</li>
+          <li>Comisiones por venta</li>
+          <li>Ranking de meseros</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🔐</div>
+        <div class="mod-title"><h3>Roles y Permisos</h3><p>Qué puede ver y hacer cada rol; base del control antirrobo.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Roles configurables y permisos por módulo</li>
+          <li>Quién puede anular o dar cortesías</li>
+          <li>Bloqueo de precios desde el celular <span class="ref">POS ref</span></li>
+          <li>Bloqueo de montos por cajero <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Aprobaciones (anular requiere admin)</li>
+          <li>Permisos granulares por acción</li>
+          <li>Perfiles predefinidos</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Roles base (admin/cajero/mesero/cocina) ya funcionan</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🕐</div>
+        <div class="mod-title"><h3>Asistencias y Nómina</h3><p>Control de asistencia del personal y apoyo para la nómina.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Marcación de entrada / salida</li>
+          <li>Reporte de asistencias</li>
+          <li>Horas trabajadas</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Cálculo de nómina y novedades</li>
+          <li>Reparto de propinas</li>
+          <li>Nómina electrónica</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Aún no construido</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ ANÁLISIS ══════════ -->
+  <section class="group" id="analisis">
+    <div class="group-h"><h2>Análisis</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📈</div>
+        <div class="mod-title"><h3>Reportes</h3><p>Todos los números del negocio para tomar decisiones.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Ventas por día / mes</li>
+          <li>Productos más vendidos</li>
+          <li>Ventas por mesero y por mesa</li>
+          <li>Movimientos de caja</li>
+          <li>Ticket promedio y horas pico</li>
+          <li>Exportar a Excel</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Ventas por categoría, área y medio de pago</li>
+          <li>Ventas por canal (salón / delivery / QR)</li>
+          <li>Anulaciones y cortesías</li>
+          <li>Margen / utilidad por producto (con recetas)</li>
+          <li>Reporte de propinas y de mermas</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Dashboards por sede y comparativos</li>
+          <li>Reportes programados por correo / WhatsApp</li>
+          <li>Análisis de menú y predicción de demanda</li>
+        </ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ CONFIGURACIÓN ══════════ -->
+  <section class="group" id="config">
+    <div class="group-h"><h2>Configuración</h2><div class="rule"></div></div>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🏬</div>
+        <div class="mod-title"><h3>Local y Sucursales</h3><p>Datos del negocio y manejo de varias sedes.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Datos del negocio</li>
+          <li>Varias sedes / sucursales</li>
+          <li>Selector de sede activa por dispositivo</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Precios por sede <span class="ref">POS ref</span></li>
+          <li>Horarios de atención por sede</li>
+          <li>Logo y datos fiscales por sede</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Traslados de inventario entre sedes</li>
+          <li>Comparativa entre sedes</li>
+          <li>Permisos por sede</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🪑</div>
+        <div class="mod-title"><h3>Mesas, QR y NFC</h3><p>Pisos, zonas y mesas, cada una con su QR y enlace NFC.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Pisos y ambientes</li>
+          <li>Mesas con capacidad y generación en masa</li>
+          <li>QR por mesa y enlace NFC</li>
+          <li>Descargar / imprimir QR y stickers</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Llamador de mesa ("mesa QR de agua": llamar mozo, pedir cuenta) <span class="ref">POS ref</span></li>
+          <li>Plano visual del salón</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Tótem de autoatención NFC <span class="ref">POS ref</span></li>
+          <li>Beeper / reloj de mozo <span class="ref">POS ref</span></li>
+          <li>Estados de mesa en el plano</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🖨️</div>
+        <div class="mod-title"><h3>Impresoras y Ticketeras</h3><p>Las térmicas de cocina, barra y caja, y el diseño del ticket.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Bridge de impresión térmica 58/80mm</li>
+          <li>Probar conexión y ticket de prueba</li>
+          <li>Pie de página personalizado</li>
+          <li>Impresión manual por clic + interruptor por negocio</li>
+          <li>Auto-arranque del bridge (script entregado)</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Varias impresoras: una por área</li>
+          <li>Personalizar el diseño del ticket (logo, tamaño)</li>
+          <li>Anulaciones impresas en cocina <span class="ref">POS ref</span></li>
+          <li>Reimpresión y corte automático</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Impresión por red / IP (sin PC)</li>
+          <li>Gaveta de dinero</li>
+          <li>QR impreso en el ticket</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">💳</div>
+        <div class="mod-title"><h3>Métodos de Pago</h3><p>Cómo cobra el negocio y las propinas.</p></div>
+        <span class="pill on">Ya está</span></div>
+      <div class="cols">
+        <div class="col c-ok"><h4>● Ya está</h4><ul>
+          <li>Efectivo, tarjeta, Nequi, Daviplata, QR</li>
+          <li>Porcentajes de propina personalizados</li>
+          <li>Pago dividido en varios medios</li>
+        </ul></div>
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Pago QR / tarjeta integrado (cobra en línea) <span class="ref">POS ref</span></li>
+          <li>Recargo o descuento por medio</li>
+          <li>Propina configurable por medio</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Pasarela con link de pago</li>
+          <li>Datáfono integrado</li>
+          <li>Pago en la mesa por QR</li>
+        </ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🔌</div>
+        <div class="mod-title"><h3>Integraciones</h3><p>Conexiones con plataformas externas.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Rappi y PedidosYa (API) <span class="ref">POS ref</span></li>
+          <li>WhatsApp Business</li>
+          <li>Pasarelas de pago</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Contabilidad / ERP</li>
+          <li>Webhooks y marketplace de integraciones</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Registro manual de apps ya disponible en Delivery</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🛡️</div>
+        <div class="mod-title"><h3>Seguridad y Auditoría</h3><p>Antirrobo y trazabilidad de las acciones sensibles.</p></div>
+        <span class="pill soon">Próximamente</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Recomendado</h4><ul>
+          <li>Auditoría de aperturas de caja, anulaciones y cambios de precio <span class="ref">POS ref</span></li>
+          <li>Alertas por correo al dueño <span class="ref">POS ref</span></li>
+          <li>Bloqueo de precios desde el celular <span class="ref">POS ref</span></li>
+          <li>Bloqueo de montos por cajero <span class="ref">POS ref</span></li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Alertas antirrobo en tiempo real</li>
+          <li>Doble autorización</li>
+          <li>Bitácora completa exportable</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Ya está</h4><ul><li>Registro de anulaciones ya existe</li></ul></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══════════ MÓDULOS NUEVOS ══════════ -->
+  <section class="group" id="nuevos">
+    <div class="group-h"><h2>Módulos nuevos sugeridos</h2><div class="rule"></div></div>
+    <p class="lede" style="margin-top:4px">Apartados que hoy no existen en FENLORA pero que el POS de referencia sí tiene y valdría la pena considerar.</p>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📅</div>
+        <div class="mod-title"><h3>Reservas y Turnos</h3><p>Gestor de colas, turnos y reservas con anfitrionas. <span class="ref">POS ref</span></p></div>
+        <span class="pill soon">Idea nueva</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Qué incluiría</h4><ul>
+          <li>Reservar mesa por fecha/hora y # de personas</li>
+          <li>Lista de espera y turnos con aviso por WhatsApp</li>
+          <li>Vista de anfitriona (quién llega, dónde sentar)</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Reservas desde la carta QR / web</li>
+          <li>Depósito / seña por reserva</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Nota</h4><ul><li>Se enlaza con Mesas y con Clientes</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">📟</div>
+        <div class="mod-title"><h3>Hardware de sala</h3><p>Beepers/relojes de mozo, llamadores de mesa y tótems de autoatención. <span class="ref">POS ref</span></p></div>
+        <span class="pill soon">Idea nueva</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Qué incluiría</h4><ul>
+          <li>Reloj de mozo: llamar al mesero, pedir la cuenta</li>
+          <li>Llamador en la mesa</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Tótem de autoatención NFC (autopedido)</li>
+          <li>Buzón de "pedido listo" para recoger</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Nota</h4><ul><li>Requiere hardware físico + integración</li></ul></div>
+      </div>
+    </article>
+
+    <article class="mod">
+      <div class="mod-head"><div class="mod-ico">🏭</div>
+        <div class="mod-title"><h3>Producción y Multi-almacén</h3><p>Control de almacenes, producción interna y traslados entre bodegas. <span class="ref">POS ref</span></p></div>
+        <span class="pill soon">Idea nueva</span></div>
+      <div class="cols">
+        <div class="col c-star"><h4>● Qué incluiría</h4><ul>
+          <li>Varios almacenes por sede (bodega, barra, cocina)</li>
+          <li>Traslados entre almacenes</li>
+          <li>Producción interna (preparar lotes que van a inventario)</li>
+        </ul></div>
+        <div class="col c-soon"><h4>● Avanzado</h4><ul>
+          <li>Órdenes de producción con costeo</li>
+          <li>Consolidado entre locales</li>
+        </ul></div>
+        <div class="col c-ok" style="opacity:.55"><h4>● Nota</h4><ul><li>Extensión natural de Inventario y Recetas</li></ul></div>
+      </div>
+    </article>
+
+    <div class="note"><b>Transversal — con o sin internet.</b> El POS de referencia insiste en que caja, comandas, impresión e inventario funcionen aunque se caiga el internet, sincronizando al reconectar. Tu POS ya lo hace en ventas y caja; conviene extenderlo también al inventario de insumos (hoy el descuento al vender necesita conexión).</div>
+  </section>
+
+  <!-- ══════════ IDEAS DEL POS REF ══════════ -->
+  <section class="group" id="ref">
+    <div class="group-h"><h2>Ideas destacadas del POS de referencia</h2><div class="rule"></div></div>
+    <div class="big-note">
+      <h3>Lo que más vale la pena tomar de ese POS</h3>
+      <ul>
+        <li><b>Operación de mesas:</b> unir/dividir mesas, trasladar platos, cambiar de mesero y precuenta por posición de silla. Es lo que más piden los meseros en la práctica.</li>
+        <li><b>Seguridad antirrobo:</b> bloqueo de montos por cajero, bloqueo de precios desde el celular y auditoría de aperturas/anulaciones con aviso al dueño.</li>
+        <li><b>Inventario avanzado:</b> reporte de mermas, cortesías y consumo del personal, y "cuadre inopinado" (conteo sorpresa) comparando teórico vs. real.</li>
+        <li><b>Delivery:</b> QR con Google Maps para el domiciliario, tiempo en camino y aviso al cliente por WhatsApp.</li>
+        <li><b>Compras:</b> órdenes de compra, comparador de precios y consolidado — el complemento natural del inventario.</li>
+        <li><b>Venta al peso</b> y <b>combos con selector</b> (tipo comida rápida) para el catálogo.</li>
+        <li><b>WhatsApp:</b> comprobante y avisos automáticos por WhatsApp, y el agente IA que cierra ventas por chat.</li>
+        <li><b>Autoatención:</b> tótems NFC y carta en PDF por QR para negocios más grandes.</li>
+      </ul>
+    </div>
+    <div class="note">Los precios de ese POS van por planes (Standard/Básico/Pro/Plus) desbloqueando funciones — un modelo que también te sirve a ti para tus planes de Fenlora: arrancar básico e ir abriendo módulos por plan.</div>
+  </section>
+
+  <footer>
+    FENLORA CLOUD · Mapa de funciones — documento de trabajo para priorizar el desarrollo.
+    Marcadores: <span style="color:var(--ok)">●</span> ya está · <span style="color:var(--star)">●</span> recomendado · <span style="color:var(--soon)">●</span> avanzado ·
+    <span class="mono">POS ref</span> = visto en el POS de referencia.
+  </footer>
+</div>

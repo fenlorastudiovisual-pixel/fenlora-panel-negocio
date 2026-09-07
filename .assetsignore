@@ -12,6 +12,8 @@ _redirects
 wrangler.toml
 assetsignore
 .assetsignore
+mapa_funciones.html
+INFORME_AUDITORIA.md
 .gitignore
 package.json
 package-lock.json

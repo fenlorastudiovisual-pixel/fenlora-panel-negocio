@@ -4650,10 +4650,67 @@ async function crearNegocioAdmin(){
 async function _negUpdate(id,patch){ try{ const {error}=await sb.from('negocios').update(patch).eq('id',id); if(error)throw error; await pullNegocios(); }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,60)); } }
 let _negEditId=null;
 function _nmRuta(){ const el=document.getElementById('nmRutaPrev'); if(!el)return; const sub=document.getElementById('nmSub'); const base=_slugify((document.getElementById('nmNombre')||{}).value||''); const actual=_slugify((sub||{}).value||'')||base; el.innerHTML = actual?('🌐 URL del dueño: <b>'+_negBaseHost()+'/'+actual+'</b>'):''; }
+/* ═══════════ FENLORA · PLANES Y COBRO (configurador de suscripción) ═══════════ */
+/* Precios en COP. Cambia estos números cuando quieras: el configurador y el total se recalculan solos. */
+const FEN_CEREBROS = {
+  economico: { n:'Económico (Gemini/GPT-mini)', nota:'ideal alto volumen' },
+  premium:   { n:'Premium (Claude)',            nota:'máxima calidad' }
+};
+const FEN_PLAN_BOT = {
+  ninguno: { n:'Sin bot',                      precio:0,      lim:0 },
+  pequeno: { n:'Pequeño — 150 pedidos/mes',    precio:60000,  lim:150 },
+  mediano: { n:'Mediano — 500 pedidos/mes',    precio:120000, lim:500 },
+  grande:  { n:'Grande — 1.500 pedidos/mes',   precio:300000, lim:1500 }
+};
+const FEN_CANAL = {
+  menu:     { n:'Menú digital nativo (chat web)', precio:0 },
+  whatsapp: { n:'WhatsApp Business API',           precio:40000 }
+};
+const FEN_REMARK = {
+  ninguno: { n:'Sin remarketing',            precio:0,      avisos:0 },
+  pequeno: { n:'Pequeño — 200 avisos/mes',   precio:40000,  avisos:200 },
+  mediano: { n:'Mediano — 500 avisos/mes',   precio:80000,  avisos:500 },
+  grande:  { n:'Grande — 1.500 avisos/mes',  precio:180000, avisos:1500 }
+};
+function _fenPrecioTotal(planBot, canal, remark){
+  return (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0);
+}
+/* Recalcula el total en vivo dentro del modal cuando cambian los selects. */
+function _fenCalcModal(){
+  const pb=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
+  const ca=(document.getElementById('nmCanal')||{}).value||'menu';
+  const rm=(document.getElementById('nmRemark')||{}).value||'ninguno';
+  const total=_fenPrecioTotal(pb,ca,rm);
+  const box=document.getElementById('nmPlanTotal');
+  if(box){
+    const lineas=[];
+    if(FEN_PLAN_BOT[pb]?.precio) lineas.push('Bot '+FEN_PLAN_BOT[pb].n.split('—')[0].trim()+': '+COP(FEN_PLAN_BOT[pb].precio));
+    if(FEN_CANAL[ca]?.precio) lineas.push('WhatsApp API: '+COP(FEN_CANAL[ca].precio));
+    if(FEN_REMARK[rm]?.precio) lineas.push('Remarketing '+FEN_REMARK[rm].n.split('—')[0].trim()+': '+COP(FEN_REMARK[rm].precio));
+    box.innerHTML = (lineas.length?('<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">'+lineas.join(' · ')+'</div>'):'')
+      + '<div style="font-size:16px;font-weight:800">Total al cliente: <span style="color:var(--primary)">'+COP(total)+'/mes</span></div>';
+  }
+}
+/* Comparte el cobro del plan al WhatsApp del dueño (abre WhatsApp con el mensaje listo). */
+function compartirPagoWA(id){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g){ toastT('Negocio no encontrado'); return; }
+  const wa=(g.whatsapp||'').replace(/\D/g,''); if(!wa){ toastT('Ese negocio no tiene WhatsApp registrado (Editar).'); return; }
+  const total=g.precio_total||_fenPrecioTotal(g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno');
+  const num = wa.length===10 ? ('57'+wa) : wa;   // Colombia
+  const venceTxt = g.vence ? ('\nFecha límite: '+g.vence) : '';
+  const msg = 'Hola '+g.nombre+' 👋\nTu plan Fenlora de este mes: '+COP(total)+'.'+venceTxt
+    + '\n\nPuedes pagar por Nequi/transferencia a nombre de Fenlora Visual Studio. Al confirmar, quedas al día. ¡Gracias! 🙌';
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+}
 function openNegModal(id){
   const g = id ? NEGOCIOS_ADMIN.find(x=>x.id===id) : null; _negEditId = id||null;
   const v=(x)=> (g && g[x]!=null) ? String(g[x]).replace(/"/g,'&quot;') : '';
   const planOpts=['prueba','basico','pro'].map(pl=>'<option value="'+pl+'"'+((g&&g.plan===pl)?' selected':'')+'>'+({prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'}[pl])+'</option>').join('');
+  const _sel=(cur,key)=> (cur===key?' selected':'');
+  const cerebroOpts=Object.keys(FEN_CEREBROS).map(k=>'<option value="'+k+'"'+_sel(g&&g.cerebro||'economico',k)+'>'+FEN_CEREBROS[k].n+'</option>').join('');
+  const canalOpts=Object.keys(FEN_CANAL).map(k=>'<option value="'+k+'"'+_sel(g&&g.canal||'menu',k)+'>'+FEN_CANAL[k].n+(FEN_CANAL[k].precio?(' (+'+COP(FEN_CANAL[k].precio)+')'):'')+'</option>').join('');
+  const planBotOpts=Object.keys(FEN_PLAN_BOT).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_bot||'ninguno',k)+'>'+FEN_PLAN_BOT[k].n+(FEN_PLAN_BOT[k].precio?(' — '+COP(FEN_PLAN_BOT[k].precio)):'')+'</option>').join('');
+  const remarkOpts=Object.keys(FEN_REMARK).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_remark||'ninguno',k)+'>'+FEN_REMARK[k].n+(FEN_REMARK[k].precio?(' — '+COP(FEN_REMARK[k].precio)):'')+'</option>').join('');
   const html='<div class="modal" style="max-width:500px"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
     +'<div class="modal-b">'
     +'<div class="nf"><label>Nombre del negocio *</label><input class="pf-in" id="nmNombre" value="'+v('nombre')+'" oninput="_nmRuta()" placeholder="Ej: Dulce Café"></div>'
@@ -4664,12 +4721,19 @@ function openNegModal(id){
     +'<div class="nf-row"><div class="nf"><label>Plan</label><select class="pf-in" id="nmPlan">'+planOpts+'</select></div>'
     +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
     +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
+    +'<div class="nf" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:700">🤖 Plan de automatizaciones</label><div style="font-size:12px;color:var(--txt3);margin-top:2px">Elige el cerebro, el canal y los planes. El total del cliente se calcula solo.</div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Cerebro (IA)</label><select class="pf-in" id="nmCerebro">'+cerebroOpts+'</select></div>'
+    +'<div class="nf"><label>Canal</label><select class="pf-in" id="nmCanal" onchange="_fenCalcModal()">'+canalOpts+'</select></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Plan de pedidos (bot)</label><select class="pf-in" id="nmPlanBot" onchange="_fenCalcModal()">'+planBotOpts+'</select></div>'
+    +'<div class="nf"><label>Remarketing</label><select class="pf-in" id="nmRemark" onchange="_fenCalcModal()">'+remarkOpts+'</select></div></div>'
+    +'<div id="nmPlanTotal" style="margin-top:8px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>'
     +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
     +(g?('<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:600">🔗 Enlace con el Menú Digital</label><div style="font-size:12px;color:var(--txt3);margin:2px 0 8px">Genera una clave y pégala en el negocio del menú digital (campo “API key del POS”). Con eso el menú lee la carta del POS y le manda los pedidos.</div><div id="nmMenuKeyBox" style="font-size:13px;color:var(--txt2)">Cargando…</div></div>'):'')
     +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
   let host=document.getElementById('negModalHost'); if(!host){host=document.createElement('div');host.id='negModalHost';document.body.appendChild(host);}
   host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closeNegModal()">'+html+'</div>';
   _nmRuta();
+  _fenCalcModal();
   if(g) _cargarMenuKey(g.id);
 }
 async function _cargarMenuKey(negId){
@@ -4706,9 +4770,14 @@ async function saveNegModal(){
   const gv=(id)=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
   const nombre=gv('nmNombre'), wa=gv('nmWa'), co=gv('nmCorreo'), doc=gv('nmDoc'), sub=_slugify(gv('nmSub')), plan=document.getElementById('nmPlan').value, vence=gv('nmVence')||null;
   const impProdEl=document.getElementById('nmImpProd'); const impProd = impProdEl ? !!impProdEl.checked : true;
+  const cerebro=(document.getElementById('nmCerebro')||{}).value||'economico';
+  const canal=(document.getElementById('nmCanal')||{}).value||'menu';
+  const plan_bot=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
+  const plan_remark=(document.getElementById('nmRemark')||{}).value||'ninguno';
+  const precio_total=_fenPrecioTotal(plan_bot,canal,plan_remark);
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
   if(_negEditId){
-    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd});
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,precio_total});
     toastT('Cambios guardados ✓'); closeNegModal();
   } else {
     if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
@@ -4732,15 +4801,24 @@ function renderNegList(){
     const susp=g.estado==='suspendido';
     const url=g.subdominio?(host+'/'+g.subdominio):null;
     const urlM=g.subdominio?(host+'/'+g.subdominio+'/meseros'):null;
+    // Add-ons activos + precio total del plan de automatizaciones
+    const addons=[];
+    if(g.plan_bot && g.plan_bot!=='ninguno') addons.push('🤖 Bot '+((FEN_PLAN_BOT[g.plan_bot]?.n||'').split('—')[0].trim()));
+    if(g.canal==='whatsapp') addons.push('📲 WhatsApp API');
+    if(g.plan_remark && g.plan_remark!=='ninguno') addons.push('🔁 Remarketing '+((FEN_REMARK[g.plan_remark]?.n||'').split('—')[0].trim()));
+    const precioT = g.precio_total || _fenPrecioTotal(g.plan_bot||'ninguno', g.canal||'menu', g.plan_remark||'ninguno');
+    const cerebroTxt = g.cerebro ? (' · 🧠 '+((FEN_CEREBROS[g.cerebro]?.n||'').split('(')[0].trim())) : '';
     return `<div class="neg-card ${susp?'susp':''}">
       <div class="neg-main">
         <div class="neg-name">${g.nombre} ${susp?'<span class="neg-badge susp">Suspendido</span>':''} ${_negAlerta(g)}</div>
         <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a> · 🧑‍🍳 <a href="https://'+urlM+'" target="_blank">/meseros</a>'):'<span style="color:var(--txt3)">sin URL asignada</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
+        ${addons.length?('<div class="neg-meta">🧩 '+addons.join(' · ')+cerebroTxt+' · <b style="color:var(--primary)">'+COP(precioT)+'/mes</b></div>'):('<div class="neg-meta" style="color:var(--txt3)">Sin plan de automatizaciones — edítalo para asignar uno</div>')}
       </div>
       <div class="neg-acts">
         <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
         <button class="btn ghost" onclick="entrarNegocio('${g.id}')">➡️ Entrar</button>
-        <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar</button>
+        <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar / Plan</button>
+        ${precioT?('<button class="btn ghost" onclick="compartirPagoWA(\''+g.id+'\')">💰 Cobrar por WhatsApp</button>'):''}
         <button class="btn ghost" onclick="resetPassNegocio('${g.id}')">🔑 Reset contraseña</button>
         <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
         <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
@@ -4763,11 +4841,17 @@ async function resetPassNegocio(id){
 function negociosView(){
   const venc=NEGOCIOS_ADMIN.filter(g=>g.vence&&new Date(g.vence+'T23:59:59')<new Date()).length;
   const pronto=NEGOCIOS_ADMIN.filter(g=>{ if(!g.vence)return false; const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); return d>=0&&d<=7; }).length;
+  const mrr=NEGOCIOS_ADMIN.reduce((s,g)=>s+(g.precio_total||0),0);
+  const conPlan=NEGOCIOS_ADMIN.filter(g=>g.precio_total>0).length;
   return `
   <div class="page-head"><h1>🏢 Negocios <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
-    <div class="sub">Crea y administra los negocios de tus clientes. Cada uno opera en su propia dirección (ruta) con el mismo POS.</div></div>
+    <div class="sub">Directorio de suscriptores. Cada negocio opera en su propia ruta, con su plan de automatizaciones y su cobro.</div></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 4px">
+    <div class="status-pill" style="background:var(--primary-dim);color:var(--primary);font-size:13px;padding:8px 14px">💵 Ingreso recurrente: <b>${COP(mrr)}/mes</b></div>
+    <div class="status-pill" style="background:var(--card);color:var(--txt2);font-size:13px;padding:8px 14px">🏢 ${NEGOCIOS_ADMIN.length} negocios · ${conPlan} con plan activo</div>
+  </div>
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
-  <div style="margin:6px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
+  <div style="margin:10px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
   <div class="section-title" style="margin-top:22px">Todos los negocios</div>
   <div id="negList"></div>`;
 }
