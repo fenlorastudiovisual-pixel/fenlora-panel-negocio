@@ -4801,12 +4801,48 @@ async function saveNegModal(){
 function entrarNegocio(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; if(!g.subdominio){ toastT('Primero asígnale una ruta (Editar)'); return; } window.open('https://'+_negBaseHost()+'/'+g.subdominio,'_blank'); }
 function toggleSuspender(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; const nuevo=(g.estado==='suspendido')?'activo':'suspendido'; if(!confirm((nuevo==='suspendido'?'¿Suspender':'¿Reactivar')+' a '+g.nombre+'?'))return; _negUpdate(id,{estado:nuevo}); }
 async function eliminarNegocioAdmin(id){ const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return; if(!confirm('¿ELIMINAR "'+g.nombre+'" y TODOS sus datos? Esto no se puede deshacer.'))return; try{ const {error}=await sb.from('negocios').delete().eq('id',id); if(error)throw error; toastT('Negocio eliminado'); await pullNegocios(); }catch(e){ toastT('No se pudo eliminar: '+String(e.message||e).slice(0,60)); } }
+/* Estado de pago de un negocio (informe de tiempos de pago) según su fecha de vencimiento. */
+function _negPagoBadge(g){
+  if(!g.vence) return '<span style="color:var(--txt3)">Sin fecha de cobro</span>';
+  const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000);
+  if(d<0)  return '<span style="color:#ff6b6b;font-weight:700">⛔ Vencido hace '+(-d)+' día'+((-d)===1?'':'s')+'</span>';
+  if(d<=7) return '<span style="color:#ffb454;font-weight:700">⏳ Vence en '+d+' día'+(d===1?'':'s')+' · '+g.vence+'</span>';
+  return '<span style="color:#57d9a3;font-weight:700">✅ Al día · vence '+g.vence+'</span>';
+}
+/* Registra el pago del mes: mueve la fecha de vencimiento +30 días (desde hoy o desde el vencimiento futuro). */
+async function renovarNegocio(id){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return;
+  const hoy=new Date();
+  const base=(g.vence && new Date(g.vence+'T23:59:59')>hoy) ? new Date(g.vence+'T00:00:00') : hoy;
+  base.setDate(base.getDate()+30);
+  const nueva=base.toISOString().slice(0,10);
+  if(!confirm('¿Registrar pago y renovar "'+g.nombre+'" 1 mes?\nNueva fecha de cobro: '+nueva)) return;
+  await _negUpdate(id,{vence:nueva});
+  toastT('✅ Pago registrado · vence '+nueva);
+}
 function renderNegList(){
   const el=document.getElementById('negList'); if(!el)return;
   if(!NEGOCIOS_ADMIN.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no hay negocios. Crea el primero arriba 👆</div>'; return; }
   const host=_negBaseHost();
   const planLbl={prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'};
-  el.innerHTML=NEGOCIOS_ADMIN.map(g=>{
+  // Buscador + filtro por estado
+  const q=(((document.getElementById('negBuscar')||{}).value)||'').toLowerCase().trim();
+  const fEstado=((document.getElementById('negFiltroEstado')||{}).value)||'todos';
+  let lista=NEGOCIOS_ADMIN.slice();
+  if(q) lista=lista.filter(g=>((g.nombre||'')+' '+(g.subdominio||'')).toLowerCase().includes(q));
+  if(fEstado!=='todos'){
+    lista=lista.filter(g=>{
+      const d=g.vence?Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000):null;
+      if(fEstado==='vencidos') return d!=null&&d<0;
+      if(fEstado==='pronto') return d!=null&&d>=0&&d<=7;
+      if(fEstado==='aldia') return d==null||d>7;
+      if(fEstado==='conplan') return g.precio_total>0;
+      if(fEstado==='suspendidos') return g.estado==='suspendido';
+      return true;
+    });
+  }
+  if(!lista.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Ningún negocio coincide con la búsqueda o el filtro.</div>'; return; }
+  el.innerHTML=lista.map(g=>{
     const susp=g.estado==='suspendido';
     const url=g.subdominio?(host+'/'+g.subdominio):null;
     const urlM=g.subdominio?(host+'/'+g.subdominio+'/meseros'):null;
@@ -4822,12 +4858,14 @@ function renderNegList(){
         <div class="neg-name">${g.nombre} ${susp?'<span class="neg-badge susp">Suspendido</span>':''} ${_negAlerta(g)}</div>
         <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a> · 🧑‍🍳 <a href="https://'+urlM+'" target="_blank">/meseros</a>'):'<span style="color:var(--txt3)">sin URL asignada</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
         ${addons.length?('<div class="neg-meta">🧩 '+addons.join(' · ')+cerebroTxt+' · <b style="color:var(--primary)">'+COP(precioT)+'/mes</b></div>'):('<div class="neg-meta" style="color:var(--txt3)">Sin plan de automatizaciones — edítalo para asignar uno</div>')}
+        <div class="neg-meta">💳 ${_negPagoBadge(g)}</div>
       </div>
       <div class="neg-acts">
         <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
         <button class="btn ghost" onclick="entrarNegocio('${g.id}')">➡️ Entrar</button>
         <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar / Plan</button>
         ${precioT?('<button class="btn ghost" onclick="compartirPagoWA(\''+g.id+'\')">💰 Cobrar por WhatsApp</button>'):''}
+        <button class="btn ghost" onclick="renovarNegocio('${g.id}')">✅ Registrar pago (1 mes)</button>
         <button class="btn ghost" onclick="resetPassNegocio('${g.id}')">🔑 Reset contraseña</button>
         <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
         <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
@@ -4861,7 +4899,18 @@ function negociosView(){
   </div>
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
   <div style="margin:10px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
-  <div class="section-title" style="margin-top:22px">Todos los negocios</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 2px">
+    <input id="negBuscar" oninput="renderNegList()" placeholder="🔎 Buscar negocio por nombre o ruta…" style="flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:13px;outline:none">
+    <select id="negFiltroEstado" onchange="renderNegList()" style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:13px">
+      <option value="todos">Todos los estados</option>
+      <option value="aldia">✅ Al día</option>
+      <option value="pronto">⏳ Por vencer</option>
+      <option value="vencidos">⛔ Vencidos</option>
+      <option value="conplan">🧩 Con plan activo</option>
+      <option value="suspendidos">⏸ Suspendidos</option>
+    </select>
+  </div>
+  <div class="section-title" style="margin-top:18px">Todos los negocios</div>
   <div id="negList"></div>`;
 }
 function initNegocios(){ renderNegList(); pullNegocios(); }
