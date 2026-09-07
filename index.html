@@ -4682,23 +4682,40 @@ const FEN_REMARK = {
   grande:  { n:'Grande — 1.500 avisos/mes',  precio:180000, avisos:1500 }
 };
 const FEN_CATEGORIAS = ['Restaurante','Comidas rápidas','Café','Cafetería','Bar','Panadería','Heladería','Pizzería','Licorera','Tienda','Otro'];
-function _fenPrecioTotal(planBot, canal, remark){
-  return (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0);
+// Fidelidad / Club VIP como add-on aparte (también genera ganancia).
+const FEN_FIDELIDAD = {
+  no: { n:'Sin fidelidad',           precio:0,     costo:0 },
+  si: { n:'Club VIP / Fidelidad',    precio:30000, costo:3000 }
+};
+// Costos internos aproximados por opción (lo que TE cuesta a ti). Editables.
+const FEN_COSTO_BOT   = { ninguno:0, pequeno:2000, mediano:7000, grande:20000 };
+const FEN_COSTO_CANAL = { menu:0, whatsapp:5000 };
+const FEN_COSTO_REMARK= { ninguno:0, pequeno:10000, mediano:25000, grande:75000 };
+function _fenPrecioTotal(planBot, canal, remark, fidel){
+  return (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0) + (FEN_FIDELIDAD[fidel]?.precio||0);
+}
+function _fenCostoTotal(planBot, canal, remark, fidel){
+  return (FEN_COSTO_BOT[planBot]||0) + (FEN_COSTO_CANAL[canal]||0) + (FEN_COSTO_REMARK[remark]||0) + (FEN_FIDELIDAD[fidel]?.costo||0);
 }
 /* Recalcula el total en vivo dentro del modal cuando cambian los selects. */
 function _fenCalcModal(){
   const pb=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
   const ca=(document.getElementById('nmCanal')||{}).value||'menu';
   const rm=(document.getElementById('nmRemark')||{}).value||'ninguno';
-  const total=_fenPrecioTotal(pb,ca,rm);
+  const fi=(document.getElementById('nmFidel')||{}).value||'no';
+  const total=_fenPrecioTotal(pb,ca,rm,fi);
+  const costo=_fenCostoTotal(pb,ca,rm,fi);
+  const gan=total-costo;
   const box=document.getElementById('nmPlanTotal');
   if(box){
     const lineas=[];
     if(FEN_PLAN_BOT[pb]?.precio) lineas.push('Bot '+FEN_PLAN_BOT[pb].n.split('—')[0].trim()+': '+COP(FEN_PLAN_BOT[pb].precio));
     if(FEN_CANAL[ca]?.precio) lineas.push('WhatsApp API: '+COP(FEN_CANAL[ca].precio));
     if(FEN_REMARK[rm]?.precio) lineas.push('Remarketing '+FEN_REMARK[rm].n.split('—')[0].trim()+': '+COP(FEN_REMARK[rm].precio));
+    if(FEN_FIDELIDAD[fi]?.precio) lineas.push('Fidelidad: '+COP(FEN_FIDELIDAD[fi].precio));
     box.innerHTML = (lineas.length?('<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">'+lineas.join(' · ')+'</div>'):'')
-      + '<div style="font-size:16px;font-weight:800">Total al cliente: <span style="color:var(--primary)">'+COP(total)+'/mes</span></div>';
+      + '<div style="font-size:16px;font-weight:800">Total al cliente: <span style="color:var(--primary)">'+COP(total)+'/mes</span></div>'
+      + '<div style="font-size:13px;color:var(--txt2);margin-top:4px">Tu ganancia estimada: <b style="color:#57d9a3">'+COP(gan)+'/mes</b> <span style="color:var(--txt3);font-size:11px">(costo aprox '+COP(costo)+')</span></div>';
   }
 }
 /* Comparte el cobro del plan al WhatsApp del dueño (abre WhatsApp con el mensaje listo). */
@@ -4722,6 +4739,7 @@ function openNegModal(id){
   const planBotOpts=Object.keys(FEN_PLAN_BOT).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_bot||'ninguno',k)+'>'+FEN_PLAN_BOT[k].n+(FEN_PLAN_BOT[k].precio?(' — '+COP(FEN_PLAN_BOT[k].precio)):'')+'</option>').join('');
   const remarkOpts=Object.keys(FEN_REMARK).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_remark||'ninguno',k)+'>'+FEN_REMARK[k].n+(FEN_REMARK[k].precio?(' — '+COP(FEN_REMARK[k].precio)):'')+'</option>').join('');
   const catOpts='<option value="">— Categoría —</option>'+FEN_CATEGORIAS.map(c=>'<option value="'+c+'"'+((g&&g.categoria===c)?' selected':'')+'>'+c+'</option>').join('');
+  const fidelOpts=Object.keys(FEN_FIDELIDAD).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_fidelidad||'no',k)+'>'+FEN_FIDELIDAD[k].n+(FEN_FIDELIDAD[k].precio?(' — '+COP(FEN_FIDELIDAD[k].precio)):'')+'</option>').join('');
   const html='<div class="modal" style="max-width:500px"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
     +'<div class="modal-b">'
     +'<div class="nf"><label>Nombre del negocio *</label><input class="pf-in" id="nmNombre" value="'+v('nombre')+'" oninput="_nmRuta()" placeholder="Ej: Dulce Café"></div>'
@@ -4739,6 +4757,8 @@ function openNegModal(id){
     +'<div class="nf"><label>Canal</label><select class="pf-in" id="nmCanal" onchange="_fenCalcModal()">'+canalOpts+'</select></div></div>'
     +'<div class="nf-row"><div class="nf"><label>Plan de pedidos (bot)</label><select class="pf-in" id="nmPlanBot" onchange="_fenCalcModal()">'+planBotOpts+'</select></div>'
     +'<div class="nf"><label>Remarketing</label><select class="pf-in" id="nmRemark" onchange="_fenCalcModal()">'+remarkOpts+'</select></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Fidelidad / Club VIP</label><select class="pf-in" id="nmFidel" onchange="_fenCalcModal()">'+fidelOpts+'</select></div>'
+    +'<div class="nf"></div></div>'
     +'<div id="nmPlanTotal" style="margin-top:8px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>'
     +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
     +(g?('<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:600">🔗 Enlace con el Menú Digital</label><div style="font-size:12px;color:var(--txt3);margin:2px 0 8px">Genera una clave y pégala en el negocio del menú digital (campo “API key del POS”). Con eso el menú lee la carta del POS y le manda los pedidos.</div><div id="nmMenuKeyBox" style="font-size:13px;color:var(--txt2)">Cargando…</div></div>'):'')
@@ -4787,12 +4807,13 @@ async function saveNegModal(){
   const canal=(document.getElementById('nmCanal')||{}).value||'menu';
   const plan_bot=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
   const plan_remark=(document.getElementById('nmRemark')||{}).value||'ninguno';
-  const precio_total=_fenPrecioTotal(plan_bot,canal,plan_remark);
+  const plan_fidelidad=(document.getElementById('nmFidel')||{}).value||'no';
+  const precio_total=_fenPrecioTotal(plan_bot,canal,plan_remark,plan_fidelidad);
   const categoria=((document.getElementById('nmCategoria')||{}).value)||null;
   const municipio=(gv('nmMunicipio'))||null;
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
   if(_negEditId){
-    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,precio_total,categoria,municipio});
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,plan_fidelidad,precio_total,categoria,municipio});
     toastT('Cambios guardados ✓'); closeNegModal();
   } else {
     if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
@@ -4871,6 +4892,7 @@ function renderNegList(){
     if(g.plan_bot&&g.plan_bot!=='ninguno') addons.push('🤖 Bot');
     if(g.canal==='whatsapp') addons.push('📲 WhatsApp');
     if(g.plan_remark&&g.plan_remark!=='ninguno') addons.push('🔁 Remarketing');
+    if(g.plan_fidelidad==='si') addons.push('⭐ Fidelidad');
     return '<tr'+(susp?' style="opacity:.55"':'')+'>'
       +'<td style="'+td+'"><b>'+g.nombre+'</b>'+(susp?' <span style="color:#ff6b6b;font-size:10px">(susp.)</span>':'')+'<div style="color:var(--txt3);font-size:11px">'+(g.subdominio||'sin ruta')+(g.municipio?(' · 📍'+g.municipio):'')+'</div></td>'
       +'<td style="'+td+'">'+(g.categoria?badge(g.categoria,'#a78bfa'):'<span style="color:var(--txt3)">—</span>')+'</td>'
