@@ -1086,6 +1086,7 @@ body:not(.authed) .app{display:none}
         <div class="search">🔎<input placeholder="Buscar opción del menú…"><span style="font-size:11px">Ctrl K</span></div>
       </div>
       <div class="hdr-right">
+        <div class="hicon" title="Actualizar app (traer la última versión)" onclick="forzarActualizar()">🔄</div>
         <div class="hicon" title="Modo claro/oscuro" onclick="toggleTheme()">🌙</div>
         <div class="hicon" title="Notificaciones" onclick="event.stopPropagation();toggleTopMenu('notif')">🔔<span class="rd" id="notifDot" style="display:none"></span></div>
         <div class="avatar" title="Mi cuenta" onclick="event.stopPropagation();toggleTopMenu('acct')">A</div>
@@ -4428,6 +4429,14 @@ loadCaja();
 loadState();
 
 /* ── Barra superior: tema, notificaciones, cuenta ── */
+/* Fuerza traer la última versión: mata cualquier Service Worker pegado, borra el caché y recarga.
+   Red de seguridad para que nadie (ni Fenlora ni los clientes) se quede con una versión vieja. */
+async function forzarActualizar(){
+  try{ toastT('🔄 Actualizando a la última versión…'); }catch(e){}
+  try{ if(navigator.serviceWorker){ const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister())); } }catch(e){}
+  try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } }catch(e){}
+  setTimeout(()=>{ try{ location.reload(true); }catch(e){ location.reload(); } }, 350);
+}
 function toggleTheme(){
   const light=document.body.classList.toggle('light');
   const moon=document.querySelector('.hdr-right .hicon');
