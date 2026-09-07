@@ -4681,6 +4681,7 @@ const FEN_REMARK = {
   mediano: { n:'Mediano — 500 avisos/mes',   precio:80000,  avisos:500 },
   grande:  { n:'Grande — 1.500 avisos/mes',  precio:180000, avisos:1500 }
 };
+const FEN_CATEGORIAS = ['Restaurante','Comidas rápidas','Café','Cafetería','Bar','Panadería','Heladería','Pizzería','Licorera','Tienda','Otro'];
 function _fenPrecioTotal(planBot, canal, remark){
   return (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0);
 }
@@ -4720,6 +4721,7 @@ function openNegModal(id){
   const canalOpts=Object.keys(FEN_CANAL).map(k=>'<option value="'+k+'"'+_sel(g&&g.canal||'menu',k)+'>'+FEN_CANAL[k].n+(FEN_CANAL[k].precio?(' (+'+COP(FEN_CANAL[k].precio)+')'):'')+'</option>').join('');
   const planBotOpts=Object.keys(FEN_PLAN_BOT).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_bot||'ninguno',k)+'>'+FEN_PLAN_BOT[k].n+(FEN_PLAN_BOT[k].precio?(' — '+COP(FEN_PLAN_BOT[k].precio)):'')+'</option>').join('');
   const remarkOpts=Object.keys(FEN_REMARK).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_remark||'ninguno',k)+'>'+FEN_REMARK[k].n+(FEN_REMARK[k].precio?(' — '+COP(FEN_REMARK[k].precio)):'')+'</option>').join('');
+  const catOpts='<option value="">— Categoría —</option>'+FEN_CATEGORIAS.map(c=>'<option value="'+c+'"'+((g&&g.categoria===c)?' selected':'')+'>'+c+'</option>').join('');
   const html='<div class="modal" style="max-width:500px"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
     +'<div class="modal-b">'
     +'<div class="nf"><label>Nombre del negocio *</label><input class="pf-in" id="nmNombre" value="'+v('nombre')+'" oninput="_nmRuta()" placeholder="Ej: Dulce Café"></div>'
@@ -4729,6 +4731,8 @@ function openNegModal(id){
     +'<div class="nf"><label>Ruta URL '+(g?'':'(automática)')+'</label><input class="pf-in" id="nmSub" value="'+v('subdominio')+'" oninput="_nmRuta()" placeholder="se genera del nombre"></div></div>'
     +'<div class="nf-row"><div class="nf"><label>Plan</label><select class="pf-in" id="nmPlan">'+planOpts+'</select></div>'
     +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
+    +'<div class="nf-row"><div class="nf"><label>Categoría del negocio</label><select class="pf-in" id="nmCategoria">'+catOpts+'</select></div>'
+    +'<div class="nf"><label>Municipio (opcional)</label><input class="pf-in" id="nmMunicipio" value="'+v('municipio')+'" placeholder="Ej: Chaparral"></div></div>'
     +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
     +'<div class="nf" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:700">🤖 Plan de automatizaciones</label><div style="font-size:12px;color:var(--txt3);margin-top:2px">Elige el cerebro, el canal y los planes. El total del cliente se calcula solo.</div></div>'
     +'<div class="nf-row"><div class="nf"><label>Cerebro (IA)</label><select class="pf-in" id="nmCerebro">'+cerebroOpts+'</select></div>'
@@ -4784,9 +4788,11 @@ async function saveNegModal(){
   const plan_bot=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
   const plan_remark=(document.getElementById('nmRemark')||{}).value||'ninguno';
   const precio_total=_fenPrecioTotal(plan_bot,canal,plan_remark);
+  const categoria=((document.getElementById('nmCategoria')||{}).value)||null;
+  const municipio=(gv('nmMunicipio'))||null;
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
   if(_negEditId){
-    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,precio_total});
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,precio_total,categoria,municipio});
     toastT('Cambios guardados ✓'); closeNegModal();
   } else {
     if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
@@ -4820,57 +4826,73 @@ async function renovarNegocio(id){
   await _negUpdate(id,{vence:nueva});
   toastT('✅ Pago registrado · vence '+nueva);
 }
+function _estadoBadge(g){
+  const b=(t,c)=>'<span style="background:'+c+'22;color:'+c+';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+t+'</span>';
+  if(!g.vence) return b('Sin fecha','#7e8aa0');
+  const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000);
+  if(d<0)  return b('Vencido','#ff6b6b');
+  if(d<=7) return b('Por vencer','#ffb454');
+  return b('Al día','#57d9a3');
+}
 function renderNegList(){
   const el=document.getElementById('negList'); if(!el)return;
-  if(!NEGOCIOS_ADMIN.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no hay negocios. Crea el primero arriba 👆</div>'; return; }
   const host=_negBaseHost();
-  const planLbl={prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'};
-  // Buscador + filtro por estado
+  // Filtros
   const q=(((document.getElementById('negBuscar')||{}).value)||'').toLowerCase().trim();
   const fEstado=((document.getElementById('negFiltroEstado')||{}).value)||'todos';
+  const fPlan=((document.getElementById('negFiltroPlan')||{}).value)||'todos';
+  const fCat=((document.getElementById('negFiltroCat')||{}).value)||'todos';
+  const cnt=document.getElementById('negCount'); if(cnt) cnt.textContent=NEGOCIOS_ADMIN.length+' negocio'+(NEGOCIOS_ADMIN.length===1?'':'s')+' registrado'+(NEGOCIOS_ADMIN.length===1?'':'s');
+  if(!NEGOCIOS_ADMIN.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no hay negocios. Crea el primero arriba 👆</div>'; return; }
   let lista=NEGOCIOS_ADMIN.slice();
-  if(q) lista=lista.filter(g=>((g.nombre||'')+' '+(g.subdominio||'')).toLowerCase().includes(q));
-  if(fEstado!=='todos'){
-    lista=lista.filter(g=>{
-      const d=g.vence?Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000):null;
-      if(fEstado==='vencidos') return d!=null&&d<0;
-      if(fEstado==='pronto') return d!=null&&d>=0&&d<=7;
-      if(fEstado==='aldia') return d==null||d>7;
-      if(fEstado==='conplan') return g.precio_total>0;
-      if(fEstado==='suspendidos') return g.estado==='suspendido';
-      return true;
-    });
-  }
-  if(!lista.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Ningún negocio coincide con la búsqueda o el filtro.</div>'; return; }
-  el.innerHTML=lista.map(g=>{
+  if(q) lista=lista.filter(g=>((g.nombre||'')+' '+(g.subdominio||'')+' '+(g.municipio||'')).toLowerCase().includes(q));
+  if(fCat!=='todos') lista=lista.filter(g=>(g.categoria||'')===fCat);
+  if(fPlan!=='todos') lista=lista.filter(g=>(g.plan_bot||'ninguno')===fPlan);
+  if(fEstado!=='todos') lista=lista.filter(g=>{
+    const d=g.vence?Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000):null;
+    if(fEstado==='vencidos') return d!=null&&d<0;
+    if(fEstado==='pronto') return d!=null&&d>=0&&d<=7;
+    if(fEstado==='aldia') return d==null||d>7;
+    if(fEstado==='conplan') return g.precio_total>0;
+    if(fEstado==='suspendidos') return g.estado==='suspendido';
+    return true;
+  });
+  if(!lista.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Ningún negocio coincide con la búsqueda o los filtros.</div>'; return; }
+  const th='padding:10px 12px;text-align:left;font-size:11px;letter-spacing:.4px;color:var(--txt3);text-transform:uppercase;font-weight:700;white-space:nowrap;border-bottom:1px solid var(--border)';
+  const td='padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:top';
+  const mini='padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--txt2);font-size:11px;cursor:pointer;white-space:nowrap';
+  const badge=(t,c)=>'<span style="background:'+c+'22;color:'+c+';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+t+'</span>';
+  const rows=lista.map(g=>{
     const susp=g.estado==='suspendido';
     const url=g.subdominio?(host+'/'+g.subdominio):null;
-    const urlM=g.subdominio?(host+'/'+g.subdominio+'/meseros'):null;
-    // Add-ons activos + precio total del plan de automatizaciones
+    const planTxt=(g.plan_bot&&g.plan_bot!=='ninguno')?((FEN_PLAN_BOT[g.plan_bot]?.n||'').split('—')[0].trim()):null;
+    const precioT=g.precio_total||_fenPrecioTotal(g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno');
     const addons=[];
-    if(g.plan_bot && g.plan_bot!=='ninguno') addons.push('🤖 Bot '+((FEN_PLAN_BOT[g.plan_bot]?.n||'').split('—')[0].trim()));
-    if(g.canal==='whatsapp') addons.push('📲 WhatsApp API');
-    if(g.plan_remark && g.plan_remark!=='ninguno') addons.push('🔁 Remarketing '+((FEN_REMARK[g.plan_remark]?.n||'').split('—')[0].trim()));
-    const precioT = g.precio_total || _fenPrecioTotal(g.plan_bot||'ninguno', g.canal||'menu', g.plan_remark||'ninguno');
-    const cerebroTxt = g.cerebro ? (' · 🧠 '+((FEN_CEREBROS[g.cerebro]?.n||'').split('(')[0].trim())) : '';
-    return `<div class="neg-card ${susp?'susp':''}">
-      <div class="neg-main">
-        <div class="neg-name">${g.nombre} ${susp?'<span class="neg-badge susp">Suspendido</span>':''} ${_negAlerta(g)}</div>
-        <div class="neg-meta">${url?('🌐 <a href="https://'+url+'" target="_blank">'+url+'</a> · 🧑‍🍳 <a href="https://'+urlM+'" target="_blank">/meseros</a>'):'<span style="color:var(--txt3)">sin URL asignada</span>'} · ${planLbl[g.plan]||g.plan||'—'}${g.vence?(' · vence '+g.vence):''}</div>
-        ${addons.length?('<div class="neg-meta">🧩 '+addons.join(' · ')+cerebroTxt+' · <b style="color:var(--primary)">'+COP(precioT)+'/mes</b></div>'):('<div class="neg-meta" style="color:var(--txt3)">Sin plan de automatizaciones — edítalo para asignar uno</div>')}
-        <div class="neg-meta">💳 ${_negPagoBadge(g)}</div>
-      </div>
-      <div class="neg-acts">
-        <button class="btn ghost" onclick="compartirNegocio('${g.id}')">🔗 Compartir</button>
-        <button class="btn ghost" onclick="entrarNegocio('${g.id}')">➡️ Entrar</button>
-        <button class="btn ghost" onclick="openNegModal('${g.id}')">✏️ Editar / Plan</button>
-        ${precioT?('<button class="btn ghost" onclick="compartirPagoWA(\''+g.id+'\')">💰 Cobrar por WhatsApp</button>'):''}
-        <button class="btn ghost" onclick="renovarNegocio('${g.id}')">✅ Registrar pago (1 mes)</button>
-        <button class="btn ghost" onclick="resetPassNegocio('${g.id}')">🔑 Reset contraseña</button>
-        <button class="btn ghost" onclick="toggleSuspender('${g.id}')">${susp?'▶️ Reactivar':'⏸ Suspender'}</button>
-        <button class="btn ghost danger" onclick="eliminarNegocioAdmin('${g.id}')">🗑</button>
-      </div></div>`;
+    if(g.plan_bot&&g.plan_bot!=='ninguno') addons.push('🤖 Bot');
+    if(g.canal==='whatsapp') addons.push('📲 WhatsApp');
+    if(g.plan_remark&&g.plan_remark!=='ninguno') addons.push('🔁 Remarketing');
+    return '<tr'+(susp?' style="opacity:.55"':'')+'>'
+      +'<td style="'+td+'"><b>'+g.nombre+'</b>'+(susp?' <span style="color:#ff6b6b;font-size:10px">(susp.)</span>':'')+'<div style="color:var(--txt3);font-size:11px">'+(g.subdominio||'sin ruta')+(g.municipio?(' · 📍'+g.municipio):'')+'</div></td>'
+      +'<td style="'+td+'">'+(g.categoria?badge(g.categoria,'#a78bfa'):'<span style="color:var(--txt3)">—</span>')+'</td>'
+      +'<td style="'+td+'">'+(planTxt?(badge(planTxt,'#f5a623')+'<div style="color:var(--primary);font-size:11px;font-weight:700;margin-top:3px">'+COP(precioT)+'/mes</div>'):'<span style="color:var(--txt3)">Sin plan</span>')+'</td>'
+      +'<td style="'+td+'">'+_estadoBadge(g)+'</td>'
+      +'<td style="'+td+';white-space:nowrap;color:var(--txt2)">'+(g.vence||'—')+'</td>'
+      +'<td style="'+td+';white-space:nowrap;color:var(--txt3);font-size:11px">0 vistas<br>0 WA</td>'
+      +'<td style="'+td+'">'+(url?('<a href="https://'+url+'" target="_blank" style="color:var(--primary);font-size:11px;word-break:break-all">'+url+'</a><div style="display:flex;gap:5px;margin-top:5px"><button style="'+mini+'" onclick="_copiarTexto(\'https://'+url+'\')">Copiar</button>'+(g.whatsapp?('<button style="'+mini+';border-color:var(--primary);color:var(--primary)" onclick="compartirPagoWA(\''+g.id+'\')">Enviar WA</button>'):'')+'</div>'):'<span style="color:var(--txt3)">sin URL</span>')+'</td>'
+      +'<td style="'+td+'">'+(addons.length?addons.map(a=>'<span style="display:inline-block;background:rgba(91,140,255,.12);color:#7fa8ff;padding:2px 8px;border-radius:20px;font-size:10.5px;margin:1px 2px 1px 0">'+a+'</span>').join(''):'<span style="color:var(--txt3)">—</span>')+'</td>'
+      +'<td style="'+td+'"><div style="display:flex;flex-wrap:wrap;gap:5px;max-width:220px">'
+        +'<button style="'+mini+'" onclick="openNegModal(\''+g.id+'\')">✏️ Editar</button>'
+        +'<button style="'+mini+'" onclick="entrarNegocio(\''+g.id+'\')">➡️ Entrar</button>'
+        +'<button style="'+mini+'" onclick="renovarNegocio(\''+g.id+'\')">✅ Pago</button>'
+        +'<button style="'+mini+'" onclick="toggleSuspender(\''+g.id+'\')">'+(susp?'▶️':'⏸')+'</button>'
+        +'<button style="'+mini+'" onclick="resetPassNegocio(\''+g.id+'\')">🔑</button>'
+        +'<button style="'+mini+';border-color:#ff6b6b55;color:#ff6b6b" onclick="eliminarNegocioAdmin(\''+g.id+'\')">🗑</button>'
+      +'</div></td></tr>';
   }).join('');
+  el.innerHTML='<div style="overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--card)">'
+    +'<table style="width:100%;border-collapse:collapse;min-width:1000px">'
+    +'<thead><tr><th style="'+th+'">Negocio</th><th style="'+th+'">Categoría</th><th style="'+th+'">Plan</th><th style="'+th+'">Estado</th><th style="'+th+'">Vence</th><th style="'+th+'">Métricas</th><th style="'+th+'">Link panel</th><th style="'+th+'">Add-ons</th><th style="'+th+'">Acciones</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div>';
 }
 /* Superadmin: enviar enlace de reseteo de contraseña al correo del dueño de un negocio. */
 async function resetPassNegocio(id){
@@ -4890,9 +4912,12 @@ function negociosView(){
   const pronto=NEGOCIOS_ADMIN.filter(g=>{ if(!g.vence)return false; const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); return d>=0&&d<=7; }).length;
   const mrr=NEGOCIOS_ADMIN.reduce((s,g)=>s+(g.precio_total||0),0);
   const conPlan=NEGOCIOS_ADMIN.filter(g=>g.precio_total>0).length;
+  const selCss='background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:13px;outline:none';
+  const planFilterOpts='<option value="todos">Todos los planes</option>'+Object.keys(FEN_PLAN_BOT).filter(k=>k!=='ninguno').map(k=>'<option value="'+k+'">'+(FEN_PLAN_BOT[k].n.split('—')[0].trim())+'</option>').join('');
+  const catFilterOpts='<option value="todos">Todas las categorías</option>'+FEN_CATEGORIAS.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
   return `
-  <div class="page-head"><h1>🏢 Negocios <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
-    <div class="sub">Directorio de suscriptores. Cada negocio opera en su propia ruta, con su plan de automatizaciones y su cobro.</div></div>
+  <div class="page-head"><h1>🏢 Directorio de suscriptores <span class="status-pill" style="background:var(--primary-dim);color:var(--primary)">Fenlora</span></h1>
+    <div class="sub" id="negCount">${NEGOCIOS_ADMIN.length} negocios registrados</div></div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 4px">
     <div class="status-pill" style="background:var(--primary-dim);color:var(--primary);font-size:13px;padding:8px 14px">💵 Ingreso recurrente: <b>${COP(mrr)}/mes</b></div>
     <div class="status-pill" style="background:var(--card);color:var(--txt2);font-size:13px;padding:8px 14px">🏢 ${NEGOCIOS_ADMIN.length} negocios · ${conPlan} con plan activo</div>
@@ -4900,8 +4925,9 @@ function negociosView(){
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
   <div style="margin:10px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 2px">
-    <input id="negBuscar" oninput="renderNegList()" placeholder="🔎 Buscar negocio por nombre o ruta…" style="flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:13px;outline:none">
-    <select id="negFiltroEstado" onchange="renderNegList()" style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:13px">
+    <select id="negFiltroPlan" onchange="renderNegList()" style="${selCss}">${planFilterOpts}</select>
+    <select id="negFiltroCat" onchange="renderNegList()" style="${selCss}">${catFilterOpts}</select>
+    <select id="negFiltroEstado" onchange="renderNegList()" style="${selCss}">
       <option value="todos">Todos los estados</option>
       <option value="aldia">✅ Al día</option>
       <option value="pronto">⏳ Por vencer</option>
@@ -4909,6 +4935,7 @@ function negociosView(){
       <option value="conplan">🧩 Con plan activo</option>
       <option value="suspendidos">⏸ Suspendidos</option>
     </select>
+    <input id="negBuscar" oninput="renderNegList()" placeholder="🔎 Buscar negocio…" style="flex:1;min-width:180px;${selCss}">
   </div>
   <div class="section-title" style="margin-top:18px">Todos los negocios</div>
   <div id="negList"></div>`;
