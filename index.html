@@ -4715,7 +4715,9 @@ function _fenCalcModal(){
   const fi=(document.getElementById('nmFidel')||{}).value||'no';
   const total=_fenPrecioTotal(pp,pb,ca,rm,fi);
   const costo=_fenCostoTotal(pp,ce,pb,ca,rm,fi);
-  const gan=total-costo;
+  const dp=parseInt((document.getElementById('nmDescPct')||{}).value,10)||0;
+  const totalDesc=dp?Math.round(total*(1-dp/100)):total;
+  const gan=totalDesc-costo;
   const box=document.getElementById('nmPlanTotal');
   if(box){
     const lineas=[];
@@ -4726,6 +4728,7 @@ function _fenCalcModal(){
     if(FEN_FIDELIDAD[fi]?.precio) lineas.push('Fidelidad: '+COP(FEN_FIDELIDAD[fi].precio));
     box.innerHTML = (lineas.length?('<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">'+lineas.join(' · ')+'</div>'):'<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">Sin cobros — todo en $0 (elige un plan arriba)</div>')
       + '<div style="font-size:16px;font-weight:800">Total al cliente: <span style="color:var(--primary)">'+COP(total)+'/mes</span></div>'
+      + (dp?('<div style="font-size:14px;font-weight:700;margin-top:2px">Con '+dp+'% de descuento: <span style="color:#a78bfa">'+COP(totalDesc)+'/mes</span></div>'):'')
       + '<div style="font-size:13px;color:var(--txt2);margin-top:4px">Tu ganancia estimada: <b style="color:#57d9a3">'+COP(gan)+'/mes</b> <span style="color:var(--txt3);font-size:11px">(costo aprox '+COP(costo)+(ce==='premium'?' · cerebro Claude':'')+')</span></div>';
   }
 }
@@ -4771,6 +4774,9 @@ function openNegModal(id){
     +'<div class="nf-row"><div class="nf"><label>Fidelidad / Club VIP</label><select class="pf-in" id="nmFidel" onchange="_fenCalcModal()">'+fidelOpts+'</select></div>'
     +'<div class="nf"></div></div>'
     +'<div id="nmPlanTotal" style="margin-top:8px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>'
+    +'<div class="nf-row" style="margin-top:8px"><div class="nf"><label>Descuento (%)</label><input class="pf-in" id="nmDescPct" type="number" min="0" max="100" value="'+v('descuento_pct')+'" placeholder="0" oninput="_fenCalcModal()"></div>'
+    +'<div class="nf"><label>Descuento hasta (opcional)</label><input class="pf-in" id="nmDescHasta" type="date" value="'+v('descuento_hasta')+'"></div></div>'
+    +(g?('<div class="nf" style="margin-top:8px;padding-top:10px;border-top:1px solid var(--line)"><label>🎁 Prueba gratis del POS'+(g.en_prueba?' <span style="color:#a78bfa;font-weight:400">(activa)</span>':'')+'</label><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',15)">15 días</button><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',30)">30 días</button>'+(g.en_prueba?('<button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="terminarPrueba(\''+g.id+'\')">Terminar prueba</button>'):'')+'</div><div class="hint" style="margin-top:5px">Regala <strong>solo el POS</strong> (Básico/Pro). Las automatizaciones se cobran igual. Empieza el conteo y lo ves en la tabla con semáforo.</div></div>'):'')
     +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
     +(g?('<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:600">🔗 Enlace con el Menú Digital</label><div style="font-size:12px;color:var(--txt3);margin:2px 0 8px">Genera una clave y pégala en el negocio del menú digital (campo “API key del POS”). Con eso el menú lee la carta del POS y le manda los pedidos.</div><div id="nmMenuKeyBox" style="font-size:13px;color:var(--txt2)">Cargando…</div></div>'):'')
     +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
@@ -4822,9 +4828,11 @@ async function saveNegModal(){
   const precio_total=_fenPrecioTotal(plan,plan_bot,canal,plan_remark,plan_fidelidad);
   const categoria=((document.getElementById('nmCategoria')||{}).value)||null;
   const municipio=(gv('nmMunicipio'))||null;
+  const descuento_pct=(function(){const x=parseInt((document.getElementById('nmDescPct')||{}).value,10); return (x>0&&x<=100)?x:null;})();
+  const descuento_hasta=(gv('nmDescHasta'))||null;
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
   if(_negEditId){
-    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,plan_fidelidad,precio_total,categoria,municipio});
+    await _negUpdate(_negEditId,{nombre,subdominio:sub||null,plan,vence,whatsapp:wa||null,correo:co||null,documento:doc||null,imprimir_produccion:impProd,cerebro,canal,plan_bot,plan_remark,plan_fidelidad,precio_total,categoria,municipio,descuento_pct,descuento_hasta});
     toastT('Cambios guardados ✓'); closeNegModal();
   } else {
     if(!wa){ toastT('Escribe el WhatsApp del dueño'); return; }
@@ -4858,13 +4866,45 @@ async function renovarNegocio(id){
   await _negUpdate(id,{vence:nueva});
   toastT('✅ Pago registrado · vence '+nueva);
 }
+function _negDiasRestantes(g){ if(!g.vence) return null; return Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); }
+function _negDescuentoActivo(g){
+  if(!g.descuento_pct) return 0;
+  if(g.descuento_hasta && new Date(g.descuento_hasta+'T23:59:59') < new Date()) return 0; // venció el descuento
+  return Number(g.descuento_pct)||0;
+}
+/* Lo que REALMENTE se le cobra al cliente hoy: en prueba el POS es gratis; aplica descuento si está vigente. */
+function _negCobroActual(g){
+  let base=Number(g.precio_total)||0;
+  if(g.en_prueba) base -= (FEN_PLAN_POS[g.plan]?.precio||0);   // en prueba, el POS no se cobra (las automatizaciones sí)
+  const d=_negDescuentoActivo(g);
+  if(d) base=Math.round(base*(1-d/100));
+  return Math.max(0,base);
+}
 function _estadoBadge(g){
-  const b=(t,c)=>'<span style="background:'+c+'22;color:'+c+';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+t+'</span>';
-  if(!g.vence) return b('Sin fecha','#7e8aa0');
-  const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000);
-  if(d<0)  return b('Vencido','#ff6b6b');
-  if(d<=7) return b('Por vencer','#ffb454');
-  return b('Al día','#57d9a3');
+  const b=(t,c)=>'<span style="background:'+c+'22;color:'+c+';padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap">'+t+'</span>';
+  const d=_negDiasRestantes(g);
+  if(g.en_prueba){
+    if(d==null) return b('🎁 Prueba','#a78bfa');
+    if(d<0) return b('🎁 Prueba vencida','#ff6b6b');
+    return b('🎁 Prueba · '+d+'d','#a78bfa');
+  }
+  if(d==null) return b('Sin fecha','#7e8aa0');
+  if(d<0) return b('🔴 Vencido '+(-d)+'d','#ff6b6b');
+  if(d<=7) return b('🟡 Vence en '+d+'d','#ffb454');
+  return b('🟢 '+d+'d','#57d9a3');
+}
+async function darPrueba(id,dias){
+  const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g)return;
+  const f=new Date(); f.setDate(f.getDate()+dias);
+  const nueva=f.toISOString().slice(0,10);
+  if(!confirm('¿Activar '+dias+' días de PRUEBA GRATIS del POS para "'+g.nombre+'"?\nVence: '+nueva+'\n\n(Solo el POS es gratis en la prueba; las automatizaciones sí se cobran.)')) return;
+  await _negUpdate(id,{vence:nueva,en_prueba:1});
+  toastT('🎁 Prueba de '+dias+' días activada · vence '+nueva);
+}
+async function terminarPrueba(id){
+  if(!confirm('¿Terminar la prueba? El negocio pasa a cobro normal.')) return;
+  await _negUpdate(id,{en_prueba:0});
+  toastT('Prueba terminada · ahora cobra normal');
 }
 function renderNegList(){
   const el=document.getElementById('negList'); if(!el)return;
@@ -4897,34 +4937,39 @@ function renderNegList(){
   const rows=lista.map(g=>{
     const susp=g.estado==='suspendido';
     const url=g.subdominio?(host+'/'+g.subdominio):null;
-    const planTxt=(g.plan_bot&&g.plan_bot!=='ninguno')?((FEN_PLAN_BOT[g.plan_bot]?.n||'').split('—')[0].trim()):null;
-    const precioT=g.precio_total||_fenPrecioTotal(g.plan||'prueba',g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno',g.plan_fidelidad||'no');
+    const planPosTxt=(FEN_PLAN_POS[g.plan]?.n)||(g.plan||'—');
     const addons=[];
-    if(g.plan_bot&&g.plan_bot!=='ninguno') addons.push('🤖 Bot');
-    if(g.canal==='whatsapp') addons.push('📲 WhatsApp');
-    if(g.plan_remark&&g.plan_remark!=='ninguno') addons.push('🔁 Remarketing');
-    if(g.plan_fidelidad==='si') addons.push('⭐ Fidelidad');
+    if(g.plan_bot&&g.plan_bot!=='ninguno') addons.push('🤖');
+    if(g.canal==='whatsapp') addons.push('📲');
+    if(g.plan_remark&&g.plan_remark!=='ninguno') addons.push('🔁');
+    if(g.plan_fidelidad==='si') addons.push('⭐');
+    const precioBase=Number(g.precio_total)||0;
+    const cobro=_negCobroActual(g);
+    const desc=_negDescuentoActivo(g);
+    const precioCell=(precioBase>0 && cobro!==precioBase)
+      ? '<span style="text-decoration:line-through;color:var(--txt3);font-size:11px">'+COP(precioBase)+'</span> <b style="color:var(--primary)">'+COP(cobro)+'</b>'+(desc?(' <span style="color:#a78bfa;font-size:10px;font-weight:700">-'+desc+'%</span>'):'')+(g.en_prueba?' <span style="color:#a78bfa;font-size:10px;font-weight:700">🎁</span>':'')
+      : (precioBase>0?('<b style="color:var(--primary)">'+COP(cobro)+'</b>'):'<span style="color:var(--txt3)">$0</span>');
     return '<tr'+(susp?' style="opacity:.55"':'')+'>'
-      +'<td style="'+td+'"><b>'+g.nombre+'</b>'+(susp?' <span style="color:#ff6b6b;font-size:10px">(susp.)</span>':'')+'<div style="color:var(--txt3);font-size:11px">'+(g.subdominio||'sin ruta')+(g.municipio?(' · 📍'+g.municipio):'')+'</div></td>'
+      +'<td style="'+td+'"><b>'+g.nombre+'</b>'+(susp?' <span style="color:#ff6b6b;font-size:10px">(susp.)</span>':'')+'<div style="color:var(--txt3);font-size:11px">'+(url?('<a href="https://'+url+'" target="_blank" style="color:var(--txt3)">'+url+'</a>'):'sin ruta')+(g.municipio?(' · 📍'+g.municipio):'')+'</div></td>'
       +'<td style="'+td+'">'+(g.categoria?badge(g.categoria,'#a78bfa'):'<span style="color:var(--txt3)">—</span>')+'</td>'
-      +'<td style="'+td+'">'+(planTxt?(badge(planTxt,'#f5a623')+'<div style="color:var(--primary);font-size:11px;font-weight:700;margin-top:3px">'+COP(precioT)+'/mes</div>'):'<span style="color:var(--txt3)">Sin plan</span>')+'</td>'
+      +'<td style="'+td+'"><div style="font-weight:600">'+planPosTxt+'</div>'+(addons.length?('<div style="font-size:14px;margin-top:2px">'+addons.join(' ')+'</div>'):'<div style="color:var(--txt3);font-size:11px;margin-top:2px">sin add-ons</div>')+'</td>'
+      +'<td style="'+td+';white-space:nowrap">'+precioCell+'<div style="color:var(--txt3);font-size:10px">/mes</div></td>'
       +'<td style="'+td+'">'+_estadoBadge(g)+'</td>'
-      +'<td style="'+td+';white-space:nowrap;color:var(--txt2)">'+(g.vence||'—')+'</td>'
-      +'<td style="'+td+';white-space:nowrap;color:var(--txt3);font-size:11px">0 vistas<br>0 WA</td>'
-      +'<td style="'+td+'">'+(url?('<a href="https://'+url+'" target="_blank" style="color:var(--primary);font-size:11px;word-break:break-all">'+url+'</a><div style="display:flex;gap:5px;margin-top:5px"><button style="'+mini+'" onclick="_copiarTexto(\'https://'+url+'\')">Copiar</button>'+(g.whatsapp?('<button style="'+mini+';border-color:var(--primary);color:var(--primary)" onclick="compartirPagoWA(\''+g.id+'\')">Enviar WA</button>'):'')+'</div>'):'<span style="color:var(--txt3)">sin URL</span>')+'</td>'
-      +'<td style="'+td+'">'+(addons.length?addons.map(a=>'<span style="display:inline-block;background:rgba(91,140,255,.12);color:#7fa8ff;padding:2px 8px;border-radius:20px;font-size:10.5px;margin:1px 2px 1px 0">'+a+'</span>').join(''):'<span style="color:var(--txt3)">—</span>')+'</td>'
-      +'<td style="'+td+'"><div style="display:flex;flex-wrap:wrap;gap:5px;max-width:220px">'
+      +'<td style="'+td+';white-space:nowrap;color:var(--txt2);font-size:12px">'+(g.vence||'—')+'</td>'
+      +'<td style="'+td+'"><div style="display:flex;flex-wrap:wrap;gap:5px;max-width:240px">'
         +'<button style="'+mini+'" onclick="openNegModal(\''+g.id+'\')">✏️ Editar</button>'
-        +'<button style="'+mini+'" onclick="entrarNegocio(\''+g.id+'\')">➡️ Entrar</button>'
+        +'<button style="'+mini+'" onclick="entrarNegocio(\''+g.id+'\')">➡️</button>'
+        +(url?('<button style="'+mini+'" onclick="_copiarTexto(\'https://'+url+'\')">🔗</button>'):'')
         +'<button style="'+mini+'" onclick="renovarNegocio(\''+g.id+'\')">✅ Pago</button>'
+        +(g.whatsapp?('<button style="'+mini+';border-color:var(--primary);color:var(--primary)" onclick="compartirPagoWA(\''+g.id+'\')">💬 Cobrar</button>'):'')
         +'<button style="'+mini+'" onclick="toggleSuspender(\''+g.id+'\')">'+(susp?'▶️':'⏸')+'</button>'
         +'<button style="'+mini+'" onclick="resetPassNegocio(\''+g.id+'\')">🔑</button>'
         +'<button style="'+mini+';border-color:#ff6b6b55;color:#ff6b6b" onclick="eliminarNegocioAdmin(\''+g.id+'\')">🗑</button>'
       +'</div></td></tr>';
   }).join('');
   el.innerHTML='<div style="overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--card)">'
-    +'<table style="width:100%;border-collapse:collapse;min-width:1000px">'
-    +'<thead><tr><th style="'+th+'">Negocio</th><th style="'+th+'">Categoría</th><th style="'+th+'">Plan</th><th style="'+th+'">Estado</th><th style="'+th+'">Vence</th><th style="'+th+'">Métricas</th><th style="'+th+'">Link panel</th><th style="'+th+'">Add-ons</th><th style="'+th+'">Acciones</th></tr></thead>'
+    +'<table style="width:100%;border-collapse:collapse;min-width:920px">'
+    +'<thead><tr><th style="'+th+'">Negocio</th><th style="'+th+'">Categoría</th><th style="'+th+'">Plan · add-ons</th><th style="'+th+'">Precio/mes</th><th style="'+th+'">Estado</th><th style="'+th+'">Vence</th><th style="'+th+'">Acciones</th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
 }
 /* Superadmin: enviar enlace de reseteo de contraseña al correo del dueño de un negocio. */
