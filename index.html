@@ -4687,42 +4687,53 @@ const FEN_FIDELIDAD = {
   no: { n:'Sin fidelidad',           precio:0,     costo:0 },
   si: { n:'Club VIP / Fidelidad',    precio:30000, costo:3000 }
 };
+// Plan del POS (la mensualidad del sistema por sí solo). Precios editables.
+const FEN_PLAN_POS = {
+  prueba: { n:'🔹 Prueba', precio:0,     costo:0 },
+  basico: { n:'🔸 Básico', precio:50000, costo:2000 },
+  pro:    { n:'⭐ Pro',    precio:80000, costo:2000 }
+};
 // Costos internos aproximados por opción (lo que TE cuesta a ti). Editables.
-const FEN_COSTO_BOT   = { ninguno:0, pequeno:2000, mediano:7000, grande:20000 };
+const FEN_COSTO_BOT   = { ninguno:0, pequeno:2000, mediano:7000, grande:20000 };  // con cerebro económico (mini)
+const FEN_CEREBRO_MULT= { economico:1, premium:6 };   // Claude cuesta ~6x el mini
 const FEN_COSTO_CANAL = { menu:0, whatsapp:5000 };
 const FEN_COSTO_REMARK= { ninguno:0, pequeno:10000, mediano:25000, grande:75000 };
-function _fenPrecioTotal(planBot, canal, remark, fidel){
-  return (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0) + (FEN_FIDELIDAD[fidel]?.precio||0);
+function _fenPrecioTotal(planPos, planBot, canal, remark, fidel){
+  return (FEN_PLAN_POS[planPos]?.precio||0) + (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0) + (FEN_FIDELIDAD[fidel]?.precio||0);
 }
-function _fenCostoTotal(planBot, canal, remark, fidel){
-  return (FEN_COSTO_BOT[planBot]||0) + (FEN_COSTO_CANAL[canal]||0) + (FEN_COSTO_REMARK[remark]||0) + (FEN_FIDELIDAD[fidel]?.costo||0);
+function _fenCostoTotal(planPos, cerebro, planBot, canal, remark, fidel){
+  const mult=FEN_CEREBRO_MULT[cerebro]||1;
+  return (FEN_PLAN_POS[planPos]?.costo||0) + ((FEN_COSTO_BOT[planBot]||0)*mult) + (FEN_COSTO_CANAL[canal]||0) + (FEN_COSTO_REMARK[remark]||0) + (FEN_FIDELIDAD[fidel]?.costo||0);
 }
 /* Recalcula el total en vivo dentro del modal cuando cambian los selects. */
 function _fenCalcModal(){
+  const pp=(document.getElementById('nmPlan')||{}).value||'prueba';
+  const ce=(document.getElementById('nmCerebro')||{}).value||'economico';
   const pb=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
   const ca=(document.getElementById('nmCanal')||{}).value||'menu';
   const rm=(document.getElementById('nmRemark')||{}).value||'ninguno';
   const fi=(document.getElementById('nmFidel')||{}).value||'no';
-  const total=_fenPrecioTotal(pb,ca,rm,fi);
-  const costo=_fenCostoTotal(pb,ca,rm,fi);
+  const total=_fenPrecioTotal(pp,pb,ca,rm,fi);
+  const costo=_fenCostoTotal(pp,ce,pb,ca,rm,fi);
   const gan=total-costo;
   const box=document.getElementById('nmPlanTotal');
   if(box){
     const lineas=[];
+    if(FEN_PLAN_POS[pp]?.precio) lineas.push('POS '+FEN_PLAN_POS[pp].n.replace(/^[^ ]+ /,'')+': '+COP(FEN_PLAN_POS[pp].precio));
     if(FEN_PLAN_BOT[pb]?.precio) lineas.push('Bot '+FEN_PLAN_BOT[pb].n.split('—')[0].trim()+': '+COP(FEN_PLAN_BOT[pb].precio));
     if(FEN_CANAL[ca]?.precio) lineas.push('WhatsApp API: '+COP(FEN_CANAL[ca].precio));
     if(FEN_REMARK[rm]?.precio) lineas.push('Remarketing '+FEN_REMARK[rm].n.split('—')[0].trim()+': '+COP(FEN_REMARK[rm].precio));
     if(FEN_FIDELIDAD[fi]?.precio) lineas.push('Fidelidad: '+COP(FEN_FIDELIDAD[fi].precio));
-    box.innerHTML = (lineas.length?('<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">'+lineas.join(' · ')+'</div>'):'')
+    box.innerHTML = (lineas.length?('<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">'+lineas.join(' · ')+'</div>'):'<div style="color:var(--txt3);font-size:12px;margin-bottom:4px">Sin cobros — todo en $0 (elige un plan arriba)</div>')
       + '<div style="font-size:16px;font-weight:800">Total al cliente: <span style="color:var(--primary)">'+COP(total)+'/mes</span></div>'
-      + '<div style="font-size:13px;color:var(--txt2);margin-top:4px">Tu ganancia estimada: <b style="color:#57d9a3">'+COP(gan)+'/mes</b> <span style="color:var(--txt3);font-size:11px">(costo aprox '+COP(costo)+')</span></div>';
+      + '<div style="font-size:13px;color:var(--txt2);margin-top:4px">Tu ganancia estimada: <b style="color:#57d9a3">'+COP(gan)+'/mes</b> <span style="color:var(--txt3);font-size:11px">(costo aprox '+COP(costo)+(ce==='premium'?' · cerebro Claude':'')+')</span></div>';
   }
 }
 /* Comparte el cobro del plan al WhatsApp del dueño (abre WhatsApp con el mensaje listo). */
 function compartirPagoWA(id){
   const g=NEGOCIOS_ADMIN.find(x=>x.id===id); if(!g){ toastT('Negocio no encontrado'); return; }
   const wa=(g.whatsapp||'').replace(/\D/g,''); if(!wa){ toastT('Ese negocio no tiene WhatsApp registrado (Editar).'); return; }
-  const total=g.precio_total||_fenPrecioTotal(g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno');
+  const total=g.precio_total||_fenPrecioTotal(g.plan||'prueba',g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno',g.plan_fidelidad||'no');
   const num = wa.length===10 ? ('57'+wa) : wa;   // Colombia
   const venceTxt = g.vence ? ('\nFecha límite: '+g.vence) : '';
   const msg = 'Hola '+g.nombre+' 👋\nTu plan Fenlora de este mes: '+COP(total)+'.'+venceTxt
@@ -4732,7 +4743,7 @@ function compartirPagoWA(id){
 function openNegModal(id){
   const g = id ? NEGOCIOS_ADMIN.find(x=>x.id===id) : null; _negEditId = id||null;
   const v=(x)=> (g && g[x]!=null) ? String(g[x]).replace(/"/g,'&quot;') : '';
-  const planOpts=['prueba','basico','pro'].map(pl=>'<option value="'+pl+'"'+((g&&g.plan===pl)?' selected':'')+'>'+({prueba:'🔹 Prueba',basico:'🔸 Básico',pro:'⭐ Pro'}[pl])+'</option>').join('');
+  const planOpts=['prueba','basico','pro'].map(pl=>'<option value="'+pl+'"'+((g&&g.plan===pl)?' selected':'')+'>'+FEN_PLAN_POS[pl].n+' — '+COP(FEN_PLAN_POS[pl].precio)+'/mes</option>').join('');
   const _sel=(cur,key)=> (cur===key?' selected':'');
   const cerebroOpts=Object.keys(FEN_CEREBROS).map(k=>'<option value="'+k+'"'+_sel(g&&g.cerebro||'economico',k)+'>'+FEN_CEREBROS[k].n+'</option>').join('');
   const canalOpts=Object.keys(FEN_CANAL).map(k=>'<option value="'+k+'"'+_sel(g&&g.canal||'menu',k)+'>'+FEN_CANAL[k].n+(FEN_CANAL[k].precio?(' (+'+COP(FEN_CANAL[k].precio)+')'):'')+'</option>').join('');
@@ -4747,13 +4758,13 @@ function openNegModal(id){
     +'<div class="nf"><label>Correo del dueño *</label><input class="pf-in" id="nmCorreo" value="'+v('correo')+'" placeholder="dueno@correo.com"></div></div>'
     +'<div class="nf-row"><div class="nf"><label>NIT / Cédula (opcional)</label><input class="pf-in" id="nmDoc" value="'+v('documento')+'" placeholder="Ej: 900123456"></div>'
     +'<div class="nf"><label>Ruta URL '+(g?'':'(automática)')+'</label><input class="pf-in" id="nmSub" value="'+v('subdominio')+'" oninput="_nmRuta()" placeholder="se genera del nombre"></div></div>'
-    +'<div class="nf-row"><div class="nf"><label>Plan</label><select class="pf-in" id="nmPlan">'+planOpts+'</select></div>'
+    +'<div class="nf-row"><div class="nf"><label>Plan del POS</label><select class="pf-in" id="nmPlan" onchange="_fenCalcModal()">'+planOpts+'</select></div>'
     +'<div class="nf"><label>Vence</label><input class="pf-in" id="nmVence" type="date" value="'+v('vence')+'"></div></div>'
     +'<div class="nf-row"><div class="nf"><label>Categoría del negocio</label><select class="pf-in" id="nmCategoria">'+catOpts+'</select></div>'
     +'<div class="nf"><label>Municipio (opcional)</label><input class="pf-in" id="nmMunicipio" value="'+v('municipio')+'" placeholder="Ej: Chaparral"></div></div>'
     +'<div id="nmRutaPrev" style="font-size:12px;color:var(--txt2);margin-top:2px"></div>'
     +'<div class="nf" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:700">🤖 Plan de automatizaciones</label><div style="font-size:12px;color:var(--txt3);margin-top:2px">Elige el cerebro, el canal y los planes. El total del cliente se calcula solo.</div></div>'
-    +'<div class="nf-row"><div class="nf"><label>Cerebro (IA)</label><select class="pf-in" id="nmCerebro">'+cerebroOpts+'</select></div>'
+    +'<div class="nf-row"><div class="nf"><label>Cerebro (IA)</label><select class="pf-in" id="nmCerebro" onchange="_fenCalcModal()">'+cerebroOpts+'</select></div>'
     +'<div class="nf"><label>Canal</label><select class="pf-in" id="nmCanal" onchange="_fenCalcModal()">'+canalOpts+'</select></div></div>'
     +'<div class="nf-row"><div class="nf"><label>Plan de pedidos (bot)</label><select class="pf-in" id="nmPlanBot" onchange="_fenCalcModal()">'+planBotOpts+'</select></div>'
     +'<div class="nf"><label>Remarketing</label><select class="pf-in" id="nmRemark" onchange="_fenCalcModal()">'+remarkOpts+'</select></div></div>'
@@ -4808,7 +4819,7 @@ async function saveNegModal(){
   const plan_bot=(document.getElementById('nmPlanBot')||{}).value||'ninguno';
   const plan_remark=(document.getElementById('nmRemark')||{}).value||'ninguno';
   const plan_fidelidad=(document.getElementById('nmFidel')||{}).value||'no';
-  const precio_total=_fenPrecioTotal(plan_bot,canal,plan_remark,plan_fidelidad);
+  const precio_total=_fenPrecioTotal(plan,plan_bot,canal,plan_remark,plan_fidelidad);
   const categoria=((document.getElementById('nmCategoria')||{}).value)||null;
   const municipio=(gv('nmMunicipio'))||null;
   if(!nombre){ toastT('Escribe el nombre del negocio'); return; }
@@ -4887,7 +4898,7 @@ function renderNegList(){
     const susp=g.estado==='suspendido';
     const url=g.subdominio?(host+'/'+g.subdominio):null;
     const planTxt=(g.plan_bot&&g.plan_bot!=='ninguno')?((FEN_PLAN_BOT[g.plan_bot]?.n||'').split('—')[0].trim()):null;
-    const precioT=g.precio_total||_fenPrecioTotal(g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno');
+    const precioT=g.precio_total||_fenPrecioTotal(g.plan||'prueba',g.plan_bot||'ninguno',g.canal||'menu',g.plan_remark||'ninguno',g.plan_fidelidad||'no');
     const addons=[];
     if(g.plan_bot&&g.plan_bot!=='ninguno') addons.push('🤖 Bot');
     if(g.canal==='whatsapp') addons.push('📲 WhatsApp');
