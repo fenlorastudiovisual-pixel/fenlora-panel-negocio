@@ -4754,7 +4754,7 @@ function openNegModal(id){
   const remarkOpts=Object.keys(FEN_REMARK).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_remark||'ninguno',k)+'>'+FEN_REMARK[k].n+(FEN_REMARK[k].precio?(' — '+COP(FEN_REMARK[k].precio)):'')+'</option>').join('');
   const catOpts='<option value="">— Categoría —</option>'+FEN_CATEGORIAS.map(c=>'<option value="'+c+'"'+((g&&g.categoria===c)?' selected':'')+'>'+c+'</option>').join('');
   const fidelOpts=Object.keys(FEN_FIDELIDAD).map(k=>'<option value="'+k+'"'+_sel(g&&g.plan_fidelidad||'no',k)+'>'+FEN_FIDELIDAD[k].n+(FEN_FIDELIDAD[k].precio?(' — '+COP(FEN_FIDELIDAD[k].precio)):'')+'</option>').join('');
-  const html='<div class="modal" style="max-width:500px"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
+  const html='<div class="modal" style="width:min(980px,95vw);max-width:95vw"><div class="modal-h"><b>'+(g?'✏️ Editar negocio':'🏢 Crear negocio')+'</b><div class="mx" onclick="closeNegModal()">✕</div></div>'
     +'<div class="modal-b">'
     +'<div class="nf"><label>Nombre del negocio *</label><input class="pf-in" id="nmNombre" value="'+v('nombre')+'" oninput="_nmRuta()" placeholder="Ej: Dulce Café"></div>'
     +'<div class="nf-row"><div class="nf"><label>WhatsApp del dueño *</label><input class="pf-in" id="nmWa" value="'+v('whatsapp')+'" placeholder="Ej: 3112746813"></div>'
