@@ -4693,17 +4693,21 @@ const FEN_PLAN_POS = {
   basico: { n:'🔸 Básico', precio:50000, costo:2000 },
   pro:    { n:'⭐ Pro',    precio:80000, costo:2000 }
 };
-// Costos internos aproximados por opción (lo que TE cuesta a ti). Editables.
-const FEN_COSTO_BOT   = { ninguno:0, pequeno:2000, mediano:7000, grande:20000 };  // con cerebro económico (mini)
-const FEN_CEREBRO_MULT= { economico:1, premium:6 };   // Claude cuesta ~6x el mini
+// Costos internos aproximados (lo que TE cuesta a ti). TODO editable desde "💲 Precios".
+// El costo del bot ahora es POR PEDIDO × la cantidad de pedidos del plan.
+const FEN_CEREBRO_COSTO_PEDIDO = { economico:12, premium:80 };  // COP por pedido
 const FEN_COSTO_CANAL = { menu:0, whatsapp:5000 };
 const FEN_COSTO_REMARK= { ninguno:0, pequeno:10000, mediano:25000, grande:75000 };
+function _fenCostoBot(cerebro, planBot){
+  const cp=FEN_CEREBRO_COSTO_PEDIDO[cerebro]||0;
+  const ped=FEN_PLAN_BOT[planBot]?.lim||0;
+  return cp*ped;
+}
 function _fenPrecioTotal(planPos, planBot, canal, remark, fidel){
   return (FEN_PLAN_POS[planPos]?.precio||0) + (FEN_PLAN_BOT[planBot]?.precio||0) + (FEN_CANAL[canal]?.precio||0) + (FEN_REMARK[remark]?.precio||0) + (FEN_FIDELIDAD[fidel]?.precio||0);
 }
 function _fenCostoTotal(planPos, cerebro, planBot, canal, remark, fidel){
-  const mult=FEN_CEREBRO_MULT[cerebro]||1;
-  return (FEN_PLAN_POS[planPos]?.costo||0) + ((FEN_COSTO_BOT[planBot]||0)*mult) + (FEN_COSTO_CANAL[canal]||0) + (FEN_COSTO_REMARK[remark]||0) + (FEN_FIDELIDAD[fidel]?.costo||0);
+  return (FEN_PLAN_POS[planPos]?.costo||0) + _fenCostoBot(cerebro,planBot) + (FEN_COSTO_CANAL[canal]||0) + (FEN_COSTO_REMARK[remark]||0) + (FEN_FIDELIDAD[fidel]?.costo||0);
 }
 /* Recalcula el total en vivo dentro del modal cuando cambian los selects. */
 function _fenCalcModal(){
@@ -4742,6 +4746,82 @@ function compartirPagoWA(id){
   const msg = 'Hola '+g.nombre+' 👋\nTu plan Fenlora de este mes: '+COP(total)+'.'+venceTxt
     + '\n\nPuedes pagar por Nequi/transferencia a nombre de Fenlora Visual Studio. Al confirmar, quedas al día. ¡Gracias! 🙌';
   window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+}
+/* ══════════ EDITOR DE PRECIOS Y MÁRGENES (superadmin) ══════════ */
+async function cargarPrecios(){
+  try{
+    const {data,error}=await sb.from('fenlora_precios').select('data').eq('id',1).maybeSingle();
+    if(error||!data||!data.data) return;
+    const c=data.data;
+    if(c.pos) for(const k in c.pos){ if(FEN_PLAN_POS[k]){ if(c.pos[k].precio!=null)FEN_PLAN_POS[k].precio=+c.pos[k].precio; if(c.pos[k].costo!=null)FEN_PLAN_POS[k].costo=+c.pos[k].costo; } }
+    if(c.bot) for(const k in c.bot){ if(FEN_PLAN_BOT[k]&&c.bot[k]!=null)FEN_PLAN_BOT[k].precio=+c.bot[k]; }
+    if(c.cerebro) for(const k in c.cerebro){ if(c.cerebro[k]!=null)FEN_CEREBRO_COSTO_PEDIDO[k]=+c.cerebro[k]; }
+    if(c.canal){ if(c.canal.precio!=null)FEN_CANAL.whatsapp.precio=+c.canal.precio; if(c.canal.costo!=null)FEN_COSTO_CANAL.whatsapp=+c.canal.costo; }
+    if(c.remark) for(const k in c.remark){ if(FEN_REMARK[k]){ if(c.remark[k].precio!=null)FEN_REMARK[k].precio=+c.remark[k].precio; if(c.remark[k].costo!=null)FEN_COSTO_REMARK[k]=+c.remark[k].costo; } }
+    if(c.fidelidad){ if(c.fidelidad.precio!=null)FEN_FIDELIDAD.si.precio=+c.fidelidad.precio; if(c.fidelidad.costo!=null)FEN_FIDELIDAD.si.costo=+c.fidelidad.costo; }
+  }catch(e){ console.warn('cargarPrecios',e); }
+}
+function _gv(id){ const el=document.getElementById(id); return el?(parseInt(el.value,10)||0):0; }
+function abrirPrecios(){
+  const inp=(id,val)=>'<input id="'+id+'" type="number" value="'+(val||0)+'" oninput="_preciosRecalc()" style="width:110px;background:#0A1120;border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--txt);font-size:13px">';
+  const th='padding:8px 10px;text-align:left;font-size:11px;color:var(--txt3);text-transform:uppercase;border-bottom:1px solid var(--border)';
+  const td='padding:8px 10px;border-bottom:1px solid var(--border)';
+  const sec=(t)=>'<tr><td style="'+td+';padding-top:14px" colspan="4"><b style="color:var(--primary)">'+t+'</b></td></tr>';
+  let rows='';
+  rows+=sec('🖥️ Plan del POS');
+  ['basico','pro'].forEach(k=>{ rows+='<tr><td style="'+td+'">'+FEN_PLAN_POS[k].n+'</td><td style="'+td+'">'+inp('p_pos_'+k,FEN_PLAN_POS[k].precio)+'</td><td style="'+td+'">'+inp('c_pos_'+k,FEN_PLAN_POS[k].costo)+'</td><td style="'+td+'"><b class="mg" id="m_pos_'+k+'"></b></td></tr>'; });
+  rows+=sec('🧠 Costo por pedido del cerebro');
+  rows+='<tr><td style="'+td+'">Económico (mini)</td><td style="'+td+'" colspan="2">'+inp('cp_eco',FEN_CEREBRO_COSTO_PEDIDO.economico)+' <span style="color:var(--txt3);font-size:11px">COP/pedido</span></td><td style="'+td+'"></td></tr>';
+  rows+='<tr><td style="'+td+'">Premium (Claude)</td><td style="'+td+'" colspan="2">'+inp('cp_pre',FEN_CEREBRO_COSTO_PEDIDO.premium)+' <span style="color:var(--txt3);font-size:11px">COP/pedido</span></td><td style="'+td+'"></td></tr>';
+  rows+=sec('🤖 Plan de pedidos (bot) — costo = pedidos × cerebro económico');
+  ['pequeno','mediano','grande'].forEach(k=>{ rows+='<tr><td style="'+td+'">'+FEN_PLAN_BOT[k].n.split('—')[0].trim()+' ('+FEN_PLAN_BOT[k].lim+' ped)</td><td style="'+td+'">'+inp('p_bot_'+k,FEN_PLAN_BOT[k].precio)+'</td><td style="'+td+'"><span class="cst" id="c_bot_'+k+'" style="color:var(--txt3);font-size:12px"></span></td><td style="'+td+'"><b class="mg" id="m_bot_'+k+'"></b></td></tr>'; });
+  rows+=sec('📲 Canal WhatsApp API');
+  rows+='<tr><td style="'+td+'">WhatsApp API</td><td style="'+td+'">'+inp('p_wa',FEN_CANAL.whatsapp.precio)+'</td><td style="'+td+'">'+inp('c_wa',FEN_COSTO_CANAL.whatsapp)+'</td><td style="'+td+'"><b class="mg" id="m_wa"></b></td></tr>';
+  rows+=sec('🔁 Remarketing');
+  ['pequeno','mediano','grande'].forEach(k=>{ rows+='<tr><td style="'+td+'">'+FEN_REMARK[k].n.split('—')[0].trim()+'</td><td style="'+td+'">'+inp('p_rm_'+k,FEN_REMARK[k].precio)+'</td><td style="'+td+'">'+inp('c_rm_'+k,FEN_COSTO_REMARK[k])+'</td><td style="'+td+'"><b class="mg" id="m_rm_'+k+'"></b></td></tr>'; });
+  rows+=sec('⭐ Fidelidad');
+  rows+='<tr><td style="'+td+'">Club VIP / Fidelidad</td><td style="'+td+'">'+inp('p_fi',FEN_FIDELIDAD.si.precio)+'</td><td style="'+td+'">'+inp('c_fi',FEN_FIDELIDAD.si.costo)+'</td><td style="'+td+'"><b class="mg" id="m_fi"></b></td></tr>';
+  const html='<div class="modal" style="width:min(780px,95vw);max-width:95vw"><div class="modal-h"><b>💲 Precios y márgenes</b><div class="mx" onclick="closePrecios()">✕</div></div>'
+    +'<div class="modal-b"><div style="color:var(--txt3);font-size:12.5px;margin-bottom:10px">Cambia precios y costos; el margen se calcula solo. Se aplica a TODOS tus negocios.</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:520px"><thead><tr><th style="'+th+'">Concepto</th><th style="'+th+'">Precio cliente</th><th style="'+th+'">Tu costo</th><th style="'+th+'">Margen</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'</div><div class="modal-f"><button class="btn ghost" onclick="closePrecios()">Cancelar</button><button class="btn primary" onclick="guardarPrecios()">Guardar precios</button></div></div>';
+  let host=document.getElementById('preciosHost'); if(!host){host=document.createElement('div');host.id='preciosHost';document.body.appendChild(host);}
+  host.innerHTML='<div class="modal-bg on" onclick="if(event.target===this)closePrecios()">'+html+'</div>';
+  _preciosRecalc();
+}
+function closePrecios(){ const h=document.getElementById('preciosHost'); if(h)h.innerHTML=''; }
+function _preciosRecalc(){
+  const mg=(id,precio,costo)=>{ const el=document.getElementById(id); if(el){ const m=precio-costo; el.textContent=COP(m); el.style.color=m>=0?'#57d9a3':'#ff6b6b'; } };
+  mg('m_pos_basico',_gv('p_pos_basico'),_gv('c_pos_basico'));
+  mg('m_pos_pro',_gv('p_pos_pro'),_gv('c_pos_pro'));
+  const cpEco=_gv('cp_eco');
+  ['pequeno','mediano','grande'].forEach(k=>{ const cost=cpEco*(FEN_PLAN_BOT[k].lim||0); const ce=document.getElementById('c_bot_'+k); if(ce)ce.textContent=COP(cost)+' (aprox)'; mg('m_bot_'+k,_gv('p_bot_'+k),cost); });
+  mg('m_wa',_gv('p_wa'),_gv('c_wa'));
+  ['pequeno','mediano','grande'].forEach(k=>mg('m_rm_'+k,_gv('p_rm_'+k),_gv('c_rm_'+k)));
+  mg('m_fi',_gv('p_fi'),_gv('c_fi'));
+}
+async function guardarPrecios(){
+  FEN_PLAN_POS.basico.precio=_gv('p_pos_basico'); FEN_PLAN_POS.basico.costo=_gv('c_pos_basico');
+  FEN_PLAN_POS.pro.precio=_gv('p_pos_pro'); FEN_PLAN_POS.pro.costo=_gv('c_pos_pro');
+  FEN_CEREBRO_COSTO_PEDIDO.economico=_gv('cp_eco'); FEN_CEREBRO_COSTO_PEDIDO.premium=_gv('cp_pre');
+  ['pequeno','mediano','grande'].forEach(k=>FEN_PLAN_BOT[k].precio=_gv('p_bot_'+k));
+  FEN_CANAL.whatsapp.precio=_gv('p_wa'); FEN_COSTO_CANAL.whatsapp=_gv('c_wa');
+  ['pequeno','mediano','grande'].forEach(k=>{ FEN_REMARK[k].precio=_gv('p_rm_'+k); FEN_COSTO_REMARK[k]=_gv('c_rm_'+k); });
+  FEN_FIDELIDAD.si.precio=_gv('p_fi'); FEN_FIDELIDAD.si.costo=_gv('c_fi');
+  const cfg={
+    pos:{basico:{precio:FEN_PLAN_POS.basico.precio,costo:FEN_PLAN_POS.basico.costo},pro:{precio:FEN_PLAN_POS.pro.precio,costo:FEN_PLAN_POS.pro.costo}},
+    cerebro:{economico:FEN_CEREBRO_COSTO_PEDIDO.economico,premium:FEN_CEREBRO_COSTO_PEDIDO.premium},
+    bot:{pequeno:FEN_PLAN_BOT.pequeno.precio,mediano:FEN_PLAN_BOT.mediano.precio,grande:FEN_PLAN_BOT.grande.precio},
+    canal:{precio:FEN_CANAL.whatsapp.precio,costo:FEN_COSTO_CANAL.whatsapp},
+    remark:{pequeno:{precio:FEN_REMARK.pequeno.precio,costo:FEN_COSTO_REMARK.pequeno},mediano:{precio:FEN_REMARK.mediano.precio,costo:FEN_COSTO_REMARK.mediano},grande:{precio:FEN_REMARK.grande.precio,costo:FEN_COSTO_REMARK.grande}},
+    fidelidad:{precio:FEN_FIDELIDAD.si.precio,costo:FEN_FIDELIDAD.si.costo}
+  };
+  try{
+    const {error}=await sb.from('fenlora_precios').upsert({id:1,data:cfg});
+    if(error)throw error;
+    toastT('💲 Precios guardados y aplicados');
+    closePrecios(); if(document.getElementById('negList'))renderNegList();
+  }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,70)); }
 }
 function openNegModal(id){
   const g = id ? NEGOCIOS_ADMIN.find(x=>x.id===id) : null; _negEditId = id||null;
@@ -5001,7 +5081,7 @@ function negociosView(){
     <div class="status-pill" style="background:var(--card);color:var(--txt2);font-size:13px;padding:8px 14px">🏢 ${NEGOCIOS_ADMIN.length} negocios · ${conPlan} con plan activo</div>
   </div>
   ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
-  <div style="margin:10px 0 4px"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button></div>
+  <div style="margin:10px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="abrirPrecios()">💲 Precios y márgenes</button></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 2px">
     <select id="negFiltroPlan" onchange="renderNegList()" style="${selCss}">${planFilterOpts}</select>
     <select id="negFiltroCat" onchange="renderNegList()" style="${selCss}">${catFilterOpts}</select>
@@ -5018,7 +5098,7 @@ function negociosView(){
   <div class="section-title" style="margin-top:18px">Todos los negocios</div>
   <div id="negList"></div>`;
 }
-function initNegocios(){ renderNegList(); pullNegocios(); }
+function initNegocios(){ renderNegList(); pullNegocios(); cargarPrecios().then(()=>{ if(document.getElementById('negList'))renderNegList(); }).catch(()=>{}); }
 /* ═══════════ EQUIPO / EMPLEADOS ═══════════ */
 let EMPLEADOS=[];
 try{ EMPLEADOS=JSON.parse(localStorage.getItem('fenlora_empleados')||'[]'); }catch(e){ EMPLEADOS=[]; }
