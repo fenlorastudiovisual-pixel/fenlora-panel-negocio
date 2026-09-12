@@ -4856,7 +4856,7 @@ function openNegModal(id){
     +'<div id="nmPlanTotal" style="margin-top:8px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>'
     +'<div class="nf-row" style="margin-top:8px"><div class="nf"><label>Descuento (%)</label><input class="pf-in" id="nmDescPct" type="number" min="0" max="100" value="'+v('descuento_pct')+'" placeholder="0" oninput="_fenCalcModal()"></div>'
     +'<div class="nf"><label>Descuento hasta (opcional)</label><input class="pf-in" id="nmDescHasta" type="date" value="'+v('descuento_hasta')+'"></div></div>'
-    +(g?('<div class="nf" style="margin-top:8px;padding-top:10px;border-top:1px solid var(--line)"><label>🎁 Prueba gratis del POS'+(g.en_prueba?' <span style="color:#a78bfa;font-weight:400">(activa)</span>':'')+'</label><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',15)">15 días</button><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',30)">30 días</button>'+(g.en_prueba?('<button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="terminarPrueba(\''+g.id+'\')">Terminar prueba</button>'):'')+'</div><div class="hint" style="margin-top:5px">Regala <strong>solo el POS</strong> (Básico/Pro). Las automatizaciones se cobran igual. Empieza el conteo y lo ves en la tabla con semáforo.</div></div>'):'')
+    +(g?('<div class="nf" style="margin-top:8px;padding-top:10px;border-top:1px solid var(--line)"><label>🎁 Prueba gratis del POS'+(g.en_prueba?' <span style="color:#a78bfa;font-weight:400">(activa)</span>':'')+'</label><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',8)">8 días</button><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',15)">15 días</button><button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="darPrueba(\''+g.id+'\',30)">30 días</button>'+(g.en_prueba?('<button type="button" class="btn ghost" style="width:auto;padding:8px 14px" onclick="terminarPrueba(\''+g.id+'\')">Terminar prueba</button>'):'')+'</div><div class="hint" style="margin-top:5px">Regala <strong>solo el POS</strong> (Básico/Pro). Las automatizaciones se cobran igual. Empieza el conteo y lo ves en la tabla con semáforo.</div></div>'):'')
     +'<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label class="pf-tgl" style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:600"><input type="checkbox" id="nmImpProd" style="margin-top:2px"'+(( !g || g.imprimir_produccion!==false )?' checked':'')+'> <span>🖨️ Imprimir comandas a cocina/barra<br><span style="color:var(--txt3);font-weight:400;font-size:12px">Apágalo si el negocio usa tablets/pantallas. El pedido igual se muestra en las pantallas, solo no se imprime.</span></span></label></div>'
     +(g?('<div class="nf" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><label style="font-weight:600">🔗 Enlace con el Menú Digital</label><div style="font-size:12px;color:var(--txt3);margin:2px 0 8px">Genera una clave y pégala en el negocio del menú digital (campo “API key del POS”). Con eso el menú lee la carta del POS y le manda los pedidos.</div><div id="nmMenuKeyBox" style="font-size:13px;color:var(--txt2)">Cargando…</div></div>'):'')
     +'</div><div class="modal-f"><button class="btn ghost" onclick="closeNegModal()">Cancelar</button><button class="btn primary" onclick="saveNegModal()">'+(g?'Guardar cambios':'Crear negocio')+'</button></div></div>';
@@ -5065,6 +5065,33 @@ async function resetPassNegocio(id){
     toastT('🔑 Enlace de reseteo enviado a '+correo);
   }catch(e){ toastT('No se pudo enviar: '+String(e.message||e).slice(0,70)); }
 }
+/* Panel de recordatorio: negocios vencidos o por vencer (incluye pruebas). Ordenado por urgencia. */
+function _negRecordatorios(){
+  const items=NEGOCIOS_ADMIN.filter(g=>g.vence).map(g=>({g,d:_negDiasRestantes(g)}))
+    .filter(x=>x.d!=null && x.d<=7)
+    .sort((a,b)=>a.d-b.d);
+  if(!items.length) return '';
+  const chip='padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--txt2);font-size:11px;cursor:pointer;white-space:nowrap';
+  const filas=items.map(({g,d})=>{
+    const trial=g.en_prueba;
+    let et,col;
+    if(d<0){ et=(trial?'🎁 Prueba vencida hace ':'🔴 Vencido hace ')+(-d)+'d'; col='#ff6b6b'; }
+    else if(d===0){ et=(trial?'🎁 Prueba vence HOY':'⏰ Vence HOY'); col='#ffb454'; }
+    else { et=(trial?'🎁 Prueba · faltan ':'🟡 Faltan ')+d+'d'; col='#ffb454'; }
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid var(--border)">'
+      +'<span style="font-weight:700;min-width:120px">'+g.nombre+'</span>'
+      +'<span style="background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+et+'</span>'
+      +'<span style="color:var(--txt3);font-size:11px">vence '+g.vence+'</span>'
+      +'<span style="flex:1"></span>'
+      +'<button style="'+chip+'" onclick="openNegModal(\''+g.id+'\')">✏️ Editar</button>'
+      +'<button style="'+chip+'" onclick="renovarNegocio(\''+g.id+'\')">✅ Pago</button>'
+      +(g.whatsapp?('<button style="'+chip+';border-color:var(--primary);color:var(--primary)" onclick="compartirPagoWA(\''+g.id+'\')">💬 Cobrar</button>'):'')
+      +'</div>';
+  }).join('');
+  return '<div style="border:1px solid var(--amber,#f59e0b);border-radius:12px;background:rgba(245,158,11,.08);margin-bottom:14px;overflow:hidden">'
+    +'<div style="padding:9px 12px;font-weight:700;color:var(--amber,#f59e0b)">🔔 Recordatorio de cobro — '+items.length+' por vencer o vencido'+(items.length===1?'':'s')+'</div>'
+    +filas+'</div>';
+}
 function negociosView(){
   const venc=NEGOCIOS_ADMIN.filter(g=>g.vence&&new Date(g.vence+'T23:59:59')<new Date()).length;
   const pronto=NEGOCIOS_ADMIN.filter(g=>{ if(!g.vence)return false; const d=Math.ceil((new Date(g.vence+'T23:59:59')-new Date())/86400000); return d>=0&&d<=7; }).length;
@@ -5080,7 +5107,7 @@ function negociosView(){
     <div class="status-pill" style="background:var(--primary-dim);color:var(--primary);font-size:13px;padding:8px 14px">💵 Ingreso recurrente: <b>${COP(mrr)}/mes</b></div>
     <div class="status-pill" style="background:var(--card);color:var(--txt2);font-size:13px;padding:8px 14px">🏢 ${NEGOCIOS_ADMIN.length} negocios · ${conPlan} con plan activo</div>
   </div>
-  ${(venc||pronto)?`<div class="neg-alertbar">${venc?('⚠ '+venc+' suscripción(es) vencida(s). '):''}${pronto?('⏳ '+pronto+' por vencer esta semana.'):''}</div>`:''}
+  ${_negRecordatorios()}
   <div style="margin:10px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="abrirPrecios()">💲 Precios y márgenes</button></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 2px">
     <select id="negFiltroPlan" onchange="renderNegList()" style="${selCss}">${planFilterOpts}</select>
