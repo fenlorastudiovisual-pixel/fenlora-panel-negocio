@@ -1128,6 +1128,7 @@ const S = {
   panel:      {g:'Operación', n:'Panel', ico:'📊', st:'activo', fase:'Fase 3'},
   mesas:      {g:'Operación', n:'Comandas', ico:'🍽️', st:'activo', fase:'Fase 3', desc:'El centro de todos los pedidos: mesas del salón, para llevar, domicilio, Rappi/PedidosYa y online. En "Mesas" tocas una mesa para abrir su comanda.', feat:['Filtros: mesas, llevar, delivery, online','Mapa de mesas con semáforo','Unir mesas para grupos','Tocar mesa → abre su comanda','Cada comanda en su pestaña','Cambiar de mesero']},
   cocina:     {g:'Operación', n:'Cocina (KDS)', ico:'👨‍🍳', st:'activo', fase:'Fase 3', desc:'La pantalla de cocina donde llegan las comandas en vivo. El personal marca cada plato como "Preparando" o "Listo" y el mesero se entera al instante.', feat:['Comandas en vivo por área','Estados: pendiente / preparando / listo','Tiempo transcurrido por pedido','Separación por barra, cocina, horno','Aviso al mesero cuando está listo','Historial de despachados']},
+  barra:      {g:'Operación', n:'Barra', ico:'🍹', st:'activo', fase:'Fase 3', desc:'La pantalla de la barra: bebidas, cócteles, granizados, licores y todo lo marcado como área BARRA llega aquí en vivo, con alarma y notificación cuando entra un pedido. Ideal para bares, licorerías y granizados que no usan cocina.', feat:['Comandas de BARRA en vivo','Alarma + notificación de pedido nuevo','Marca cada bebida como lista','Tiempo por pedido','Sirve con mesero y con autopedido']},
   caja:       {g:'Operación', n:'Caja', ico:'💵', st:'activo', fase:'Fase 3', desc:'Control del dinero del turno: apertura y cierre de caja, caja chica, y el cuadre automático (esperado vs real) al final del día.', feat:['Apertura y cierre de turno','Cuadre automático de caja','Caja chica y gastos menores','Cobro: efectivo, tarjeta, Nequi, QR','Arqueo por cajero','Historial de movimientos']},
   online:     {g:'Operación', n:'Pedidos Online / Delivery', ico:'🛵', st:'activo', fase:'Fase 3', desc:'Todos los pedidos que no son de salón, en un solo lugar: domicilio propio y los que entran por Rappi, PedidosYa, iFood o el menú digital. Pago confirmado por adelantado, con estado de entrega.', feat:['Domicilio propio con dirección y teléfono','Pedidos de Rappi / iFood / PedidosYa (registro manual, listo para conectar API)','Pago anticipado obligatorio antes de crear el pedido','Estado de entrega: pendiente → en camino → entregado','Pendiente: integración directa por API con cada plataforma cuando el negocio la tenga']},
   // CATÁLOGO
@@ -1171,15 +1172,15 @@ const STLABEL={activo:'Activo',construccion:'En construcción',pronto:'Próximam
 const nav=document.getElementById('nav');
 /* ─── ROLES: qué ve cada quién ─── */
 function _puedeCobrar(){ const r=window.ROL||'admin'; return r==='admin'||r==='cajero'; }
-function _puedeCocina(){ const r=window.ROL||'admin'; return r==='cocina'||r==='admin'; }  // solo cocina o admin marca listo/entregado
+function _puedeCocina(){ const r=window.ROL||'admin'; return r==='cocina'||r==='barra'||r==='admin'; }  // cocina, barra o admin marca listo/entregado
 function _canSee(k){ if(k==='negocios') return !!window._esSuper && !window._tenant; const rol=window.ROL||'admin'; if(rol==='admin')return true;
-  const allow={mesero:['mesas','cocina'],cajero:['mesas','cocina','caja'],cocina:['cocina']};
+  const allow={mesero:['mesas','cocina','barra'],cajero:['mesas','cocina','barra','caja'],cocina:['cocina'],barra:['barra']};
   const base=allow[rol]||[];
   // Pestañas dinámicas de comandas (mesa_1, delivery_1, etc.) se permiten si el rol puede ver Mesas
   const esComanda = /^(mesa_|delivery|llevar|barra_|pickup|dom_)/.test(k) || (typeof DYN!=='undefined'&&DYN&&DYN[k]);
   if(esComanda) return base.includes('mesas');
   return base.includes(k); }
-function _homeTab(){ const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='cajero'?'caja':'panel'; }
+function _homeTab(){ const rol=window.ROL||'admin'; return rol==='mesero'?'mesas':rol==='cocina'?'cocina':rol==='barra'?'barra':rol==='cajero'?'caja':'panel'; }
 function renderNav(){
   nav.innerHTML='';
   GROUPS.forEach(g=>{
@@ -1224,10 +1225,11 @@ function renderTabs(){
 }
 function buildPanel(k){
   const d=document.createElement('div');d.className='tabpanel';d.dataset.k=k;
-  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? insumosView() : k==='recetas' ? recetasView() : k==='carta' ? cartaView() : (DYN[k] ? DYN[k].render() : moduleView(k));
+  d.innerHTML = k==='panel' ? dashboard() : k==='mesas' ? comandasView() : k==='cocina' ? kdsView() : k==='barra' ? barraView() : k==='online' ? pedidosView() : k==='caja' ? cajaView() : k==='reportes' ? reportesView() : k==='categorias' ? categoriasView() : k==='empleados' ? empleadosView() : k==='negocios' ? negociosView() : k==='productos' ? productosView() : k==='ambientes' ? qrConfigView() : k==='pagos' ? pagosView() : k==='impresoras' ? impresorasView() : k==='local' ? localSucursalesView() : k==='stock' ? insumosView() : k==='recetas' ? recetasView() : k==='carta' ? cartaView() : (DYN[k] ? DYN[k].render() : moduleView(k));
   content.appendChild(d);
   if(k==='mesas') initComandas();
   else if(k==='cocina') initKds();
+  else if(k==='barra') initBarra();
   else if(k==='online') renderPedidosBoard();
   else if(k==='caja') initCaja();
   else if(k==='categorias') initCategorias();
@@ -1738,22 +1740,52 @@ function kdsView(){
   </div>
   <div id="kdsBoard"></div>`;
 }
-function initKds(){renderKdsAreas();renderKds();}
+function initKds(){ renderKdsAreas(); renderKds(); }
+/* ── Pantalla BARRA: tablero PROPIO (ids barraBoard/barraAreas), fijo en área BARRA.
+   Ids distintos a Cocina para que ambas pantallas puedan estar abiertas sin pisarse. ── */
+function barraView(){
+  return `
+  <div class="page-head"><h1>🍹 Barra <span class="status-pill activo">En vivo</span></h1>
+    <div class="sub">Todo lo marcado como área <b>BARRA</b> (bebidas, cócteles, granizados, licores) de cada pedido llega aquí. Marca cada uno como listo y el mesero lo ve al instante. Suena una alarma cuando entra un pedido nuevo.</div></div>
+  <div style="margin:6px 0 2px"><button class="btn ghost" style="width:auto;padding:8px 14px" onclick="_barraTestAlarma()">🔔 Probar alarma</button></div>
+  <div class="kds-bar">
+    <div class="kds-areas"><button class="kds-atab on" style="cursor:default">🍹 BARRA</button></div>
+    <div class="kds-legend"><span class="kl-dot g"></span> &lt;5 min <span class="kl-dot a"></span> 5–10 min <span class="kl-dot r"></span> +10 min</div>
+  </div>
+  <div id="barraBoard"></div>`;
+}
+function initBarra(){ renderKds(); try{ if(typeof _pedirPermisoAvisos==='function')_pedirPermisoAvisos(); }catch(e){} }
+/* Prueba manual de la alarma/notificación de barra (para que confirmes que suena/llega). */
+function _barraTestAlarma(){
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([220,110,220]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const opt={body:'Así te avisará cuando entre un pedido de barra.',tag:'barra-test',renotify:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(reg=>reg.showNotification('🍹 Prueba de barra',opt)).catch(()=>{ try{new Notification('🍹 Prueba de barra',opt);}catch(_){} }); }
+      else { try{new Notification('🍹 Prueba de barra',opt);}catch(_){} }
+    } else if('Notification' in window && Notification.permission==='default'){ Notification.requestPermission().catch(()=>{}); }
+  }catch(e){}
+  try{ if(typeof _overlayAviso==='function')_overlayAviso('nuevopedido','Prueba de barra'); }catch(e){}
+  try{ toastT('🔔 Alarma de barra probada'); }catch(e){}
+}
 function kdsAreasList(){const set=new Set();Object.keys(ORD).forEach(k=>ORD[k].forEach(l=>{if(l.sent&&!l.served)set.add(l.area);}));return [...set];}
 function renderKdsAreas(){
-  const el=document.getElementById('kdsAreas');if(!el)return;
+  const el=document.getElementById('kdsAreas');if(!el)return;   // solo la pantalla Cocina tiene selector
   const tabs=[['all','Todas']].concat(kdsAreasList().map(a=>[a,a]));
   el.innerHTML=tabs.map(t=>`<button class="kds-atab ${kdsArea===t[0]?'on':''}" onclick="kdsSetArea('${t[0]}')">${t[1]}</button>`).join('');
 }
 function kdsSetArea(a){kdsArea=a;renderKdsAreas();renderKds();}
-function kdsItemsOf(k){return ORD[k].filter(l=>l.sent&&!l.served&&(kdsArea==='all'||l.area===kdsArea));}
-function _kdsCard(t){
+// Ítems de un pedido para un área dada. Sin argumento usa el área del selector de Cocina.
+function kdsItemsOf(k,area){ area=(area===undefined?kdsArea:area); return ORD[k].filter(l=>l.sent&&!l.served&&(area==='all'||l.area===area)); }
+function _kdsCard(t,area){
   const mins=Math.floor((Date.now()-t.sentAt)/60000);
   const age=mins<5?'g':(mins<=10?'a':'r');
   const shown=t.items.slice(0,3);const extra=t.items.length-shown.length;
   const readyN=t.items.filter(l=>l.ready).length;
   const puede=_puedeCocina();
-  return `<div class="kds-card ${t.allReady?'ready':''} age-${age}" onclick="kdsOpen('${t.k}')">
+  const ar=area||'all';
+  return `<div class="kds-card ${t.allReady?'ready':''} age-${age}" onclick="kdsOpen('${t.k}','${ar}')">
     <div class="kds-head"><b>${t.title}</b><span class="kds-time">⏱ ${mins}m</span></div>
     <div class="kds-items preview">${shown.map(l=>{
       const opts=(l.opts&&l.opts.length)?l.opts.map(o=>o.n).join(', '):'';
@@ -1761,37 +1793,43 @@ function _kdsCard(t){
     }).join('')}${extra>0?`<div class="kds-more">＋ ${extra} más · toca para ver todo</div>`:''}</div>
     <div class="kds-foot"><span class="kds-prog">${readyN}/${t.items.length} listos</span>${
       !puede
-        ? `<span class="kds-rol">👀 Solo cocina marca</span>`
+        ? `<span class="kds-rol">👀 Solo cocina/barra marca</span>`
         : (t.allReady
-          ? `<button class="btn primary" style="flex:1" onclick="event.stopPropagation();kdsServe('${t.k}')">🍽️ Entregado</button>`
-          : `<button class="btn ghost" style="flex:1" onclick="event.stopPropagation();kdsReadyAll('${t.k}')">✅ Todo listo</button>`)}</div>
+          ? `<button class="btn primary" style="flex:1" onclick="event.stopPropagation();kdsServe('${t.k}','${ar}')">🍽️ Entregado</button>`
+          : `<button class="btn ghost" style="flex:1" onclick="event.stopPropagation();kdsReadyAll('${t.k}','${ar}')">✅ Todo listo</button>`)}</div>
   </div>`;
 }
-function renderKds(){
-  const board=document.getElementById('kdsBoard');if(!board)return;
+// Pinta un tablero (por id) filtrando por área. Se usa para Cocina (kdsBoard) y Barra (barraBoard).
+function _renderKdsInto(boardId, area, dondeTxt){
+  const board=document.getElementById(boardId);if(!board)return;
   const tickets=[];
   Object.keys(ORD).forEach(k=>{
-    const items=kdsItemsOf(k);if(!items.length)return;
+    const items=kdsItemsOf(k,area);if(!items.length)return;
     const meta=ORDMETA[k]||{};
     tickets.push({k,title:(DYN[k]&&DYN[k].title)||meta.title||k,items,sentAt:Math.min(...items.map(l=>l.sentAt||Date.now())),allReady:items.every(l=>l.ready)});
   });
-  if(!tickets.length){board.innerHTML=`<div class="dash-empty" style="margin-top:20px">No hay comandas en cocina ahora mismo.<br>Cuando un mesero toque “Enviar a Producción”, el pedido aparecerá aquí.</div>`;return;}
-  // Clasificar: en preparación (falta algo) vs listos para entregar (todo listo)
+  if(!tickets.length){board.innerHTML=`<div class="dash-empty" style="margin-top:20px">No hay comandas ${dondeTxt} ahora mismo.<br>Cuando un mesero envíe a producción, el pedido aparecerá aquí.</div>`;return;}
   const prep=tickets.filter(t=>!t.allReady).sort((a,b)=>a.sentAt-b.sentAt);
   const listos=tickets.filter(t=>t.allReady).sort((a,b)=>a.sentAt-b.sentAt);
   const col=(titulo,cls,arr,vacio)=>`<div class="kds-col ${cls}">
       <div class="kds-col-h">${titulo} <span class="kds-col-n">${arr.length}</span></div>
-      ${arr.length?`<div class="kds-grid">${arr.map(_kdsCard).join('')}</div>`:`<div class="kds-col-empty">${vacio}</div>`}
+      ${arr.length?`<div class="kds-grid">${arr.map(t=>_kdsCard(t,area)).join('')}</div>`:`<div class="kds-col-empty">${vacio}</div>`}
     </div>`;
   board.innerHTML=`<div class="kds-cols">
     ${col('🍳 En preparación','prep',prep,'Nada en preparación.')}
     ${col('✅ Listos para entregar','listo',listos,'Ningún pedido listo aún.')}
   </div>`;
 }
-function kdsOpen(k){window._kdsOpen=k;renderKdsModal();}
+function renderKds(){
+  _renderKdsInto('kdsBoard', kdsArea, 'en cocina');       // Cocina: respeta su selector de área
+  _renderKdsInto('barraBoard', 'BARRA', 'en barra');       // Barra: siempre solo BARRA
+}
+// ¿Hay alguna pantalla tipo KDS montada (Cocina o Barra)? Usado por los refrescos en vivo.
+function _kdsAnyBoard(){ return document.getElementById('kdsBoard')||document.getElementById('barraBoard'); }
+function kdsOpen(k,area){window._kdsOpen=k;window._kdsOpenArea=(area===undefined?kdsArea:area);renderKdsModal();}
 function closeKdsModal(){window._kdsOpen=null;const m=document.getElementById('kdsModal');if(m)m.classList.remove('on');}
 function renderKdsModal(){
-  const k=window._kdsOpen;if(!k)return;const items=kdsItemsOf(k);const m=document.getElementById('kdsModal');
+  const k=window._kdsOpen;if(!k)return;const area=window._kdsOpenArea||'all';const items=kdsItemsOf(k,area);const m=document.getElementById('kdsModal');
   if(!items.length){closeKdsModal();return;}
   const title=(DYN[k]&&DYN[k].title)||(ORDMETA[k]||{}).title||k;
   const mins=Math.floor((Date.now()-Math.min(...items.map(l=>l.sentAt||Date.now())))/60000);
@@ -1806,7 +1844,7 @@ function renderKdsModal(){
           <div class="kds-it"><b>${l.qty}× ${l.n}${l.llevar?' 🥡 llevar':''}</b>${opts?`<span>▸ ${opts}</span>`:''}${ns?`<span>📝 ${ns}</span>`:''}<span class="kds-area-tag">${l.area}</span></div>
         </div>`;}).join('')}</div>
     </div>
-    <div class="modal-f">${!_puedeCocina()?`<span style="font-size:12px;color:var(--txt2)">👀 Solo la cocina o el administrador marcan listo/entregado.</span>`:(allReady?`<button class="btn primary" onclick="kdsServe('${k}');closeKdsModal()">🍽️ Entregado a la mesa</button>`:`<button class="btn ghost" onclick="kdsReadyAll('${k}')">✅ Marcar todo listo</button>`)}</div></div>`;
+    <div class="modal-f">${!_puedeCocina()?`<span style="font-size:12px;color:var(--txt2)">👀 Solo la cocina o el administrador marcan listo/entregado.</span>`:(allReady?`<button class="btn primary" onclick="kdsServe('${k}','${area}');closeKdsModal()">🍽️ Entregado a la mesa</button>`:`<button class="btn ghost" onclick="kdsReadyAll('${k}','${area}')">✅ Marcar todo listo</button>`)}</div></div>`;
   m.classList.add('on');
 }
 function _kdsRefreshAll(k){
@@ -1815,8 +1853,8 @@ function _kdsRefreshAll(k){
   try{ if(typeof _touched!=='undefined' && !_applyingRemote && k){ _touched.add(k); if(typeof pushComandasSoon==='function')pushComandasSoon(true); } }catch(e){}
   syncMesa&&syncMesa(k);renderComanda(k);renderKds();renderKdsAreas();if(window._kdsOpen)renderKdsModal();saveState();if(document.getElementById('comContent'))renderComContent();}
 function kdsToggleItem(k,lid){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}const l=ORD[k].find(x=>x.lid===lid);if(l){l.ready=!l.ready;_kdsRefreshAll(k);}}
-function kdsReadyAll(k){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
-function kdsServe(k){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado a la mesa');}
+function kdsReadyAll(k,area){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k,area).forEach(l=>l.ready=true);_kdsRefreshAll(k);toastT('✅ Pedido listo para servir');}
+function kdsServe(k,area){if(!_puedeCocina()){toastT('👀 Solo la cocina o el admin marcan los pedidos');return;}kdsItemsOf(k,area).forEach(l=>l.served=true);_kdsRefreshAll(k);toastT('🍽️ Entregado');}
 
 /* ═══ PRODUCTOS (catálogo, fuente única del panel y el menú QR) ═══ */
 let productSeq=100, prdCat='Todos', _pf=null, menuStyle=(function(){try{return localStorage.getItem('fenlora_menustyle')||'fotos'}catch(e){return 'fotos'}})();
@@ -3004,7 +3042,7 @@ function delLine(target,lid){
   ORD[target]=ORD[target].filter(x=>x.lid!==lid);
   renderComanda(target);syncMesa(target);
   if(typeof pushComandasSoon==='function')pushComandasSoon(true);
-  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
 }
 function toggleHold(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l&&!l.sent){l.held=!l.held;renderComanda(target);}}
 function toggleCort(target,lid){const l=ORD[target].find(x=>x.lid===lid);if(l){l.cort=!l.cort;toastT(l.cort?'🎁 Cortesía: '+l.n:'Cortesía quitada');renderComanda(target);syncMesa(target);}}
@@ -3198,7 +3236,7 @@ function enviarProduccion(target){
   send.forEach(l=>{l.sent=true;l.sentAt=now;l.ready=false;l.served=false;});
   renderComanda(target);syncMesa(target);saveState();
   if(typeof pushComandasSoon==='function')pushComandasSoon(true);
-  if(document.getElementById('kdsBoard')){renderKdsAreas();renderKds();}
+  if(_kdsAnyBoard()){renderKdsAreas();renderKds();}
   printCocina(target,send);
 }
 function enviarComanda(target){printComanda(target,'comanda');}
@@ -3585,7 +3623,7 @@ function confirmarFacturaFinal(){
     if(typeof _touched!=='undefined' && !_applyingRemote){ _touched.add(target); if(typeof pushComandasSoon==='function')pushComandasSoon(true); }
     closeTab(target);
     if(document.getElementById('comContent'))renderComContent();
-    if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+    if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
     saveState();
     toastT(`${factura.tipo==='electronica'?'📄 Factura':'🧾 Comprobante'} ${factura.num} · ${COP(t.total)} · falta CONFIRMAR PAGO para liberar la mesa`);
   } else {
@@ -3618,7 +3656,7 @@ function confirmarPago(clave){
   try{closeMesaAct();}catch(e){}
   if(typeof openTabs!=='undefined' && openTabs.includes(clave) && typeof closeTab==='function')closeTab(clave);
   if(document.getElementById('comContent'))renderComContent();
-  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   saveState();
   toastT('✅ Pago confirmado · mesa liberada');
 }
@@ -3790,7 +3828,7 @@ function cancelarComanda(target){
   try{closeMesaAct();}catch(e){}
   closeTab(target);
   if(document.getElementById('comContent'))renderComContent();
-  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   saveState();
 }
 function openMesaAct(n){
@@ -4333,6 +4371,7 @@ function dashboard(){
   const qa=[
     ['mesas','🍽️','Comandas','var(--primary-dim)','var(--primary)'],
     ['cocina','👨‍🍳','Cocina KDS','var(--red-dim)','var(--red)'],
+    ['barra','🍹','Barra','var(--purple-dim)','var(--purple)'],
     ['caja','💵','Caja','var(--primary-dim)','var(--primary)'],
     ['ambientes','🪑','Mesas y QR','var(--blue-dim)','var(--blue)'],
     ['productos','🍔','Productos','var(--amber-dim)','var(--amber)'],
@@ -4501,7 +4540,7 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.topmenu')&&!e.targ
 _loadTheme();
 setInterval(updateNotifDot,15000);setTimeout(updateNotifDot,1000);
 
-try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden){saveState();if(typeof pushComandasSoon==='function')pushComandasSoon(true);}}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(document.getElementById('kdsBoard'))renderKds(); if(document.getElementById('pedidosBoard'))renderPedidosBoard(); },30000); }catch(e){}
+try{ setInterval(saveState,2500); window.addEventListener('beforeunload',saveState); document.addEventListener('visibilitychange',()=>{if(document.hidden){saveState();if(typeof pushComandasSoon==='function')pushComandasSoon(true);}}); setInterval(()=>{ if(document.hidden)return; if(comType==='mesas'&&document.getElementById('comContent'))renderComContent(); if(_kdsAnyBoard())renderKds(); if(document.getElementById('pedidosBoard'))renderPedidosBoard(); },30000); }catch(e){}
 
 /* ═══════════ SINCRONIZACIÓN DEL CATÁLOGO (offline-first) ═══════════ */
 function newId(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);}); }
@@ -4621,7 +4660,7 @@ function compartirEmpleado(id){
   const slug=window._tenant||'tu-negocio';
   const ruta={mesero:'meseros',cajero:'caja',cocina:'cocina'}[e.rol]||'meseros';
   const url='https://'+_negBaseHost()+'/'+slug+'/'+ruta;
-  const rol={mesero:'mesero',cajero:'cajero/a',cocina:'cocina'}[e.rol]||e.rol;
+  const rol={mesero:'mesero',cajero:'cajero/a',cocina:'cocina',barra:'barra'}[e.rol]||e.rol;
   const msg='¡Hola '+e.nombre+'! 👋 Este es tu acceso al sistema como *'+rol+'*\n\n📲 Abre este enlace en tu celular:\n'+url+'\n\n1) Elige tu nombre: *'+e.nombre+'*\n2) Crea tu PIN de 4 dígitos (la primera vez)\n\nPuedes instalarlo como app para abrirlo más rápido.';
   _openShare('Compartir acceso · '+e.nombre, msg);
 }
@@ -4822,6 +4861,39 @@ async function guardarPrecios(){
     toastT('💲 Precios guardados y aplicados');
     closePrecios(); if(document.getElementById('negList'))renderNegList();
   }catch(e){ toastT('No se pudo guardar: '+String(e.message||e).slice(0,70)); }
+}
+/* ══════════ AVISOS PUSH DE COBRO AL CELULAR (superadmin) ══════════ */
+const AVISOS_API   = 'https://menudigital.fenloravisual.com';
+const VAPID_PUBLIC = 'BOtg3bykXwmR9dLxVrRPxY19rXLsLajGCGRCi_vp-sHTUFOcXRGjAs93a6ILfIN2Mc3UvLUPom0Z-hdeWJzdQE4';
+function _urlB64ToU8(base64){
+  const pad='='.repeat((4-base64.length%4)%4);
+  const b=(base64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(b); const out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+  return out;
+}
+async function activarAvisosCobro(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){ toastT('Este navegador no soporta avisos push. Usa Chrome en el celular.'); return; }
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){ toastT('Debes permitir las notificaciones para recibir los avisos.'); return; }
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){ sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)}); }
+    const endpoint=sub.endpoint;
+    const r=await fetch(AVISOS_API+'/avisos/sub',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    toastT('🔔 Avisos activados en este celular');
+  }catch(e){ toastT('No se pudo activar: '+String(e.message||e).slice(0,70)); }
+}
+async function probarAvisoCobro(){
+  try{
+    toastT('⏳ Enviando aviso de prueba…');
+    const r=await fetch(AVISOS_API+'/avisos/probar',{method:'POST'});
+    const j=await r.json().catch(()=>({}));
+    if(j&&j.ok){ toastT(j.enviados?('✅ Aviso enviado a '+j.enviados+' celular(es)'):'No hay celulares suscritos aún. Toca "Activar" primero.'); }
+    else toastT('No se pudo enviar la prueba'+(j&&j.motivo?(' ('+j.motivo+')'):''));
+  }catch(e){ toastT('No se pudo probar: '+String(e.message||e).slice(0,70)); }
 }
 function openNegModal(id){
   const g = id ? NEGOCIOS_ADMIN.find(x=>x.id===id) : null; _negEditId = id||null;
@@ -5108,7 +5180,7 @@ function negociosView(){
     <div class="status-pill" style="background:var(--card);color:var(--txt2);font-size:13px;padding:8px 14px">🏢 ${NEGOCIOS_ADMIN.length} negocios · ${conPlan} con plan activo</div>
   </div>
   ${_negRecordatorios()}
-  <div style="margin:10px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="abrirPrecios()">💲 Precios y márgenes</button></div>
+  <div style="margin:10px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" style="width:auto;padding:11px 22px" onclick="openNegModal(null)">+ Crear negocio</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="abrirPrecios()">💲 Precios y márgenes</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="activarAvisosCobro()">🔔 Activar avisos en este celular</button><button class="btn ghost" style="width:auto;padding:11px 22px" onclick="probarAvisoCobro()">Probar aviso</button></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 2px">
     <select id="negFiltroPlan" onchange="renderNegList()" style="${selCss}">${planFilterOpts}</select>
     <select id="negFiltroCat" onchange="renderNegList()" style="${selCss}">${catFilterOpts}</select>
@@ -5160,7 +5232,7 @@ async function removeEmpleado(id){
 }
 function renderEmpList(){
   const el=document.getElementById('empList'); if(!el)return;
-  const rolLbl={mesero:'🧑‍🍳 Mesero',cajero:'💵 Cajero',cocina:'👨‍🍳 Cocina',admin:'👑 Admin'};
+  const rolLbl={mesero:'🧑‍🍳 Mesero',cajero:'💵 Cajero',cocina:'👨‍🍳 Cocina',barra:'🍹 Barra',admin:'👑 Admin'};
   const _lista=EMPLEADOS.filter(e=>e.rol!=='admin');
   if(!_lista.length){ el.innerHTML='<div class="dash-empty" style="margin-top:10px">Aún no has agregado empleados. Agrega al primero arriba 👆</div>'; return; }
   el.innerHTML=_lista.map(e=>`<div class="emp-card">
@@ -5182,6 +5254,7 @@ function empleadosView(){
       <option value="mesero">🧑‍🍳 Mesero</option>
       <option value="cajero">💵 Cajero</option>
       <option value="cocina">👨‍🍳 Cocina</option>
+      <option value="barra">🍹 Barra</option>
     </select>
     <button class="btn primary" style="width:auto;padding:10px 18px" onclick="addEmpleado()">+ Agregar</button>
   </div>
@@ -5259,7 +5332,7 @@ async function pullComandas(){
     });
     if(typeof saveState==='function')saveState();
     if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
-    if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+    if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
     _applyingRemote=false;
     // Avisos: pedidos que quedaron listos (mesero) y mesas que pidieron cuenta (admin) — red si se pierde el realtime
     (data||[]).forEach(r=>{ if(r&&r.clave){ try{ _chequearListoParaMesero(r.clave); }catch(e){} try{ _chequearFaseAdmin(r.clave); }catch(e){} try{ _chequearLlamadoMesero(r.clave); }catch(e){} } });
@@ -5275,7 +5348,7 @@ function _applyRemoteComanda(row){
   if(typeof syncMesa==='function')syncMesa(row.clave);
   if(active===row.clave && typeof renderComanda==='function')renderComanda(row.clave);
   if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
-  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   if(window._kdsOpen&&typeof renderKdsModal==='function')renderKdsModal();
   if(typeof saveState==='function')saveState();
   _applyingRemote=false;
@@ -5292,7 +5365,7 @@ function _removeRemoteComanda(clave){
   if(clave.startsWith('mesa_')) clave.replace('mesa_','').split('_').forEach(x=>{const m=getMesa(+x);if(m){m.est='libre';m.m=0;m.t='';m.merged=false;m.grp=null;m.grpLabel=null;}});
   if(openTabs.includes(clave)&&typeof closeTab==='function')closeTab(clave);
   if(document.getElementById('comContent')&&typeof renderComContent==='function')renderComContent();
-  if(document.getElementById('kdsBoard')){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
+  if(_kdsAnyBoard()){ if(typeof renderKds==='function')renderKds(); if(typeof renderKdsAreas==='function')renderKdsAreas(); }
   if(typeof saveState==='function')saveState();
   _applyingRemote=false;
 }
@@ -5374,7 +5447,7 @@ function _pedirPermisoAvisos(){
   try{
     if(!('Notification' in window))return;
     const rol=window.ROL||'admin';
-    if(rol!=='mesero' && rol!=='cocina' && !(typeof _puedeCobrar==='function'&&_puedeCobrar()))return;  // avisos: meseros (pedido listo), cocina (pedido nuevo) y admin/cajero (piden cuenta)
+    if(rol!=='mesero' && rol!=='cocina' && rol!=='barra' && !(typeof _puedeCobrar==='function'&&_puedeCobrar()))return;  // avisos: meseros (pedido listo), cocina/barra (pedido nuevo) y admin/cajero (piden cuenta)
     if(Notification.permission==='default' && !_notifAsked){ _notifAsked=true; Notification.requestPermission().catch(()=>{}); }
   }catch(e){}
 }
@@ -5435,8 +5508,14 @@ function _chequearListoParaMesero(clave){
   const st=(typeof mesaKitchen==='function')?mesaKitchen({grp:clave}):null;
   _kdsPrevState[clave]=st;
   if(!_readyBaseline)return;                                    // primera carga: solo foto, sin avisar
-  if(st==='cocina' && prev!=='cocina'){                          // pedido recién enviado a producción → avisa SOLO a cocina
+  if(st==='cocina' && prev!=='cocina'){                          // pedido recién enviado a producción
     if((window.ROL||'admin')==='cocina') _avisoNuevoPedidoCocina(clave);
+    // BARRA: si el pedido trae ítems de área BARRA, avisa a quien atiende la barra
+    try{
+      const rolB=window.ROL||'admin';
+      const tieneBarra=(ORD[clave]||[]).some(l=>l.sent&&!l.served&&l.area==='BARRA');
+      if(tieneBarra && (rolB==='barra' || (rolB==='admin' && active==='barra'))) _avisoNuevoPedidoBarra(clave);
+    }catch(e){}
   }
   if(st==='listo' && prev!=='listo'){
     const rol=window.ROL||'admin';
@@ -5468,6 +5547,23 @@ function _avisoNuevoPedidoCocina(clave){
       if(navigator.serviceWorker && navigator.serviceWorker.ready){
         navigator.serviceWorker.ready.then(reg=>reg.showNotification('👨‍🍳 ¡Pedido nuevo!',opt)).catch(()=>{ try{new Notification('👨‍🍳 ¡Pedido nuevo!',{body});}catch(_){} });
       } else { try{new Notification('👨‍🍳 ¡Pedido nuevo!',{body});}catch(_){} }
+    }
+  }catch(e){}
+  _overlayAviso('nuevopedido',titulo);
+}
+/* Aviso a la BARRA cuando entra un pedido nuevo con ítems de área BARRA */
+function _avisoNuevoPedidoBarra(clave){
+  const meta=ORDMETA[clave]||{};
+  const titulo=meta.title||('Mesa '+clave.replace('mesa_','').split('_').join(' + '));
+  try{ _beepListo(); }catch(e){}
+  try{ if(navigator.vibrate)navigator.vibrate([220,110,220]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const body='Llegó un pedido de barra de '+titulo+'.';
+      const opt={body,tag:'barra-'+clave,renotify:true,requireInteraction:true,icon:'./icon-192.png',badge:'./icon-192.png'};
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){
+        navigator.serviceWorker.ready.then(reg=>reg.showNotification('🍹 ¡Pedido de barra!',opt)).catch(()=>{ try{new Notification('🍹 ¡Pedido de barra!',{body});}catch(_){} });
+      } else { try{new Notification('🍹 ¡Pedido de barra!',{body});}catch(_){} }
     }
   }catch(e){}
   _overlayAviso('nuevopedido',titulo);

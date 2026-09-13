@@ -15,16 +15,27 @@ self.addEventListener('activate', (e) => {
   })());
 });
 
-/* Push del servidor (Fase 2: requiere VAPID + emisor). Muestra el aviso aunque la app esté cerrada. */
+/* Push del servidor. Muestra el aviso aunque la app esté cerrada.
+   Si el push NO trae contenido (es el "timbre" del aviso de cobros del superadmin),
+   pedimos el detalle al Worker del menú (/avisos/pendientes). */
+const AVISOS_API = 'https://menudigital.fenloravisual.com';
 self.addEventListener('push', (e) => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch (_) { try { d = { body: e.data && e.data.text() }; } catch (__) { d = {}; } }
-  const title = d.title || '🔔 ¡Pedido listo!';
-  const body  = d.body  || 'Tienes un pedido listo para reclamar.';
-  e.waitUntil(self.registration.showNotification(title, {
-    body, tag: d.tag || 'listo', renotify: true, requireInteraction: true,
-    icon: './icon-192.png', badge: './icon-192.png', data: d, vibrate: [220,110,220]
-  }));
+  e.waitUntil((async () => {
+    let d = {};
+    try { d = e.data ? e.data.json() : {}; } catch (_) { try { d = { body: e.data && e.data.text() }; } catch (__) { d = {}; } }
+    if (!d.title && !d.body) {
+      try {
+        const r = await fetch(AVISOS_API + '/avisos/pendientes', { cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); if (j && (j.title || j.body)) d = j; }
+      } catch (_) {}
+    }
+    const title = d.title || '🔔 Fenlora';
+    const body  = d.body  || 'Tienes avisos pendientes.';
+    await self.registration.showNotification(title, {
+      body, tag: d.tag || 'fenlora', renotify: true, requireInteraction: true,
+      icon: './icon-192.png', badge: './icon-192.png', data: d, vibrate: [220,110,220]
+    });
+  })());
 });
 
 /* Al tocar la notificación: enfocar la app si está abierta, o abrirla. */
