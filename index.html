@@ -5217,7 +5217,16 @@ async function addEmpleado(){
   if(!nombre){ toastT('Escribe el nombre del empleado'); return; }
   if(EMPLEADOS.some(e=>e.nombre.toLowerCase()===nombre.toLowerCase())){ toastT('Ya existe un empleado con ese nombre'); return; }
   const id=newId(); EMPLEADOS.push({id,nombre,rol,pin:false,activo:true}); saveEmpleados(); inp.value=''; renderEmpList();
-  if(_cloudReady()){ try{ const {error}=await sb.from('empleados').insert({id,negocio_id:NEGOCIO_ID,nombre,rol}); if(error)throw error; }catch(e){ toastT('⚠️ No subió a la nube: '+String(e.message||e).slice(0,50)); } }
+  if(_cloudReady()){
+    try{ const {error}=await sb.from('empleados').upsert({id,negocio_id:NEGOCIO_ID,nombre,rol},{onConflict:'id'}); if(error)throw error; }
+    catch(e){
+      // La nube rechazó al empleado (p.ej. rol no permitido): NO lo dejamos
+      // solo en local, porque otros dispositivos (kioscos) leen de la nube y
+      // no lo verían. Lo revertimos y avisamos claramente.
+      EMPLEADOS=EMPLEADOS.filter(x=>x.id!==id); saveEmpleados(); renderEmpList();
+      alert('No se pudo guardar a "'+nombre+'" en la nube y por eso no se agregó.\n\nDetalle: '+String(e.message||e).slice(0,140)+'\n\nSi el rol es "Barra", corre en Supabase el archivo sql_empleados_rol_barra.sql y vuelve a intentar.');
+    }
+  }
   else toastT('Sin internet: guardado local, subirá al reconectar');
 }
 async function resetPinEmpleado(id){
